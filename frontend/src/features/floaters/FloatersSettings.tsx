@@ -70,16 +70,19 @@ export function FloatersSettings() {
         ))}
         {!full && (
           <li className="rc-floater-thumbs__add">
-            <Button variant="glass" icon={<ImagePlus size={16} />} loading={busy} onClick={() => input.current?.click()}>
+            {/* Etiqueta nativa unida al campo de archivo: abre la galería/archivos sin depender de un click()
+                programático, que algunos visores incrustados (WebView) bloquean. */}
+            <label className={`rc-btn rc-btn--glass rc-file-label${busy ? ' is-busy' : ''}`} aria-busy={busy || undefined}>
+              {busy ? <span className="rc-btn__spinner" aria-hidden="true" /> : <ImagePlus size={16} aria-hidden="true" />}
               {busy ? t.floaters.processing : t.floaters.add}
-            </Button>
+              <input ref={input} type="file" accept="image/*" className="sr-only" disabled={busy}
+                onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
             <span className="rc-list__meta">{t.floaters.addHint}</span>
           </li>
         )}
       </ul>
       {full && <p className="rc-list__meta">{t.floaters.limitReached}</p>}
-      <input ref={input} type="file" accept="image/*" className="sr-only" aria-label={t.floaters.add} tabIndex={-1}
-        onChange={(e) => { pick(e.target.files?.[0]); e.target.value = ''; }} />
       {error && <p className="rc-form__error" role="alert">{error}</p>}
 
       <label className="rc-switch">

@@ -20,11 +20,12 @@ export function FloatersProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
+  // Tras subir o quitar una imagen solo se actualiza la lista de imágenes: las preferencias locales
+  // (que pueden haber cambiado mientras la petición estaba en curso) no se sobrescriben.
   const refresh = useCallback(async () => {
     try {
-      setState(await loadFloaters());
-    } catch {
-      setState(EMPTY);
+      const next = await loadFloaters();
+      setState((s) => ({ ...s, images: next.images, max: next.max }));
     } finally {
       setReady(true);
     }

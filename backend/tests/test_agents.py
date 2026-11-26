@@ -293,6 +293,40 @@ def test_claude_adapter_request_shape_and_cost_without_network():
     assert result.cost_usd == pytest.approx((1000 * 4 + 200 * 20) / 1_000_000)
 
 
+def test_claude_haiku_has_no_server_fallback_and_its_own_price(monkeypatch):
+    from app.config import get_settings
+
+    seen = {}
+
+    def handler(request):
+        seen["body"] = json.loads(request.content)
+        seen["beta"] = request.headers.get("anthropic-beta", "")
+        return httpx2.Response(
+            200,
+            json={
+                "id": "msg_2",
+                "type": "message",
+                "role": "assistant",
+                "model": "claude-haiku-5-5",
+                "content": [{"type": "text", "text": "Resumen."}],
+                "stop_reason": "end_turn",
+                "stop_sequence": None,
+                "usage": {"input_tokens": 2000, "output_tokens": 400},
+            },
+        )
+
+    monkeypatch.setenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
+    get_settings.cache_clear()
+    try:
+        result = _claude_with(handler).summarize(agent="financial-analyst", language="es", facts={"x": 1})
+    finally:
+        monkeypatch.delenv("ANTHROPIC_MODEL")
+        get_settings.cache_clear()
+    assert seen["body"]["model"] == "claude-haiku-5-5" and "fallbacks" not in seen["body"]
+    assert "server-side-fallback" not in seen["beta"]
+    assert result.cost_usd == pytest.approx((2000 * 0.10 + 400 * 0.50) / 1_000_000)
+
+
 def test_claude_adapter_refusal_and_errors_become_provider_errors():
     refusal = _claude_with(
         lambda r: httpx2.Response(

@@ -4,6 +4,18 @@ import { expect, test } from './fixtures';
 const asset = (name: string) => path.resolve(process.cwd(), 'e2e', 'assets', name);
 
 test.describe('floating images (real API + browser canvas)', () => {
+  test('tapping "Agregar imagen" opens the device file/gallery picker', async ({ page }) => {
+    await page.goto('/settings');
+    const add = page.locator('label.rc-file-label');
+    await add.scrollIntoViewIfNeeded();
+    const chooser = page.waitForEvent('filechooser');
+    await add.click();
+    const fc = await chooser;
+    expect(fc.isMultiple()).toBe(false);
+    await fc.setFiles(asset('floater-a.png'));
+    await expect(page.getByRole('dialog', { name: 'Recorta tu imagen' })).toBeVisible();
+  });
+
   test('crop, upload up to 3 images and see them on screen', async ({ page }) => {
     await page.goto('/settings');
     for (const name of ['floater-a.png', 'floater-b.png', 'floater-c.png']) {
@@ -33,8 +45,11 @@ test.describe('floating images (real API + browser canvas)', () => {
     await page.locator('input[type=file][accept="image/*"]').setInputFiles(asset('floater-a.png'));
     await page.getByRole('dialog').getByRole('button', { name: 'Usar imagen' }).click();
     await page.getByRole('button', { name: 'Estrellas' }).click();
+    // Guardado diferido: esperar a que el servidor confirme las preferencias finales.
+    const saved = page.waitForResponse((r) => r.url().includes('/api/me/preferences/floaters') && r.request().method() === 'PUT'
+      && (r.request().postData() ?? '').includes('"size":120') && r.ok());
     await page.getByRole('slider', { name: /Tamaño/ }).fill('120');
-    await page.waitForTimeout(800); // guardado diferido
+    await saved;
     await page.reload();
     await expect(page.getByRole('button', { name: 'Estrellas' })).toHaveAttribute('aria-pressed', 'true');
     await expect(page.getByText('120 px')).toBeVisible();

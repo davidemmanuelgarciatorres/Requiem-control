@@ -64,7 +64,7 @@ describe('floating images settings', () => {
     });
     renderApp('/settings');
     expect(await screen.findByText('Ya tienes 3 imágenes. Quita una para agregar otra.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Agregar imagen' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Agregar imagen', { selector: 'input' })).not.toBeInTheDocument();
     expect(screen.getAllByRole('img', { name: /Imagen flotante/ })).toHaveLength(3);
     await user.click(screen.getByRole('button', { name: 'Corazones' }));
     fireEvent.change(screen.getByRole('slider', { name: /Tamaño/ }), { target: { value: '96' } });
@@ -93,7 +93,7 @@ describe('floating images settings', () => {
     });
     try {
       renderApp('/settings');
-      await screen.findByRole('button', { name: 'Agregar imagen' });
+      await screen.findByLabelText('Agregar imagen', { selector: 'input' });
       await user.upload(screen.getByLabelText('Agregar imagen', { selector: 'input' }), new File(['img'], 'foto.jpg', { type: 'image/jpeg' }));
       const dialog = await screen.findByRole('dialog', { name: 'Recorta tu imagen' });
       expect(dialog).toBeInTheDocument();
@@ -110,7 +110,7 @@ describe('floating images settings', () => {
     const user = userEvent.setup({ applyAccept: false });
     mockSignedIn({ 'GET /api/me/floaters': json(200, { ...FLOATERS, images: [] }), 'GET /api/organizations/current/members': json(200, []), 'GET /api/organizations/current/subscription': json(404, {}) });
     renderApp('/settings');
-    await screen.findByRole('button', { name: 'Agregar imagen' });
+    await screen.findByLabelText('Agregar imagen', { selector: 'input' });
     await user.upload(screen.getByLabelText('Agregar imagen', { selector: 'input' }), new File(['%PDF'], 'doc.pdf', { type: 'application/pdf' }));
     expect(screen.getByText('Ese archivo no es una imagen compatible.')).toBeInTheDocument();
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();

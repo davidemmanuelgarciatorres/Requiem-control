@@ -44,9 +44,10 @@ class Settings(BaseSettings):
     anthropic_effort: Literal["low", "medium", "high"] = "medium"
     ai_timeout_seconds: float = Field(default=90.0, gt=0)
     ai_max_retries: int = Field(default=2, ge=0, le=5)
-    # Precios por millón de tokens (USD) para estimar el costo; configurables.
-    anthropic_input_usd_per_mtok: float = 4.0
-    anthropic_output_usd_per_mtok: float = 20.0
+    # Precios por millón de tokens (USD) para estimar el costo. Si se dejan vacíos se usan los precios
+    # publicados del modelo elegido (tabla en app/agents/providers.py).
+    anthropic_input_usd_per_mtok: float | None = None
+    anthropic_output_usd_per_mtok: float | None = None
 
 
 @lru_cache

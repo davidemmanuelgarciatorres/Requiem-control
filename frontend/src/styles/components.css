@@ -350,3 +350,8 @@
 .rc-swatch-btn { width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.2); }
 .rc-swatch-btn[aria-pressed='true'] { border-color: #fff; box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.25); }
 .rc-color-input input { width: 40px; height: 32px; padding: 0; border: 0; background: none; cursor: pointer; }
+
+/* Botón-etiqueta para elegir archivo (imágenes flotantes). */
+.rc-file-label { cursor: pointer; position: relative; }
+.rc-file-label:focus-within { outline: 2px solid var(--rc-accent, #b8f0cc); outline-offset: 2px; }
+.rc-file-label.is-busy { pointer-events: none; opacity: 0.7; }

@@ -85,6 +85,31 @@ class MockProvider:
         return ProviderResult(text=f"{head} {body}", provider=self.name, model=self.model, simulated=True)
 
 
+# Precios publicados por millón de tokens (USD, entrada / salida). Haiku 5.5: hasta 100K tokens de entrada.
+MODEL_PRICES: dict[str, tuple[float, float]] = {
+    "claude-opus-5-5": (4.0, 20.0),
+    "claude-sonnet-5-5": (2.0, 10.0),
+    "claude-haiku-5-5": (0.10, 0.50),
+}
+# Modelos que aceptan el respaldo del servidor ante rechazos (`fallbacks: "default"`); Haiku 5.5 no.
+SERVER_FALLBACK_MODELS = {
+    "claude-opus-5-5",
+    "claude-opus-5",
+    "claude-sonnet-5-5",
+    "claude-fable-5-2",
+    "claude-fable-5-1",
+}
+
+
+def model_prices(model: str) -> tuple[float, float]:
+    s = get_settings()
+    default_in, default_out = MODEL_PRICES.get(model, MODEL_PRICES["claude-opus-5-5"])
+    return (
+        s.anthropic_input_usd_per_mtok if s.anthropic_input_usd_per_mtok is not None else default_in,
+        s.anthropic_output_usd_per_mtok if s.anthropic_output_usd_per_mtok is not None else default_out,
+    )
+
+
 class ClaudeProvider:
     """Adaptador para Claude con el SDK oficial. Requiere credencial en el servidor."""
 
@@ -104,22 +129,23 @@ class ClaudeProvider:
     def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult:
         import anthropic
 
-        s = get_settings()
         lang = "Spanish (Mexico)" if language != "en" else "English"
         prompt = (
             f"Agent: {agent}. Write the summary in {lang}.\n"
             "Facts (JSON):\n<facts>\n" + json.dumps(facts, ensure_ascii=False, default=str) + "\n</facts>"
         )
+        extra: dict[str, Any] = {}
+        if self.model in SERVER_FALLBACK_MODELS:
+            # Si el modelo declina por política, la API reintenta con un modelo de respaldo.
+            extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
         try:
             response = self._client.beta.messages.create(
                 model=self.model,
                 max_tokens=16000,
                 system=SYSTEM_PROMPT,
                 output_config={"effort": self._effort},
-                # Si el modelo declina por política, la API reintenta con un modelo de respaldo.
-                betas=["server-side-fallback-2026-07-01"],
-                fallbacks="default",
                 messages=[{"role": "user", "content": prompt}],
+                **extra,
             )
         except anthropic.RateLimitError as e:
             raise ProviderError("ai.rate_limited", "El proveedor de IA está limitando las solicitudes.") from e
@@ -136,9 +162,8 @@ class ClaudeProvider:
         if not text:
             raise ProviderError("ai.empty", "El proveedor de IA no devolvió texto.")
         usage = response.usage
-        cost = (
-            usage.input_tokens * s.anthropic_input_usd_per_mtok + usage.output_tokens * s.anthropic_output_usd_per_mtok
-        ) / 1_000_000
+        price_in, price_out = model_prices(self.model)
+        cost = (usage.input_tokens * price_in + usage.output_tokens * price_out) / 1_000_000
         return ProviderResult(
             text=text,
             provider=self.name,
