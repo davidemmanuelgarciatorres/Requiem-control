@@ -28,7 +28,8 @@
   --rc-accent-strong: #9fe3b8;
   --rc-accent-soft: rgba(184, 240, 204, 0.12);
   --rc-on-accent: #05140b;
-  --rc-warm: #f0c48e;             /* luz solar (acentos editoriales) */
+  --rc-warm: #f0c48e;
+  --rc-neon: #39ff8f;             /* verde neón: solo para el rastro de gotas de los paneles */             /* luz solar (acentos editoriales) */
   --rc-cta: #f4f6f8;              /* acción principal: blanco */
   --rc-on-cta: #05070a;
 

@@ -193,6 +193,7 @@
 .rc-org-btn--block { display: inline-flex; width: 100%; justify-content: space-between; }
 .rc-org-btn--block .rc-org-btn__name { flex: 1; text-align: left; max-width: none; }
 .rc-drawer .rc-popover { width: 100%; }
+.rc-drawer .rc-drips { display: none; }
 .rc-topbar__lang { display: none; }
 @media (min-width: 640px) { .rc-topbar__lang { display: inline-flex; } }
 
@@ -320,3 +321,16 @@
   background: rgba(251, 191, 36, 0.05);
 }
 @media (max-width: 639.98px) { .rc-demo-strip__body { display: none; } .rc-demo-strip { padding-block: 6px; } }
+
+/* Barra superior en teléfonos angostos (360 px): todo debe caber dentro de la píldora. */
+@media (max-width: 479.98px) {
+  .rc-topbar { gap: 6px; padding: 6px 8px; }
+  .rc-topbar__group { gap: 6px; }
+  .rc-topbar .rc-icon-btn, .rc-topbar .rc-avatar-btn { width: 36px; height: 36px; }
+  .rc-topbar__brand { letter-spacing: 0.2em; gap: 6px; min-width: 0; }
+}
+@media (max-width: 379.98px) {
+  .rc-topbar__brand > span:last-child { display: none; }
+}
+.rc-topbar > * { flex-shrink: 0; }
+.rc-topbar .rc-topbar__spacer { flex: 1 1 0; min-width: 0; }

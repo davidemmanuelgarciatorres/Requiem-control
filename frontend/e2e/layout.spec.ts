@@ -42,3 +42,35 @@ test.describe('responsive layout', () => {
     await expect(page.locator('.rc-skip-link')).toBeFocused();
   });
 });
+
+test.describe('narrow phones (360 px)', () => {
+  test.use({ viewport: { width: 360, height: 780 } });
+
+  test('every top-bar button stays inside the bar', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    const bar = (await page.locator('.rc-topbar').boundingBox())!;
+    for (const button of await page.locator('.rc-topbar button').all()) {
+      if (!(await button.isVisible())) continue;
+      const bb = (await button.boundingBox())!;
+      expect(bb.x).toBeGreaterThanOrEqual(bar.x);
+      expect(bb.x + bb.width).toBeLessThanOrEqual(bar.x + bar.width);
+    }
+  });
+
+  test('panels open fully inside the screen and can be closed', async ({ page }) => {
+    await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    for (const name of [/^Aprobaciones pendientes/, /^Notificaciones/, /^Perfil$/]) {
+      await page.locator('.rc-topbar').getByRole('button', { name }).click();
+      const dialog = page.getByRole('dialog');
+      await expect(dialog).toBeVisible();
+      await page.waitForTimeout(700); // fin de la animación de entrada
+      const bb = (await dialog.boundingBox())!;
+      expect(bb.x).toBeGreaterThanOrEqual(0);
+      expect(bb.x + bb.width).toBeLessThanOrEqual(360);
+      await dialog.getByRole('button', { name: 'Cerrar', exact: true }).click();
+      await expect(page.getByRole('dialog')).toHaveCount(0);
+    }
+  });
+});
