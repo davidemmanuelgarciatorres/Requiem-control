@@ -11,6 +11,7 @@ Plataforma SaaS de inteligencia de negocio y automatización de operaciones con 
 > **simulado por defecto** (sin costo, etiquetado); Claude se activa con `AI_PROVIDER=anthropic` y tu credencial.
 > También: hasta 3 imágenes flotantes personalizables por usuario.
 > Proveedores de IA: simulado (predeterminado), Claude (incl. Haiku) o Gemini. Google necesita tus credenciales (ver `.env.example`).
+> Probarla desde el teléfono sin computadora: ver [CODESPACES.md](CODESPACES.md).
 > Aún **no** hay pagos ni agentes avanzados (Fases 7–8).
 > Las cifras de la “vista de demostración” son ficticias y están etiquetadas como tales.
 

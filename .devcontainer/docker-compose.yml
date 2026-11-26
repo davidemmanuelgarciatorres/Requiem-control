@@ -1,0 +1,23 @@
+# Contenedores del Codespace: la app y una base de datos PostgreSQL 16 privada (solo dentro del Codespace).
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.13-bookworm
+    volumes:
+      - ../..:/workspaces:cached
+    command: sleep infinity
+    # Comparte la red de la base de datos: PostgreSQL queda en localhost:5432, como en desarrollo local.
+    network_mode: service:db
+    depends_on:
+      - db
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      # Superusuario SOLO para crear los roles de la app dentro de este Codespace (no es accesible desde fuera).
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:

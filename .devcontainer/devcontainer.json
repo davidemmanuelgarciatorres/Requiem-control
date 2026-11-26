@@ -1,0 +1,35 @@
+{
+  // Entorno para GitHub Codespaces: app completa (API + página + PostgreSQL) en la nube,
+  // usable desde el navegador del teléfono. Se instala sola al crearse y arranca sola al iniciarse.
+  "name": "REQUIEM CONTROL",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": { "version": "22" }
+  },
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": { "label": "REQUIEM CONTROL", "onAutoForward": "openBrowser" },
+    "8000": { "label": "API (interna)", "onAutoForward": "ignore" },
+    "5432": { "label": "PostgreSQL (interna)", "onAutoForward": "ignore" }
+  },
+  // Secretos recomendados: GitHub los pide al crear el Codespace y los guarda cifrados.
+  // Nunca se escriben en el repositorio.
+  "secrets": {
+    "GOOGLE_OAUTH_CLIENT_ID": {
+      "description": "ID de cliente OAuth de Google Cloud (termina en .apps.googleusercontent.com)."
+    },
+    "GOOGLE_OAUTH_CLIENT_SECRET": {
+      "description": "Secreto del cliente OAuth de Google Cloud."
+    },
+    "GEMINI_API_KEY": {
+      "description": "Opcional: clave de Gemini (Google AI Studio) para usar IA real en lugar del modo simulado."
+    }
+  },
+  "postCreateCommand": "bash scripts/codespace-setup.sh",
+  "postStartCommand": "bash scripts/codespace-start.sh",
+  "customizations": {
+    "codespaces": { "openFiles": ["CODESPACES.md"] }
+  }
+}

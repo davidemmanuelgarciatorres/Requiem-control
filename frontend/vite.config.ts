@@ -14,7 +14,10 @@ export default defineConfig(({ mode }) => ({
   plugins: [react()],
   // Constante de compilación: permite eliminar por completo el código de la demo en producción.
   define: { __DEMO__: JSON.stringify(mode === 'demo') },
-  server: { port: 5173, proxy },
+  // En GitHub Codespaces la página se abre por un dominio *.app.github.dev (con HTTPS en el puerto 443).
+  server: process.env.CODESPACES
+    ? { port: 5173, proxy, allowedHosts: ['.app.github.dev'], hmr: { clientPort: 443 } }
+    : { port: 5173, proxy },
   preview: { port: 4173, proxy },
   build: {
     outDir: mode === 'demo' ? 'dist-demo' : 'dist',
