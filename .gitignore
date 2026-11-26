@@ -1,0 +1,23 @@
+# Dependencias y builds
+node_modules/
+dist/
+*.tsbuildinfo
+frontend/test-results/
+frontend/playwright-report/
+
+# Python (fases futuras)
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+
+# Secretos y entorno local — NUNCA versionar
+.env
+.env.*
+!.env.example
+
+# Sistema / editores
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

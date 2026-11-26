@@ -1,0 +1,90 @@
+import { Bell, Building2, ChevronDown, CircleUser, ListChecks, Menu } from 'lucide-react';
+import { LANGUAGES, usePreferences } from '../../app/preferences';
+import { Popover } from '../ui/Popover';
+import { GlobalSearch } from './GlobalSearch';
+
+export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
+  const { t, lang, setLang } = usePreferences();
+  return (
+    <header className="rc-topbar rc-glass rc-glass--strong">
+      <button
+        type="button"
+        className="rc-icon-btn rc-topbar__menu"
+        onClick={onOpenMenu}
+        aria-label={t.nav.openMenu}
+        aria-expanded={menuOpen}
+        aria-controls="mobile-drawer"
+      >
+        <Menu size={18} aria-hidden="true" />
+      </button>
+      <span className="rc-topbar__brand">
+        <span className="rc-brand__mark" aria-hidden="true">R</span>
+        <span>REQUIEM</span>
+      </span>
+
+      <Popover
+        title={t.topbar.organization}
+        align="start"
+        trigger={(p) => (
+          <button type="button" className="rc-org-btn" {...p}>
+            <span className="rc-org-btn__avatar"><Building2 size={15} aria-hidden="true" /></span>
+            <span>{t.topbar.noOrganization}</span>
+            <ChevronDown size={14} aria-hidden="true" />
+          </button>
+        )}
+      >
+        <p>{t.topbar.noOrganization}</p>
+        <p className="rc-popover__hint">{t.topbar.orgPending}</p>
+      </Popover>
+
+      <GlobalSearch />
+      <span className="rc-topbar__spacer" />
+
+      <div className="rc-topbar__group">
+        <div className="rc-segmented" role="group" aria-label={t.settings.language}>
+          {LANGUAGES.map((l) => (
+            <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} lang={l} style={{ minHeight: 28, padding: '0 10px', fontSize: '0.75rem' }}>
+              {l.toUpperCase()}
+            </button>
+          ))}
+        </div>
+
+        <Popover
+          title={t.topbar.approvals}
+          trigger={(p) => (
+            <button type="button" className="rc-icon-btn" aria-label={`${t.topbar.approvals}: 0`} {...p}>
+              <ListChecks size={18} aria-hidden="true" />
+            </button>
+          )}
+        >
+          <p>{t.topbar.approvalsEmpty}</p>
+          <p className="rc-popover__hint">{t.topbar.approvalsHint}</p>
+        </Popover>
+
+        <Popover
+          title={t.topbar.notifications}
+          trigger={(p) => (
+            <button type="button" className="rc-icon-btn" aria-label={`${t.topbar.notifications}: 0`} {...p}>
+              <Bell size={18} aria-hidden="true" />
+            </button>
+          )}
+        >
+          <p>{t.topbar.notificationsEmpty}</p>
+          <p className="rc-popover__hint">{t.topbar.notificationsHint}</p>
+        </Popover>
+
+        <Popover
+          title={t.topbar.profile}
+          trigger={(p) => (
+            <button type="button" className="rc-avatar-btn" aria-label={t.topbar.profile} {...p}>
+              <CircleUser size={20} aria-hidden="true" />
+            </button>
+          )}
+        >
+          <p>{t.topbar.signedOut}</p>
+          <p className="rc-popover__hint">{t.topbar.authPending}</p>
+        </Popover>
+      </div>
+    </header>
+  );
+}
