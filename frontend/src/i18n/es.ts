@@ -336,7 +336,7 @@ export const es = {
   ai: {
     lead: 'Activa un agente, elige un conjunto de datos y revisa su análisis. Las acciones que cambian datos siempre esperan tu aprobación.',
     providerMock: 'Proveedor de IA: simulado. Los cálculos son reales; el resumen en texto se genera con una plantilla, sin IA real y sin costo.',
-    providerReal: 'Proveedor de IA: {model}. Los resúmenes consumen créditos de tu cuenta del proveedor.',
+    providerReal: 'Proveedor de IA: {model}. Los resúmenes usan tu cuenta del proveedor (créditos o límites de su capa gratuita).',
     activeCount: 'Agentes activos: {n} de {limit}',
     runsCount: 'Ejecuciones este mes: {n} de {limit}',
     active: 'Activo',

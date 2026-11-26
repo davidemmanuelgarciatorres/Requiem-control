@@ -335,7 +335,7 @@ export const en: Dictionary = {
   ai: {
     lead: 'Activate an agent, pick a dataset and review its analysis. Actions that change data always wait for your approval.',
     providerMock: 'AI provider: simulated. Calculations are real; the text summary comes from a template, with no real AI and no cost.',
-    providerReal: 'AI provider: {model}. Summaries use credits from your provider account.',
+    providerReal: 'AI provider: {model}. Summaries use your provider account (credits or its free-tier limits).',
     activeCount: 'Active agents: {n} of {limit}',
     runsCount: 'Runs this month: {n} of {limit}',
     active: 'Active',

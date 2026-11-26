@@ -3,7 +3,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     # Proveedor de IA (Fase 4). "mock" por defecto: no consume créditos. Para usar Claude:
     # AI_PROVIDER=anthropic y una credencial del SDK (ANTHROPIC_API_KEY o `ant auth login`).
-    ai_provider: Literal["mock", "anthropic"] = "mock"
+    ai_provider: Literal["mock", "anthropic", "gemini"] = "mock"
     anthropic_model: str = "claude-opus-5-5"
     anthropic_effort: Literal["low", "medium", "high"] = "medium"
     ai_timeout_seconds: float = Field(default=90.0, gt=0)
@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     # publicados del modelo elegido (tabla en app/agents/providers.py).
     anthropic_input_usd_per_mtok: float | None = None
     anthropic_output_usd_per_mtok: float | None = None
+    # Gemini (Google AI Studio). La clave va SOLO en el servidor: GEMINI_API_KEY (nunca en Git ni en el frontend).
+    gemini_api_key: SecretStr | None = None
+    gemini_model: str = "gemini-2.5-flash"
+    gemini_api_base: str = "https://generativelanguage.googleapis.com/v1beta"
+    # Capa gratuita: costo 0. Si se usa la capa de pago, configura los precios del modelo elegido.
+    gemini_input_usd_per_mtok: float = 0.0
+    gemini_output_usd_per_mtok: float = 0.0
 
 
 @lru_cache

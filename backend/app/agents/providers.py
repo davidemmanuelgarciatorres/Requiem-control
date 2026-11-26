@@ -9,6 +9,12 @@ sin resumen.
   `simulated: True` y la interfaz lo muestra siempre.
 - ClaudeProvider: SDK oficial `anthropic`. Solo se usa con AI_PROVIDER=anthropic
   y una credencial configurada en el servidor. Consume créditos de pago.
+  Modelo configurable (p. ej. claude-haiku-5-5, el más económico).
+- GeminiProvider: API REST de Gemini (Google AI Studio). Solo con AI_PROVIDER=gemini y
+  GEMINI_API_KEY en el servidor. Tiene capa gratuita con límites; en esa capa Google
+  puede usar lo enviado para mejorar sus productos (por eso solo se envían agregados).
+
+Agregar otro proveedor = una clase con `summarize` + una rama en `provider_status`.
 """
 
 import json
@@ -176,6 +182,87 @@ class ClaudeProvider:
         )
 
 
+class GeminiProvider:
+    """Adaptador para Gemini por REST (sin SDK adicional). Requiere GEMINI_API_KEY en el servidor."""
+
+    name = "gemini"
+    simulated = False
+
+    def __init__(self, client: Any = None) -> None:
+        s = get_settings()
+        self.model = s.gemini_model
+        if client is None:
+            import httpx2
+
+            client = httpx2.Client(timeout=s.ai_timeout_seconds)
+        self._client = client
+
+    def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult:
+        import httpx2
+
+        s = get_settings()
+        key = s.gemini_api_key.get_secret_value() if s.gemini_api_key else ""
+        lang = "Spanish (Mexico)" if language != "en" else "English"
+        prompt = (
+            f"Agent: {agent}. Write the summary in {lang}.\n"
+            "Facts (JSON):\n<facts>\n" + json.dumps(facts, ensure_ascii=False, default=str) + "\n</facts>"
+        )
+        body = {
+            "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+            "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+            "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.3},
+        }
+        url = f"{s.gemini_api_base}/models/{self.model}:generateContent"
+        data: dict[str, Any] = {}
+        for attempt in range(s.ai_max_retries + 1):
+            try:
+                # La clave viaja en una cabecera (no en la URL, para que no quede en registros).
+                r = self._client.post(url, json=body, headers={"x-goog-api-key": key})
+            except httpx2.HTTPError as e:
+                if attempt < s.ai_max_retries:
+                    continue
+                raise ProviderError("ai.unreachable", "No se pudo conectar con el proveedor de IA.") from e
+            if r.status_code in (500, 502, 503, 504) and attempt < s.ai_max_retries:
+                continue
+            if r.status_code == 429:
+                raise ProviderError(
+                    "ai.rate_limited", "El proveedor de IA está limitando las solicitudes (límite de la capa gratuita)."
+                )
+            if r.status_code in (401, 403) or (r.status_code == 400 and "API key" in r.text):
+                raise ProviderError("ai.auth", "La credencial del proveedor de IA no es válida.")
+            if r.status_code >= 400:
+                raise ProviderError("ai.api_error", f"El proveedor de IA respondió con error {r.status_code}.")
+            data = r.json()
+            break
+
+        if (data.get("promptFeedback") or {}).get("blockReason"):
+            raise ProviderError("ai.refusal", "El proveedor de IA declinó redactar el resumen.")
+        candidates = data.get("candidates") or []
+        if not candidates:
+            raise ProviderError("ai.empty", "El proveedor de IA no devolvió texto.")
+        cand = candidates[0]
+        if cand.get("finishReason") in ("SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII"):
+            raise ProviderError("ai.refusal", "El proveedor de IA declinó redactar el resumen.")
+        parts = (cand.get("content") or {}).get("parts") or []
+        text = "".join(p.get("text", "") for p in parts if not p.get("thought")).strip()
+        if not text:
+            raise ProviderError("ai.empty", "El proveedor de IA no devolvió texto.")
+        usage = data.get("usageMetadata") or {}
+        tin = int(usage.get("promptTokenCount") or 0)
+        tout = int(usage.get("candidatesTokenCount") or 0) + int(usage.get("thoughtsTokenCount") or 0)
+        cost = (tin * s.gemini_input_usd_per_mtok + tout * s.gemini_output_usd_per_mtok) / 1_000_000
+        return ProviderResult(
+            text=text,
+            provider=self.name,
+            model=str(data.get("modelVersion") or self.model),
+            simulated=False,
+            input_tokens=tin,
+            output_tokens=tout,
+            cost_usd=round(cost, 6),
+            extra={"finish_reason": cand.get("finishReason")},
+        )
+
+
 def _has_anthropic_credentials() -> bool:
     import os
 
@@ -194,6 +281,23 @@ def provider_status() -> ProviderStatus:
             configured=False,
             note="AI_PROVIDER=anthropic pero no hay credencial en el servidor; se usa el proveedor simulado.",
         )
+    if s.ai_provider == "gemini":
+        if s.gemini_api_key and s.gemini_api_key.get_secret_value():
+            return ProviderStatus(
+                "gemini",
+                s.gemini_model,
+                simulated=False,
+                configured=True,
+                note="Gemini (capa gratuita si no configuraste precios): Google puede usar lo enviado para mejorar "
+                "sus productos; solo se envían cifras agregadas, nunca filas.",
+            )
+        return ProviderStatus(
+            "mock",
+            MockProvider.model,
+            simulated=True,
+            configured=False,
+            note="AI_PROVIDER=gemini pero falta GEMINI_API_KEY en el servidor; se usa el proveedor simulado.",
+        )
     return ProviderStatus("mock", MockProvider.model, simulated=True, configured=False)
 
 
@@ -201,4 +305,6 @@ def get_provider() -> AIProvider:
     status = provider_status()
     if status.provider == "anthropic":
         return ClaudeProvider()
+    if status.provider == "gemini":
+        return GeminiProvider()
     return MockProvider()

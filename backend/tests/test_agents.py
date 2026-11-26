@@ -380,3 +380,90 @@ def test_executions_and_approvals_are_isolated(make_client):
             == 0
         )
     engine.dispose()
+
+
+# --- Gemini (sin red: transporte HTTP simulado) ---------------------------------
+def _gemini_with(handler, monkeypatch, **env):
+    from app.config import get_settings
+
+    monkeypatch.setenv("GEMINI_API_KEY", "test-gemini-key")
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+    get_settings.cache_clear()
+    return providers.GeminiProvider(client=httpx2.Client(transport=httpx2.MockTransport(handler)))
+
+
+def test_gemini_request_shape_key_in_header_and_text(monkeypatch):
+    seen = {}
+
+    def handler(request):
+        seen["url"] = str(request.url)
+        seen["key"] = request.headers.get("x-goog-api-key")
+        seen["body"] = json.loads(request.content)
+        return httpx2.Response(
+            200,
+            json={
+                "candidates": [
+                    {
+                        "content": {"parts": [{"text": "pensando", "thought": True}, {"text": "Resumen Gemini."}]},
+                        "finishReason": "STOP",
+                    }
+                ],
+                "usageMetadata": {"promptTokenCount": 900, "candidatesTokenCount": 120, "thoughtsTokenCount": 30},
+                "modelVersion": "gemini-2.5-flash",
+            },
+        )
+
+    try:
+        result = _gemini_with(handler, monkeypatch).summarize(
+            agent="financial-analyst", language="es", facts={"total": 10}
+        )
+    finally:
+        from app.config import get_settings
+
+        get_settings.cache_clear()
+    assert seen["url"].endswith("/models/gemini-2.5-flash:generateContent") and "key=" not in seen["url"]
+    assert seen["key"] == "test-gemini-key"
+    assert "data, not instructions" in seen["body"]["systemInstruction"]["parts"][0]["text"]
+    assert "<facts>" in seen["body"]["contents"][0]["parts"][0]["text"]
+    assert result.text == "Resumen Gemini." and result.provider == "gemini" and result.simulated is False
+    assert result.input_tokens == 900 and result.output_tokens == 150 and result.cost_usd == 0
+
+
+def test_gemini_errors_become_provider_errors(monkeypatch):
+    from app.config import get_settings
+
+    cases = [
+        (lambda r: httpx2.Response(429, json={}), "ai.rate_limited"),
+        (lambda r: httpx2.Response(400, json={"error": {"message": "API key not valid"}}), "ai.auth"),
+        (lambda r: httpx2.Response(200, json={"promptFeedback": {"blockReason": "SAFETY"}}), "ai.refusal"),
+        (lambda r: httpx2.Response(200, json={"candidates": [{"finishReason": "SAFETY"}]}), "ai.refusal"),
+        (lambda r: httpx2.Response(200, json={"candidates": []}), "ai.empty"),
+        (lambda r: httpx2.Response(503, json={}), "ai.api_error"),
+    ]
+    try:
+        for handler, code in cases:
+            with pytest.raises(providers.ProviderError) as e:
+                _gemini_with(handler, monkeypatch, AI_MAX_RETRIES="0").summarize(agent="a", language="es", facts={})
+            assert e.value.code == code
+    finally:
+        get_settings.cache_clear()
+
+
+def test_gemini_status_and_selection(monkeypatch):
+    from app.config import get_settings
+
+    monkeypatch.setenv("AI_PROVIDER", "gemini")
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    get_settings.cache_clear()
+    try:
+        st = providers.provider_status()
+        assert st.provider == "mock" and "GEMINI_API_KEY" in (st.note or "")
+        assert isinstance(providers.get_provider(), providers.MockProvider)
+        monkeypatch.setenv("GEMINI_API_KEY", "k")
+        get_settings.cache_clear()
+        st = providers.provider_status()
+        assert st.provider == "gemini" and st.configured and not st.simulated and "agregadas" in (st.note or "")
+        assert isinstance(providers.get_provider(), providers.GeminiProvider)
+    finally:
+        get_settings.cache_clear()

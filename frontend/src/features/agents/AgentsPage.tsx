@@ -50,7 +50,7 @@ function AgentsLive() {
       {provider.data && (
         <p className={`rc-notice${provider.data.simulated ? ' rc-notice--warning' : ''}`} role="note" style={{ marginBottom: 'var(--rc-space-5)' }}>
           <Info size={18} aria-hidden="true" />
-          <span>{provider.data.simulated ? t.ai.providerMock : interpolate(t.ai.providerReal, { model: provider.data.model })}</span>
+          <span>{provider.data.simulated ? t.ai.providerMock : interpolate(t.ai.providerReal, { model: provider.data.model })}{provider.data.note ? ` ${provider.data.note}` : ''}</span>
         </p>
       )}
       {agents.loading && <Skeleton height={200} />}
