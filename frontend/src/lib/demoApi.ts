@@ -237,6 +237,29 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case `DELETE /reports/${DEMO_REPORT_ID}`:
         requirePerm(s, 'data.write');
         return fail(403, 'demo.read_only', 'El reporte de ejemplo no se puede eliminar en la demostración.');
+      case 'GET /finance/overview':
+        requirePerm(s, 'data.read');
+        return { datasets: [], dataset: null };
+      case 'GET /assistant/conversations':
+        requirePerm(s, 'data.read');
+        return [];
+      case 'POST /assistant/messages': {
+        const { org, out } = requirePerm(s, 'data.read');
+        const conv = (b.conversation_id as string | undefined) ?? uid();
+        const at = now();
+        const q = String(b.question ?? '').slice(0, 1000);
+        const r = demoReport(org.name);
+        const parts = [
+          { kind: 'verified', text: `Demostración sin servidor: no hay datos importados en este dispositivo. El reporte de ejemplo «${r.title}» marca ingresos de $721,800.00 MXN entre ${r.period_from} y ${r.period_to}.` },
+          { kind: 'estimate', text: 'En noviembre las ventas del ejemplo bajaron 13.4 % frente a octubre; el mes podría estar incompleto.' },
+          { kind: 'suggestion', text: 'En la versión con servidor, importa tus archivos y te responderé con tus propias cifras.' },
+        ];
+        const meta = { provider: 'mock', model: 'rules', simulated: true };
+        return {
+          question: { id: uid(), conversation_id: conv, role: 'user', content: q, parts: null, meta: {}, created_at: at, user: out.user.id },
+          answer: { id: uid(), conversation_id: conv, role: 'assistant', content: parts.map((p) => p.text).join('\n\n'), parts, meta, created_at: at },
+        };
+      }
       case 'GET /dashboard/summary':
         requirePerm(s, 'data.read');
         return { generated_at: now(), datasets: 0, storage_bytes: 0, active_agents: 0, pending_approvals: 0, financial: null, recent_executions: [], recommendations: [], reports: [] };

@@ -103,6 +103,7 @@ def overview(
     data = _frame(db, ds)
     excluded = int(data[["amount", "date"]].isna().any(axis=1).sum())
     data = data.dropna(subset=["amount", "date"])
+    data["amount"] = data["amount"].astype(float)
     limitations: list[dict[str, Any]] = [
         {"code": "not_accounting_advice", "params": {}},
         {"code": "sign_convention", "params": {}},
@@ -231,7 +232,9 @@ def overview(
         q1, q3 = np.percentile(absval, [25, 75])
         high = q3 + 3 * (q3 - q1)
         if q3 > q1:
-            flagged = data[absval > high].assign(abs=absval).sort_values("abs", ascending=False).head(MAX_UNUSUAL)
+            # Filtrar DESPUÉS de agregar la columna: si no hay inusuales, el resultado queda vacío (sin filas NaN).
+            marked = data.assign(abs=absval)
+            flagged = marked[marked["abs"] > high].sort_values("abs", ascending=False).head(MAX_UNUSUAL)
             unusual = [
                 {
                     "row_number": int(r.row),

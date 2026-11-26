@@ -220,3 +220,31 @@ export type DashboardSummary = {
 export function downloadUrl(path: string): string | null {
   return __DEMO__ ? null : `/api${path}`;
 }
+
+export type FinanceMetric = { key: 'income' | 'expenses' | 'net' | 'margin' | 'avg_income'; value: number; format: 'currency' | 'percent'; formula: string; rows?: number };
+export type FinanceMonth = { period: string; income: number; expenses: number; net: number; cumulative: number; count: number };
+export type FinanceCategory = { label: string; total: number; share: number };
+export type FinanceObservation = { code: 'negative_months' | 'cumulative_negative' | 'thin_margin' | 'expense_concentration' | 'unusual'; severity: 'warning' | 'info'; params: Record<string, string | number | string[]> };
+export type FinanceOverview = {
+  datasets: { id: string; name: string; row_count: number }[];
+  dataset: { id: string; name: string; row_count: number } | null;
+  source?: { dataset: string; amount: string; date: string };
+  period?: { from: string; to: string };
+  periods?: string[];
+  group_name?: string | null;
+  metrics?: FinanceMetric[];
+  monthly?: FinanceMonth[];
+  comparison?: { previous: string; current: string; metrics: { key: string; previous: number; current: number; delta: number; delta_pct: number | null }[] } | null;
+  expense_categories?: FinanceCategory[];
+  income_categories?: FinanceCategory[];
+  observations?: FinanceObservation[];
+  unusual?: { row_number: number; date: string; amount: number; label: string | null }[];
+  limitations?: { code: string; params: Record<string, string | number> }[];
+};
+export type AssistantPart = { kind: 'verified' | 'estimate' | 'suggestion'; text: string };
+export type AssistantMessage = {
+  id: string; conversation_id: string; role: 'user' | 'assistant'; content: string; parts: AssistantPart[] | null;
+  meta: { provider?: string; model?: string; simulated?: boolean; provider_error?: string; cost_usd?: number };
+  created_at: string;
+};
+export type AssistantConversation = { id: string; title: string; updated_at: string; messages: number };

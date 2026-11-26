@@ -65,3 +65,23 @@ def test_no_dataset_missing_roles_and_isolation(client, make_client):
     other.register("other@example.com", org="Ajena")
     assert other.get(f"/api/finance/overview?dataset_id={ds['id']}").status_code == 404
     assert other.get("/api/finance/overview").json()["dataset"] is None
+
+
+def test_integer_amounts_without_unusual_values(client):
+    client.register("owner@example.com")
+    rows = [
+        "01/10/2026;Ventas;1000",
+        "05/10/2026;Ventas;1500",
+        "10/10/2026;Renta;-800",
+        "15/10/2026;Nómina;-600",
+        "01/11/2026;Ventas;700",
+        "05/11/2026;Ventas;600",
+        "10/11/2026;Renta;-800",
+        "15/11/2026;Nómina;-900",
+    ]
+    import_dataset(
+        client, content=("Fecha;Concepto;Monto\n" + "\n".join(rows)).encode(), roles={"Concepto": "category"}
+    )
+    r = client.get("/api/finance/overview")
+    assert r.status_code == 200, r.text
+    assert r.json()["unusual"] == [] and {m["key"]: m["value"] for m in r.json()["metrics"]}["net"] == 700

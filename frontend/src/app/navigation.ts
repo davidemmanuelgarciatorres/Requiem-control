@@ -31,7 +31,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'sectionOperate',
     items: [
       { id: 'overview', path: '/', icon: LayoutDashboard, status: 'live' },
-      { id: 'assistant', path: '/assistant', icon: Sparkles, status: 'planned', phase: 4, module: 'assistant' },
+      { id: 'assistant', path: '/assistant', icon: Sparkles, status: 'live', phase: 4 },
       { id: 'agents', path: '/agents', icon: Bot, status: 'live', phase: 4 },
       { id: 'automations', path: '/automations', icon: Workflow, status: 'planned', phase: 7, module: 'automations' },
     ],
@@ -39,7 +39,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'sectionIntelligence',
     items: [
-      { id: 'finance', path: '/finance', icon: Wallet, status: 'planned', phase: 4, module: 'finance' },
+      { id: 'finance', path: '/finance', icon: Wallet, status: 'live', phase: 4 },
       { id: 'data', path: '/data', icon: Table2, status: 'live', phase: 3 },
       { id: 'inventory', path: '/inventory', icon: Boxes, status: 'planned', phase: 7, module: 'inventory' },
       { id: 'customers', path: '/customers', icon: Users, status: 'planned', phase: 7, module: 'customers' },

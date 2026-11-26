@@ -20,9 +20,9 @@ describe('secondary pages are honest about their state', () => {
 
   it('planned modules declare they are not operational', async () => {
     mockSignedIn();
-    renderApp('/finance', 'en');
+    renderApp('/inventory', 'en');
     expect(await screen.findByText(/not operational yet/)).toBeInTheDocument();
-    expect(screen.getByText('Planned for Phase 4')).toBeInTheDocument();
+    expect(screen.getByText('Planned for Phase 7')).toBeInTheDocument();
   });
 
   it('settings: reduced-motion preference sets data-motion on <html>', async () => {

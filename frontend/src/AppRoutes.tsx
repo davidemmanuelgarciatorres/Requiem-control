@@ -16,6 +16,8 @@ import { ModulePage } from './features/modules/ModulePage';
 import { NotFoundPage } from './features/modules/NotFoundPage';
 import { ReportPage } from './features/reports/ReportPage';
 import { ReportsPage } from './features/reports/ReportsPage';
+import { AssistantPage } from './features/assistant/AssistantPage';
+import { FinancePage } from './features/finance/FinancePage';
 import { SettingsPage } from './features/settings/SettingsPage';
 
 export function AppRoutes() {
@@ -30,6 +32,8 @@ export function AppRoutes() {
         <Route path="data" element={<DataPage />} />
         <Route path="data/import/:uploadId" element={<ImportReviewPage />} />
         <Route path="data/:datasetId" element={<DatasetPage />} />
+        <Route path="assistant" element={<AssistantPage />} />
+        <Route path="finance" element={<FinancePage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/:reportId" element={<ReportPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />

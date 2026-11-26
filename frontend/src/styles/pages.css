@@ -207,3 +207,35 @@ label.rc-btn.is-disabled { opacity: 0.45; pointer-events: none; }
   .rc-bars__track span { background: #555 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
   a { text-decoration: none; }
 }
+
+/* --- Inteligencia financiera / Asistente IA ------------------------------------- */
+.rc-wrap { flex-wrap: wrap; }
+.rc-field--inline { display: inline-flex; flex-direction: column; gap: 4px; min-width: 160px; }
+.rc-chat-layout { display: grid; grid-template-columns: minmax(220px, 280px) 1fr; gap: var(--rc-space-5, 20px); align-items: start; }
+.rc-chat { display: flex; flex-direction: column; min-height: 60vh; }
+.rc-chat__log { flex: 1; display: flex; flex-direction: column; gap: 14px; overflow-y: auto; max-height: 62vh; padding-right: 4px; }
+.rc-chat__question { align-self: flex-end; max-width: 85%; margin: 0; padding: 10px 14px; border-radius: 16px 16px 4px 16px;
+  background: var(--rc-cta, #fff); color: #0b0b10; overflow-wrap: anywhere; }
+.rc-chat__answer { align-self: flex-start; max-width: 95%; }
+.rc-chat__parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.rc-chat__part { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255,255,255,0.04); border-left: 3px solid transparent; overflow-wrap: anywhere; }
+.rc-chat__part--verified { border-left-color: #7ee2a8; }
+.rc-chat__part--estimate { border-left-color: #f0c48e; }
+.rc-chat__part--suggestion { border-left-color: #b8f0cc; }
+.rc-chat__part > :first-child { flex: none; }
+.rc-chat__empty { display: grid; gap: 12px; }
+.rc-chat__form { display: flex; gap: 10px; align-items: flex-end; margin-top: 14px; }
+.rc-chat__form textarea { flex: 1; resize: vertical; min-height: 44px; }
+.rc-chip-btn { border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.05); color: inherit;
+  border-radius: 999px; padding: 8px 14px; font: inherit; font-size: 0.9rem; cursor: pointer; text-align: left; }
+.rc-chip-btn:hover { background: rgba(255,255,255,0.1); }
+.rc-link-btn { background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; padding: 0; }
+.rc-list__item.is-active { outline: 1px solid var(--rc-accent, #b8f0cc); }
+@media (max-width: 860px) {
+  .rc-chat-layout { grid-template-columns: 1fr; }
+  .rc-chat-history { order: 2; }
+  .rc-chat__log { max-height: none; }
+  .rc-chat__form { flex-direction: column; align-items: stretch; }
+}
+textarea.rc-input { font: inherit; line-height: 1.4; }
