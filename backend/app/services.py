@@ -22,6 +22,7 @@ def now() -> datetime:
 
 # --- Sesiones -----------------------------------------------------------------
 
+
 def create_session(
     db: Session, user: User, active_org_id: uuid.UUID | None, ip: str | None, user_agent: str | None
 ) -> tuple[str, UserSession]:
@@ -54,6 +55,7 @@ def load_session(db: Session, token: str) -> UserSession | None:
 
 # --- Organizaciones -----------------------------------------------------------
 
+
 def slugify(name: str) -> str:
     ascii_name = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
     base = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")[:60] or "org"
@@ -68,8 +70,9 @@ def create_organization(
     db: Session, owner: User, name: str, *, country: str = "MX", currency: str = "MXN", ip: str | None = None
 ) -> Organization:
     """Crea la organización, la membresía de propietario y la suscripción al plan gratuito (atómico)."""
-    org = Organization(id=uuid.uuid4(), name=name, slug=slugify(name), country=country, currency=currency,
-                       created_by=owner.id)
+    org = Organization(
+        id=uuid.uuid4(), name=name, slug=slugify(name), country=country, currency=currency, created_by=owner.id
+    )
     # La política RLS de INSERT exige que la organización sea la del contexto actual.
     set_tenant_context(db, user_id=owner.id, org_id=org.id)
     db.add(org)
@@ -77,8 +80,9 @@ def create_organization(
     db.add(OrganizationMember(organization_id=org.id, user_id=owner.id, role_id=system_role(db, "owner").id))
     free = db.execute(select(Plan).where(Plan.code == "free")).scalar_one()
     db.add(Subscription(organization_id=org.id, plan_id=free.id, status="active"))
-    audit.record(db, "org.create", organization_id=org.id, user_id=owner.id, target_type="organization",
-                 target_id=org.id, ip=ip)
+    audit.record(
+        db, "org.create", organization_id=org.id, user_id=owner.id, target_type="organization", target_id=org.id, ip=ip
+    )
     db.flush()
     return org
 
@@ -102,15 +106,19 @@ def organizations_by_id(db: Session, ids: list[uuid.UUID]) -> dict[uuid.UUID, Or
 
 
 def count_members(db: Session, org_id: uuid.UUID) -> int:
-    return int(db.execute(
-        select(func.count()).select_from(OrganizationMember).where(OrganizationMember.organization_id == org_id)
-    ).scalar_one())
+    return int(
+        db.execute(
+            select(func.count()).select_from(OrganizationMember).where(OrganizationMember.organization_id == org_id)
+        ).scalar_one()
+    )
 
 
 def count_owners(db: Session, org_id: uuid.UUID) -> int:
-    return int(db.execute(
-        select(func.count())
-        .select_from(OrganizationMember)
-        .join(Role, Role.id == OrganizationMember.role_id)
-        .where(OrganizationMember.organization_id == org_id, Role.code == "owner")
-    ).scalar_one())
+    return int(
+        db.execute(
+            select(func.count())
+            .select_from(OrganizationMember)
+            .join(Role, Role.id == OrganizationMember.role_id)
+            .where(OrganizationMember.organization_id == org_id, Role.code == "owner")
+        ).scalar_one()
+    )

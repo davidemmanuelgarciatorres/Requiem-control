@@ -12,6 +12,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
     UniqueConstraint,
@@ -80,9 +81,7 @@ class Role(Base):
 class RolePermission(Base):
     __tablename__ = "role_permissions"
     role_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("roles.id", ondelete="CASCADE"), primary_key=True)
-    permission_code: Mapped[str] = mapped_column(
-        ForeignKey("permissions.code", ondelete="CASCADE"), primary_key=True
-    )
+    permission_code: Mapped[str] = mapped_column(ForeignKey("permissions.code", ondelete="CASCADE"), primary_key=True)
 
 
 class OrganizationMember(Base):
@@ -174,3 +173,47 @@ class UsageRecord(Base):
     quantity: Mapped[int] = mapped_column(BigInteger, nullable=False)
     period_start: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = _created_at()
+
+
+class UploadedFile(Base):
+    __tablename__ = "uploaded_files"
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    uploaded_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    original_filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    file_format: Mapped[str] = mapped_column(String(8), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    content: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, deferred=True)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="validated")
+    parse_options: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False, default=dict)
+    created_at: Mapped[datetime] = _created_at()
+
+
+class Dataset(Base):
+    __tablename__ = "datasets"
+    id: Mapped[uuid.UUID] = _uuid_pk()
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    uploaded_file_id: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("uploaded_files.id", ondelete="SET NULL"))
+    created_by: Mapped[uuid.UUID | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"))
+    name: Mapped[str] = mapped_column(String(120), nullable=False)
+    row_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    column_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    columns: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, nullable=False)
+    report: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = _created_at()
+
+
+class DatasetRow(Base):
+    __tablename__ = "dataset_rows"
+    __table_args__ = {"implicit_returning": False}  # noqa: RUF012
+    dataset_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("datasets.id", ondelete="CASCADE"), primary_key=True)
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False
+    )
+    row_number: Mapped[int] = mapped_column(Integer, primary_key=True)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)

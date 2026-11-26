@@ -19,18 +19,23 @@ def test_members_and_audit_are_scoped(make_client):
 
 def test_cannot_switch_to_foreign_org(make_client):
     a, b = setup_two_orgs(make_client)
-    r = a.send("POST", "/api/auth/switch-organization", json={"organization_id": b.session["active_organization"]["id"]})
+    r = a.send(
+        "POST", "/api/auth/switch-organization", json={"organization_id": b.session["active_organization"]["id"]}
+    )
     assert r.status_code == 403
     # Una organización inexistente produce exactamente la misma respuesta.
-    r2 = a.send("POST", "/api/auth/switch-organization",
-                json={"organization_id": "00000000-0000-0000-0000-000000000000"})
+    r2 = a.send(
+        "POST", "/api/auth/switch-organization", json={"organization_id": "00000000-0000-0000-0000-000000000000"}
+    )
     assert r2.status_code == 403 and r2.json() == r.json()
 
 
 def test_cannot_touch_foreign_member_by_id(make_client):
     a, b = setup_two_orgs(make_client)
     b_member_id = b.get("/api/organizations/current/members").json()[0]["id"]
-    assert a.send("PATCH", f"/api/organizations/current/members/{b_member_id}", json={"role": "viewer"}).status_code == 404
+    assert (
+        a.send("PATCH", f"/api/organizations/current/members/{b_member_id}", json={"role": "viewer"}).status_code == 404
+    )
     assert a.send("DELETE", f"/api/organizations/current/members/{b_member_id}").status_code == 404
     assert b.get("/api/organizations/current/members").json()[0]["role"] == "owner"
 

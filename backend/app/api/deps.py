@@ -62,9 +62,11 @@ def get_auth(request: Request, db: Session = Depends(get_db)) -> AuthContext:
     set_tenant_context(db, user_id=user.id, org_id=session.active_organization_id)
     ctx = AuthContext(user=user, session=session)
     if session.active_organization_id:
-        membership = db.query(OrganizationMember).filter_by(
-            organization_id=session.active_organization_id, user_id=user.id
-        ).one_or_none()
+        membership = (
+            db.query(OrganizationMember)
+            .filter_by(organization_id=session.active_organization_id, user_id=user.id)
+            .one_or_none()
+        )
         if membership is None:
             # Ya no es miembro (lo quitaron): se descarta la organización activa.
             session.active_organization_id = None

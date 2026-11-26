@@ -25,8 +25,10 @@ def app_conn():
 
 
 def ctx(conn, user_id="", org_id=""):
-    conn.execute(text("SELECT set_config('app.current_user_id', :u, false), set_config('app.current_org_id', :o, false)"),
-                 {"u": user_id, "o": org_id})
+    conn.execute(
+        text("SELECT set_config('app.current_user_id', :u, false), set_config('app.current_org_id', :o, false)"),
+        {"u": user_id, "o": org_id},
+    )
 
 
 def test_app_role_cannot_bypass_rls(app_conn):
@@ -56,13 +58,18 @@ def test_cannot_write_into_foreign_org(two_orgs, app_conn):
     a, b = two_orgs
     ctx(app_conn, a["user"]["id"], a["active_organization"]["id"])
     with pytest.raises(DBAPIError, match="row-level security"):
-        app_conn.execute(text(
-            "INSERT INTO organization_members (organization_id, user_id, role_id) "
-            "SELECT :o, :u, id FROM roles WHERE code = 'admin'"), {"o": b["active_organization"]["id"], "u": a["user"]["id"]})
+        app_conn.execute(
+            text(
+                "INSERT INTO organization_members (organization_id, user_id, role_id) "
+                "SELECT :o, :u, id FROM roles WHERE code = 'admin'"
+            ),
+            {"o": b["active_organization"]["id"], "u": a["user"]["id"]},
+        )
     app_conn.rollback()
     ctx(app_conn, a["user"]["id"], a["active_organization"]["id"])
-    updated = app_conn.execute(text("UPDATE organizations SET name = 'pwned' WHERE id = :o"),
-                               {"o": b["active_organization"]["id"]}).rowcount
+    updated = app_conn.execute(
+        text("UPDATE organizations SET name = 'pwned' WHERE id = :o"), {"o": b["active_organization"]["id"]}
+    ).rowcount
     assert updated == 0
 
 

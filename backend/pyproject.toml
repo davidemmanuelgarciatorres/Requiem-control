@@ -12,10 +12,13 @@ dependencies = [
   "pydantic>=2.14,<3",
   "pydantic-settings>=2.16,<3",
   "email-validator>=2.4",
+  "pandas>=3,<4",
+  "openpyxl>=3.1,<4",
+  "python-multipart>=0.0.20",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=9", "httpx>=0.28", "ruff>=0.17", "mypy>=2.4"]
+dev = ["pytest>=9", "httpx>=0.28", "ruff>=0.17", "mypy>=2.4", "pandas-stubs", "types-openpyxl"]
 
 [tool.ruff]
 line-length = 120

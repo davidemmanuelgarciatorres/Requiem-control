@@ -33,8 +33,16 @@ def test_register_creates_user_org_owner_and_free_plan(client, owner_engine):
 def test_register_validation(client, make_client):
     assert client.register("x@example.com", password="short").json()["error"]["code"] == "auth.password_too_short"
     assert client.register("x@example.com", password="x@example.com").status_code == 422
-    r = client.http.post("/api/auth/register", json={"email": "y@example.com", "password": PASSWORD,
-                                                      "full_name": "Y", "organization_name": "O", "is_admin": True})
+    r = client.http.post(
+        "/api/auth/register",
+        json={
+            "email": "y@example.com",
+            "password": PASSWORD,
+            "full_name": "Y",
+            "organization_name": "O",
+            "is_admin": True,
+        },
+    )
     assert r.status_code == 422 and r.json()["error"]["code"] == "request.invalid"
     assert client.register("bad-email").status_code == 422
     assert client.register("dup@example.com").status_code == 201
@@ -88,8 +96,9 @@ def test_foreign_origin_and_non_json_rejected(client):
     client.register("fay@example.com")
     r = client.send("PATCH", "/api/auth/me", json={"full_name": "X"}, headers={"Origin": "https://evil.example"})
     assert r.status_code == 403 and r.json()["error"]["code"] == "request.origin_forbidden"
-    r = client.http.post("/api/auth/login", content="email=a&password=b",
-                         headers={"Content-Type": "application/x-www-form-urlencoded"})
+    r = client.http.post(
+        "/api/auth/login", content="email=a&password=b", headers={"Content-Type": "application/x-www-form-urlencoded"}
+    )
     assert r.status_code == 415
 
 
@@ -117,5 +126,7 @@ def test_failed_logins_are_audited_even_though_request_fails(client, make_client
     client.register("hal@example.com")
     make_client().login("hal@example.com", "wrong-password-123")
     with owner_engine.connect() as c:
-        rows = c.execute(text("SELECT action, organization_id FROM audit_logs WHERE action = 'auth.login_failed'")).all()
+        rows = c.execute(
+            text("SELECT action, organization_id FROM audit_logs WHERE action = 'auth.login_failed'")
+        ).all()
     assert rows == [("auth.login_failed", None)]

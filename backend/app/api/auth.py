@@ -36,17 +36,25 @@ register_limiter = RateLimiter(_settings.login_rate_limit, _settings.login_rate_
 def _set_session_cookie(response: Response, token: str) -> None:
     s = get_settings()
     response.set_cookie(
-        s.session_cookie_name, token, max_age=s.session_ttl_hours * 3600, httponly=True,
-        secure=s.cookie_secure, samesite="lax", path="/",
+        s.session_cookie_name,
+        token,
+        max_age=s.session_ttl_hours * 3600,
+        httponly=True,
+        secure=s.cookie_secure,
+        samesite="lax",
+        path="/",
     )
 
 
 def _validate_password(password: str, email: str) -> None:
     s = get_settings()
     if len(password) < s.password_min_length:
-        raise ApiError(422, "auth.password_too_short",
-                       f"La contraseña debe tener al menos {s.password_min_length} caracteres.",
-                       {"min_length": s.password_min_length})
+        raise ApiError(
+            422,
+            "auth.password_too_short",
+            f"La contraseña debe tener al menos {s.password_min_length} caracteres.",
+            {"min_length": s.password_min_length},
+        )
     if password.strip().lower() == email.lower():
         raise ApiError(422, "auth.password_weak", "La contraseña no puede ser igual al correo.")
 
@@ -61,7 +69,8 @@ def build_session_out(db: Session, ctx: AuthContext) -> SessionOut:
         permissions=sorted(ctx.permissions),
         memberships=[
             MembershipOut(organization=org_out(orgs[m.organization_id]), role=cast(RoleCode, m.role.code))
-            for m in members if m.organization_id in orgs
+            for m in members
+            if m.organization_id in orgs
         ],
         csrf_token=ctx.session.csrf_token,
     )
@@ -76,8 +85,12 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
     if db.execute(select(User.id).where(User.email == str(body.email))).first():
         raise conflict("auth.email_taken", "Ya existe una cuenta con ese correo.")
 
-    user = User(email=str(body.email), full_name=body.full_name, password_hash=hash_password(body.password),
-                preferred_language=body.preferred_language)
+    user = User(
+        email=str(body.email),
+        full_name=body.full_name,
+        password_hash=hash_password(body.password),
+        preferred_language=body.preferred_language,
+    )
     db.add(user)
     db.flush()
     org = create_organization(db, user, body.organization_name, ip=ip)
@@ -87,8 +100,13 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
 
     set_tenant_context(db, user_id=user.id, org_id=org.id)
     membership = db.query(OrganizationMember).filter_by(organization_id=org.id, user_id=user.id).one()
-    ctx = AuthContext(user=user, session=session, organization=org, membership=membership,
-                      permissions=frozenset(p.code for p in membership.role.permissions))
+    ctx = AuthContext(
+        user=user,
+        session=session,
+        organization=org,
+        membership=membership,
+        permissions=frozenset(p.code for p in membership.role.permissions),
+    )
     return build_session_out(db, ctx)
 
 
@@ -127,10 +145,16 @@ def login(body: LoginIn, request: Request, response: Response, db: Session = Dep
 
 
 @router.post("/logout", status_code=204)
-def logout(request: Request, response: Response, ctx: AuthContext = Depends(get_auth),
-           db: Session = Depends(get_db)) -> Response:
-    audit.record(db, "auth.logout", organization_id=ctx.session.active_organization_id, user_id=ctx.user.id,
-                 ip=client_ip(request))
+def logout(
+    request: Request, response: Response, ctx: AuthContext = Depends(get_auth), db: Session = Depends(get_db)
+) -> Response:
+    audit.record(
+        db,
+        "auth.logout",
+        organization_id=ctx.session.active_organization_id,
+        user_id=ctx.user.id,
+        ip=client_ip(request),
+    )
     db.delete(ctx.session)
     response.status_code = 204
     response.delete_cookie(get_settings().session_cookie_name, path="/")
@@ -153,10 +177,12 @@ def update_me(body: UpdateMeIn, ctx: AuthContext = Depends(get_auth), db: Sessio
 
 
 @router.post("/switch-organization", response_model=SessionOut)
-def switch_organization(body: SwitchOrgIn, request: Request, ctx: AuthContext = Depends(get_auth),
-                        db: Session = Depends(get_db)) -> SessionOut:
-    membership = db.query(OrganizationMember).filter_by(organization_id=body.organization_id,
-                                                        user_id=ctx.user.id).one_or_none()
+def switch_organization(
+    body: SwitchOrgIn, request: Request, ctx: AuthContext = Depends(get_auth), db: Session = Depends(get_db)
+) -> SessionOut:
+    membership = (
+        db.query(OrganizationMember).filter_by(organization_id=body.organization_id, user_id=ctx.user.id).one_or_none()
+    )
     if membership is None:
         # Misma respuesta exista o no la organización: no se revela su existencia.
         raise forbidden("org.not_member", "No perteneces a esa organización.")
@@ -165,7 +191,8 @@ def switch_organization(body: SwitchOrgIn, request: Request, ctx: AuthContext = 
     ctx.membership = membership
     ctx.organization = organizations_by_id(db, [membership.organization_id])[membership.organization_id]
     ctx.permissions = frozenset(p.code for p in membership.role.permissions)
-    audit.record(db, "org.switch", organization_id=membership.organization_id, user_id=ctx.user.id,
-                 ip=client_ip(request))
+    audit.record(
+        db, "org.switch", organization_id=membership.organization_id, user_id=ctx.user.id, ip=client_ip(request)
+    )
     db.flush()
     return build_session_out(db, ctx)

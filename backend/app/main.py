@@ -10,7 +10,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __doc__ as _doc
-from app.api import auth, organizations
+from app.api import auth, datasets, organizations
 from app.config import get_settings
 from app.db import get_engine
 from app.errors import ApiError
@@ -48,10 +48,18 @@ def create_app() -> FastAPI:
             # 2) Solo JSON: los formularios HTML de otros sitios no pueden enviar application/json sin CORS.
             length = int(request.headers.get("content-length") or 0)
             ctype = request.headers.get("content-type", "")
-            if length and not ctype.startswith("application/json"):
-                return _error(415, "request.unsupported_media_type", "Se requiere application/json.")
-            if length > settings.max_json_body_bytes:
-                return _error(413, "request.too_large", "La petición es demasiado grande.")
+            # Solo la subida de archivos acepta multipart; todo lo demás, solo JSON.
+            is_upload = request.method == "POST" and request.url.path == "/api/datasets/uploads"
+            if is_upload:
+                if not ctype.startswith("multipart/form-data"):
+                    return _error(415, "request.unsupported_media_type", "Se requiere multipart/form-data.")
+                if length > settings.max_upload_bytes + 64 * 1024:
+                    return _error(413, "upload.too_large", "El archivo supera el tamaño máximo.")
+            else:
+                if length and not ctype.startswith("application/json"):
+                    return _error(415, "request.unsupported_media_type", "Se requiere application/json.")
+                if length > settings.max_json_body_bytes:
+                    return _error(413, "request.too_large", "La petición es demasiado grande.")
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
@@ -92,6 +100,7 @@ def create_app() -> FastAPI:
     app.include_router(auth.router)
     app.include_router(organizations.router)
     app.include_router(organizations.plans_router)
+    app.include_router(datasets.router)
     return app
 
 

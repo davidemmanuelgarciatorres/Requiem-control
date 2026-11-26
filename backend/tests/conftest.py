@@ -46,8 +46,15 @@ def owner_engine():
 def clean_db(owner_engine) -> Iterator[None]:
     with owner_engine.begin() as conn:
         # DELETE (no TRUNCATE CASCADE) para conservar los roles del sistema y los planes sembrados.
-        for table in ("audit_logs", "usage_records", "user_sessions", "subscriptions", "organization_members",
-                      "organizations", "users"):
+        for table in (
+            "audit_logs",
+            "usage_records",
+            "user_sessions",
+            "subscriptions",
+            "organization_members",
+            "organizations",
+            "users",
+        ):
             conn.execute(text(f"DELETE FROM {table}"))
     auth_api.login_limiter.reset()
     auth_api.register_limiter.reset()
@@ -74,11 +81,19 @@ class ApiClient:
         return r
 
     def register(self, email: str, org: str = "Org", password: str = PASSWORD, name: str = "Test User"):
-        return self._remember(self.http.post("/api/auth/register", json={
-            "email": email, "password": password, "full_name": name, "organization_name": org}))
+        return self._remember(
+            self.http.post(
+                "/api/auth/register",
+                json={"email": email, "password": password, "full_name": name, "organization_name": org},
+            )
+        )
 
     def login(self, email: str, password: str = PASSWORD):
         return self._remember(self.http.post("/api/auth/login", json={"email": email, "password": password}))
+
+    def upload(self, filename: str, content: bytes, csrf: bool = True, **data):
+        headers = {"X-CSRF-Token": self.csrf} if csrf and self.csrf else {}
+        return self.http.post("/api/datasets/uploads", files={"file": (filename, content)}, data=data, headers=headers)
 
     def get(self, url: str, **kw):
         return self.http.get(url, **kw)

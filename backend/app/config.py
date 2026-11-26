@@ -16,9 +16,7 @@ class Settings(BaseSettings):
     # de modo que la Row-Level Security de PostgreSQL siempre aplica.
     database_url: str = "postgresql+psycopg://requiem_app:requiem_app_dev@localhost:5432/requiem_control"
     # Las migraciones usan el rol propietario de las tablas.
-    migration_database_url: str = (
-        "postgresql+psycopg://requiem_owner:requiem_owner_dev@localhost:5432/requiem_control"
-    )
+    migration_database_url: str = "postgresql+psycopg://requiem_owner:requiem_owner_dev@localhost:5432/requiem_control"
 
     session_cookie_name: str = "rc_session"
     csrf_header_name: str = "X-CSRF-Token"
@@ -32,6 +30,12 @@ class Settings(BaseSettings):
     login_rate_window_seconds: int = Field(default=60, ge=1)
 
     password_min_length: int = Field(default=10, ge=8)
+
+    # Ingesta de datos (Fase 3)
+    max_upload_bytes: int = Field(default=10 * 1024 * 1024, ge=1024)
+    max_uncompressed_bytes: int = Field(default=100 * 1024 * 1024, ge=1024)  # XLSX descomprimido (anti zip-bomb)
+    max_import_rows: int = Field(default=100_000, ge=1)
+    max_import_columns: int = Field(default=200, ge=1)
 
 
 @lru_cache

@@ -124,7 +124,7 @@ class PlanOut(BaseModel):
 class SubscriptionOut(BaseModel):
     status: str
     plan: PlanOut
-    usage: dict[str, int]
+    usage: dict[str, float]
     billing_enabled: bool
 
 
@@ -142,3 +142,62 @@ class HealthOut(BaseModel):
     status: Literal["ok", "degraded"]
     database: Literal["ok", "unavailable"]
     version: str
+
+
+# --- Ingesta de datos (Fase 3) ----------------------------------------------
+ColumnTypeIn = Literal["integer", "number", "date", "boolean", "text"]
+RoleIn = Literal["none", "date", "amount", "category", "customer", "product", "quantity", "identifier"]
+
+
+class ColumnMappingIn(Strict):
+    key: str = Field(pattern=r"^c\d{1,3}$")
+    name: str = Field(min_length=1, max_length=80)
+    type: ColumnTypeIn
+    role: RoleIn = "none"
+    include: bool = True
+
+
+class ConfirmImportIn(Strict):
+    name: str = Field(min_length=1, max_length=120)
+    columns: list[ColumnMappingIn] = Field(min_length=1, max_length=500)
+
+
+class UploadSummaryOut(BaseModel):
+    id: UUID
+    filename: str
+    format: str
+    size_bytes: int
+    status: str
+    created_at: datetime
+
+
+class UploadPreviewOut(UploadSummaryOut):
+    options: dict[str, Any]
+    sheets: list[str]
+    row_count: int
+    preview_rows: list[list[str]]
+    report: dict[str, Any]
+    duplicate_of: dict[str, Any] | None
+
+
+class DatasetSummaryOut(BaseModel):
+    id: UUID
+    name: str
+    row_count: int
+    column_count: int
+    completeness: float
+    issue_count: int
+    source_filename: str | None
+    created_at: datetime
+
+
+class DatasetOut(DatasetSummaryOut):
+    columns: list[dict[str, Any]]
+    report: dict[str, Any]
+
+
+class DatasetRowsOut(BaseModel):
+    total: int
+    offset: int
+    limit: int
+    rows: list[dict[str, Any]]
