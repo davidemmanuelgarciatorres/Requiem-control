@@ -1,38 +1,38 @@
 # SECURITY — REQUIEM CONTROL
 
-## 1. Superficie actual (Fase 1)
+## 1. Controles implementados (Fases 1–2) — todos con pruebas automatizadas
 
-La aplicación es **solo un frontend estático**. No hay backend, base de datos, autenticación, carga de archivos,
-claves ni llamadas a servicios externos.
-
-| Aspecto | Estado en Fase 1 |
+| Área | Control |
 |---|---|
-| Secretos | Ninguno. `.env` y `.env.*` están en `.gitignore`; `.env.example` no contiene valores. |
-| Datos de negocio | Ninguno. Los datos de demo son ficticios y viven en el código fuente. |
-| Almacenamiento del navegador | Solo preferencias de interfaz (`rc.lang`, `rc.motion`) en `localStorage`, con `try/catch`. Nunca datos de negocio ni tokens. |
-| XSS | React escapa todo el contenido; no se usa `dangerouslySetInnerHTML` ni `eval`. |
-| Dependencias de terceros en tiempo de ejecución | Ninguna CDN: fuentes e iconos se empaquetan localmente. `npm audit`: 0 vulnerabilidades al instalar. |
-| Simulación | Toda funcionalidad no implementada aparece deshabilitada o marcada como “Demo”/“Fase N”. Ninguna integración se muestra como conectada. |
+| Contraseñas | Argon2id (argon2-cffi, parámetros OWASP), re-hash automático si cambian los parámetros, mínimo 10 caracteres, no igual al correo. Nunca se registran ni se devuelven. |
+| Enumeración de cuentas | Inicio de sesión con respuesta idéntica para correo inexistente y contraseña errónea; se verifica contra un hash ficticio para igualar tiempos. (El registro sí informa “correo ya usado”: compromiso habitual, documentado.) |
+| Fuerza bruta | 5 intentos por minuto por IP+correo en login y por IP en registro → 429. **Limitación:** en memoria por proceso. |
+| Sesiones | Token aleatorio de 256 bits en cookie `HttpOnly`, `SameSite=Lax`, `Secure` en producción (`COOKIE_SECURE=true`); en BD solo `sha256(token)`; token nuevo en cada inicio de sesión (anti-fijación); expiración (7 días por defecto); cierre de sesión borra la sesión en el servidor; limpieza de sesiones caducadas. |
+| CSRF | Token por sesión exigido en todo POST/PATCH/DELETE autenticado (comparación en tiempo constante), guardado solo en memoria del frontend; además: verificación de `Origin`, solo `application/json`, cookies `SameSite=Lax`. |
+| Autorización | Roles `owner > admin > member > viewer` y 14 permisos en BD; `require_permission` en cada endpoint; nadie puede gestionar a un miembro de rango superior; la organización conserva al menos un propietario; el rol de propietario no se asigna al agregar. |
+| Aislamiento multi-tenant | (1) La organización activa sale de la sesión y de una membresía verificada, nunca de un parámetro del cliente; las rutas usan `/current`. (2) **PostgreSQL RLS** en todas las tablas con `organization_id`, contexto por transacción, y la API conecta con `requiem_app` (sin superusuario ni `BYPASSRLS`); las migraciones usan otro rol (`requiem_owner`). (3) Pedir una organización ajena o inexistente da la misma respuesta. |
+| Límites del plan | Leídos de la tabla `plans` y aplicados en el servidor (p. ej. máximo de miembros → 402; regla de 2 agentes activos lista para la Fase 4). Nunca se confía en una bandera del frontend. |
+| Validación | Pydantic con `extra="forbid"` (campos desconocidos → 422), longitudes máximas, correo validado; SQL siempre parametrizado (SQLAlchemy); tamaño máximo de cuerpo JSON. |
+| Errores | Forma estable `{"error": {code, message}}`; errores 500 genéricos con detalle solo en el log del servidor; sin trazas ni SQL al cliente. |
+| Cabeceras | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `Cache-Control: no-store` en `/api`. Documentación OpenAPI desactivada en producción. |
+| Auditoría | `audit_logs` de solo anexado (la API no tiene UPDATE/DELETE): registro, login, fallos de login (persisten aunque la petición falle), cambio de organización, cambios de miembros, edición, exportación y eliminación. Sin contraseñas ni tokens. |
+| Datos personales | Exportación JSON de la organización (`org.export`) y eliminación completa con confirmación por identificador (`org.delete`, borrado en cascada). |
+| Secretos | Ninguno en el repositorio. `.env` ignorado por Git. Contraseñas de `init_dev_db.sh` son solo para desarrollo local y se pueden sobrescribir por variables. |
+| Frontend | React escapa todo; sin `dangerouslySetInnerHTML` ni `eval`; sin CDNs de terceros; `localStorage` solo para preferencias de interfaz; redirección tras login solo a rutas internas (sin redirección abierta). |
+
+### Riesgos conocidos / pendientes
+- Limitador de intentos en memoria → moverlo a PostgreSQL/Redis antes de ejecutar varias réplicas.
+- Detrás de un proxy, configurar `uvicorn --proxy-headers --forwarded-allow-ips=…` para registrar la IP real.
+- Sin verificación de correo, recuperación de contraseña ni 2FA (requieren proveedor de email).
+- Producción debe servir frontend y `/api` desde el mismo dominio con HTTPS y `COOKIE_SECURE=true`.
 
 ## 2. Controles planificados por fase
 
-### Autenticación y sesiones (Fase 2)
-- Contraseñas con **Argon2id**; política de longitud mínima; bloqueo progresivo/límite de intentos.
-- Sesión en cookie `HttpOnly; Secure; SameSite=Lax`, rotación al iniciar sesión, expiración e invalidación en servidor.
-- **CSRF**: token sincronizado o doble cookie para peticiones que cambian estado.
-- Verificación de correo y recuperación de contraseña con tokens de un solo uso y caducidad corta.
+### Cuentas (cuando haya proveedor de email)
+- Verificación de correo y recuperación de contraseña con tokens de un solo uso y caducidad corta; 2FA (TOTP).
 
-### Autorización y multi-tenant (Fase 2)
-- Todo registro propiedad de una organización lleva `organization_id NOT NULL` con clave foránea.
-- El servidor resuelve la organización activa desde la sesión y la membresía — **nunca** desde un parámetro del cliente sin verificar.
-- Doble barrera: filtrado en la capa de repositorio + **PostgreSQL Row-Level Security** (`SET app.current_org`).
-- Roles y permisos verificados en cada endpoint; límites de plan (p. ej. 2 agentes en plan gratuito) aplicados **en el servidor**.
-- Pruebas obligatorias: la organización A no puede leer, listar, modificar ni inferir datos de la B.
-
-### Validación de API
-- Pydantic en cada entrada/salida; consultas parametrizadas (SQLAlchemy) — sin SQL concatenado.
-- Limitación de tasa por usuario/IP/organización; tamaños máximos de cuerpo.
-- Errores al usuario sin trazas internas ni fragmentos de datasets; detalle solo en logs del servidor.
+### Toda tabla nueva de datos de negocio (Fases 3+)
+- `organization_id NOT NULL` + RLS con la misma política que las tablas actuales + prueba de aislamiento.
 
 ### Archivos subidos (Fase 3)
 - Límite de tamaño y de filas/columnas; verificación por *magic bytes*, no por nombre ni MIME del cliente.

@@ -1,10 +1,16 @@
-import { Bell, Building2, ChevronDown, CircleUser, ListChecks, Menu } from 'lucide-react';
+import { Bell, CircleUser, ListChecks, LogOut, Menu } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../app/auth';
+import { Button } from '../ui/Button';
+import { OrgSwitcher } from './OrgSwitcher';
 import { LANGUAGES, usePreferences } from '../../app/preferences';
 import { Popover } from '../ui/Popover';
 import { GlobalSearch } from './GlobalSearch';
 
 export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
   const { t, lang, setLang } = usePreferences();
+  const { session, logout } = useAuth();
+  const navigate = useNavigate();
   return (
     <header className="rc-topbar rc-glass rc-glass--strong">
       <button
@@ -22,26 +28,13 @@ export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuO
         <span>REQUIEM</span>
       </span>
 
-      <Popover
-        title={t.topbar.organization}
-        align="start"
-        trigger={(p) => (
-          <button type="button" className="rc-org-btn" {...p}>
-            <span className="rc-org-btn__avatar"><Building2 size={15} aria-hidden="true" /></span>
-            <span>{t.topbar.noOrganization}</span>
-            <ChevronDown size={14} aria-hidden="true" />
-          </button>
-        )}
-      >
-        <p>{t.topbar.noOrganization}</p>
-        <p className="rc-popover__hint">{t.topbar.orgPending}</p>
-      </Popover>
+      <OrgSwitcher />
 
       <GlobalSearch />
       <span className="rc-topbar__spacer" />
 
       <div className="rc-topbar__group">
-        <div className="rc-segmented" role="group" aria-label={t.settings.language}>
+        <div className="rc-segmented rc-topbar__lang" role="group" aria-label={t.settings.language}>
           {LANGUAGES.map((l) => (
             <button key={l} type="button" aria-pressed={lang === l} onClick={() => setLang(l)} lang={l} style={{ minHeight: 28, padding: '0 10px', fontSize: '0.75rem' }}>
               {l.toUpperCase()}
@@ -81,8 +74,12 @@ export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuO
             </button>
           )}
         >
-          <p>{t.topbar.signedOut}</p>
-          <p className="rc-popover__hint">{t.topbar.authPending}</p>
+          <p className="rc-popover__hint">{t.auth.signedInAs}</p>
+          <p><strong>{session?.user.full_name}</strong><br />{session?.user.email}</p>
+          {session?.role && <p className="rc-popover__hint">{t.org.roles[session.role]} · {session.active_organization?.name}</p>}
+          <Button variant="glass" size="sm" icon={<LogOut size={14} />} onClick={() => void logout().then(() => navigate('/login'))}>
+            {t.auth.logout}
+          </Button>
         </Popover>
       </div>
     </header>

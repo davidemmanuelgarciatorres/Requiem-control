@@ -1,6 +1,9 @@
 import { Route, Routes } from 'react-router-dom';
 import { NAV_ITEMS } from './app/navigation';
 import { AppShell } from './components/layout/AppShell';
+import { LoginPage } from './features/auth/LoginPage';
+import { RegisterPage } from './features/auth/RegisterPage';
+import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RequireAuth';
 import { AgentsPage } from './features/agents/AgentsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { DesignSystemPage } from './features/design-system/DesignSystemPage';
@@ -12,7 +15,9 @@ import { SettingsPage } from './features/settings/SettingsPage';
 export function AppRoutes() {
   return (
     <Routes>
-      <Route element={<AppShell />}>
+      <Route path="login" element={<RedirectIfAuthenticated><LoginPage /></RedirectIfAuthenticated>} />
+      <Route path="register" element={<RedirectIfAuthenticated><RegisterPage /></RedirectIfAuthenticated>} />
+      <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
         <Route path="agents" element={<AgentsPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />

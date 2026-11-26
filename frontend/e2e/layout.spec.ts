@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 const ROUTES = ['/', '/?view=demo', '/agents', '/integrations', '/settings', '/design-system', '/finance'];
 
@@ -37,6 +37,7 @@ test.describe('responsive layout', () => {
   test('keyboard users can reach main content via the skip link', async ({ page, isMobile }) => {
     test.skip(isMobile, 'keyboard flow verified on desktop');
     await page.goto('/');
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
     await page.keyboard.press('Tab');
     await expect(page.locator('.rc-skip-link')).toBeFocused();
   });

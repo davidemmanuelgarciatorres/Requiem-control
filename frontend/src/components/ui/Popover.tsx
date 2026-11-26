@@ -5,7 +5,8 @@ type PopoverProps = {
   trigger: (props: { 'aria-expanded': boolean; 'aria-controls': string; onClick: () => void }) => ReactNode;
   title: string;
   align?: 'start' | 'end';
-  children: ReactNode;
+  /** Contenido; como función recibe `close` para cerrar el panel tras una acción. */
+  children: ReactNode | ((close: () => void) => ReactNode);
 };
 
 /** Panel flotante ligero: se cierra con Escape, clic exterior o al perder el foco. */
@@ -34,7 +35,7 @@ export function Popover({ trigger, title, align = 'end', children }: PopoverProp
       {open && (
         <div id={id} role="dialog" aria-label={title} className={`rc-popover rc-glass rc-glass--strong${align === 'start' ? ' rc-popover--start' : ''}`}>
           <p className="rc-popover__title">{title}</p>
-          <div className="rc-popover__body">{children}</div>
+          <div className="rc-popover__body">{typeof children === 'function' ? children(() => setOpen(false)) : children}</div>
         </div>
       )}
     </div>

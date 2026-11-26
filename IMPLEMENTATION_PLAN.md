@@ -5,9 +5,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | Fase | Nombre | Estado |
 |---|---|---|
 | 0 | Auditoría | ✅ Completa |
-| 1 | Fundamento visual | ✅ Completa (pendiente de revisión) |
-| 2 | Autenticación y base de datos | ⏸ Esperando autorización |
-| 3 | Ingesta de datos (CSV/XLSX) | Pendiente |
+| 1 | Fundamento visual | ✅ Completa |
+| 2 | Autenticación y base de datos | ✅ Completa (pendiente de revisión) |
+| 3 | Ingesta de datos (CSV/XLSX) | ⏸ Siguiente — esperando autorización |
 | 4 | Primeros agentes de IA | Pendiente |
 | 5 | Reportes e inteligencia | Pendiente |
 | 6 | Integraciones (Gmail, Sheets, Drive) | Pendiente |
@@ -22,21 +22,23 @@ Sistema de diseño (tokens), shell responsivo (barra lateral / riel / cajón mó
 estado de onboarding y vista de demostración etiquetada, componentes de vidrio, fondo ambiental de 120 s,
 estados de carga/vacío/error, i18n es/en, páginas honestas para módulos planificados, pruebas unitarias y e2e.
 
-## Fase 2 — Autenticación y base de datos (siguiente recomendada)
-- `backend/` en Python: FastAPI + SQLAlchemy 2 + Alembic (migraciones) + Pydantic; PostgreSQL 16 local (Docker o nativo).
-- Esquema: `users`, `organizations`, `organization_members`, `roles`, `permissions`, `plans`, `subscriptions`,
-  `audit_logs`, `usage_records` (resto de tablas en sus fases).
-- Autenticación: sesiones con cookie `HttpOnly; Secure; SameSite=Lax`, hash Argon2id, protección CSRF, límite de intentos.
-  Alternativa a evaluar: proveedor gestionado (p. ej. Supabase Auth) — requiere autorización por costo/dependencia.
-- Aislamiento multi-tenant: `organization_id` obligatorio + filtrado en repositorios + **PostgreSQL RLS** como segunda barrera.
-- Frontend: pantallas de registro/inicio de sesión, selector de organización real, cliente API tipado.
-- Pruebas: usuario de la org A no puede leer/escribir datos de la org B (API y SQL).
-- **Decisión pendiente del propietario:** confirmar backend único en Python (recomendado) y método de autenticación.
+## Fase 2 — Autenticación y base de datos ✅
+Decisiones tomadas (recomendadas en la Fase 0 y autorizadas por el propietario):
+- **Un solo backend Python** (`backend/`): FastAPI + SQLAlchemy 2 + Alembic + Pydantic. Las fases de datos e IA se
+  añadirán como módulos del mismo servicio (monolito modular).
+- **Autenticación propia** (sin proveedor externo, costo $0): Argon2id, sesiones de servidor en cookie HttpOnly,
+  CSRF ligado a la sesión, límite de intentos.
+- **Multi-tenant con doble barrera**: organización activa resuelta en el servidor + PostgreSQL RLS con un rol de
+  aplicación sin privilegios para saltarla.
+- Planes y límites en la base de datos (configurables sin tocar código).
 
-## Fase 3 — Ingesta de datos
+Pendiente dentro del área (requiere proveedor de email, autorización de costo): invitaciones por correo,
+verificación de correo, recuperación de contraseña.
+
+## Fase 3 — Ingesta de datos (siguiente recomendada)
 Subida CSV/XLSX con límites de tamaño, validación por *magic bytes* (no por nombre/MIME), OpenPyXL en modo
 `read_only`/`data_only` (sin macros ni fórmulas), almacenamiento temporal seguro, vista previa, mapeo de columnas,
-detección de duplicados/faltantes, procedencia e historial. Tablas `data_sources`, `uploaded_files`, `datasets`.
+detección de duplicados/faltantes, procedencia e historial. Tablas `data_sources`, `uploaded_files`, `datasets` (con `organization_id` y RLS como el resto). Procesamiento con Pandas en el mismo backend; archivos grandes en un worker.
 
 ## Fase 4 — Primeros agentes
 Abstracción de proveedores de IA (interfaz común, timeouts, reintentos, uso/costo), **proveedor mock claramente

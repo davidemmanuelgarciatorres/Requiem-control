@@ -1,4 +1,6 @@
-import { Bot, Building2, Check, Database, Eye, Upload } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Bot, Building2, Check, CircleCheck, Database, Eye, Upload } from 'lucide-react';
+import { api, type Health } from '../../lib/api';
 import { usePreferences } from '../../app/preferences';
 import { Badge, type Tone } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
@@ -12,16 +14,31 @@ import { AGENT_CATALOG } from '../agents/catalog';
  */
 export function EmptyDashboard({ onShowDemo }: { onShowDemo: () => void }) {
   const { t } = usePreferences();
+  const [health, setHealth] = useState<Health | 'down' | null>(null);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    api<Health>('/health', { signal: ctrl.signal }).then(setHealth).catch((e: unknown) => {
+      if (!(e instanceof DOMException)) setHealth('down');
+    });
+    return () => ctrl.abort();
+  }, []);
+  const apiUp = health !== null && health !== 'down';
+  const dbUp = apiUp && health.database === 'ok';
   const steps = [
-    { key: 'account', icon: Building2, phase: 2 },
-    { key: 'import', icon: Upload, phase: 3 },
-    { key: 'analyze', icon: Bot, phase: 4 },
+    { key: 'account', icon: Building2, phase: 2, done: true },
+    { key: 'import', icon: Upload, phase: 3, done: false },
+    { key: 'analyze', icon: Bot, phase: 4, done: false },
   ] as const;
 
   const status: { label: string; value: string; tone: Tone }[] = [
     { label: t.dashboard.systemStatus.frontend, value: t.common.operational, tone: 'success' },
-    { label: t.dashboard.systemStatus.api, value: `${t.common.notImplemented} · ${interpolate(t.common.phase, { n: 2 })}`, tone: 'outline' },
-    { label: t.dashboard.systemStatus.database, value: `${t.common.notImplemented} · ${interpolate(t.common.phase, { n: 2 })}`, tone: 'outline' },
+    health === null
+      ? { label: t.dashboard.systemStatus.api, value: t.dashboard.systemStatus.checking, tone: 'outline' }
+      : { label: t.dashboard.systemStatus.api, value: apiUp ? t.common.operational : t.status.danger, tone: apiUp ? 'success' : 'danger' },
+    health === null
+      ? { label: t.dashboard.systemStatus.database, value: t.dashboard.systemStatus.checking, tone: 'outline' }
+      : { label: t.dashboard.systemStatus.database, value: dbUp ? t.common.operational : t.status.danger, tone: dbUp ? 'success' : 'danger' },
+    { label: t.dashboard.systemStatus.authentication, value: t.common.operational, tone: 'success' },
     { label: t.dashboard.systemStatus.aiProvider, value: `${t.common.notConfigured} · ${interpolate(t.common.phase, { n: 4 })}`, tone: 'outline' },
     { label: t.dashboard.systemStatus.integrations, value: `${t.common.notConnected} · ${interpolate(t.common.phase, { n: 6 })}`, tone: 'outline' },
   ];
@@ -45,7 +62,9 @@ export function EmptyDashboard({ onShowDemo }: { onShowDemo: () => void }) {
                   <p className="rc-step__title">{copy.title}</p>
                   <p className="rc-step__text">{copy.body}</p>
                 </div>
-                <Badge tone="outline">{interpolate(t.common.phase, { n: s.phase })}</Badge>
+                {s.done
+                  ? <Badge tone="success"><CircleCheck size={12} aria-hidden="true" />{t.common.completed}</Badge>
+                  : <Badge tone="outline">{interpolate(t.common.phase, { n: s.phase })}</Badge>}
               </li>
             );
           })}
@@ -60,7 +79,7 @@ export function EmptyDashboard({ onShowDemo }: { onShowDemo: () => void }) {
           {status.map((s) => (
             <div key={s.label} className="rc-status-list__row">
               <dt>{s.label}</dt>
-              <dd><Badge tone={s.tone} dot={s.tone === 'success'}>{s.value}</Badge></dd>
+              <dd><Badge tone={s.tone} dot={s.tone === 'success' || s.tone === 'danger'}>{s.value}</Badge></dd>
             </div>
           ))}
         </dl>

@@ -1,0 +1,273 @@
+import { useState, type FormEvent } from 'react';
+import { Download, Trash2, UserPlus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../app/auth';
+import { usePreferences } from '../../app/preferences';
+import { Badge } from '../../components/ui/Badge';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { ErrorState, Skeleton } from '../../components/ui/States';
+import { api, type AuditEntry, type Member, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
+import { formatCurrency, formatDate, formatNumber, interpolate } from '../../lib/format';
+import { useApiResource } from '../../lib/useApi';
+import { errorMessage } from '../auth/errors';
+import { Field } from '../auth/Field';
+
+const ROLES: RoleCode[] = ['owner', 'admin', 'member', 'viewer'];
+
+/** Ejecuta una acción con estado de carga, error y confirmación. */
+function useAction() {
+  const { t } = usePreferences();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [ok, setOk] = useState(false);
+  const run = async (fn: () => Promise<void>) => {
+    setBusy(true);
+    setError(null);
+    setOk(false);
+    try {
+      await fn();
+      setOk(true);
+    } catch (e) {
+      setError(errorMessage(t, e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return { busy, error, ok, run };
+}
+
+export function AccountSection() {
+  const { t } = usePreferences();
+  const { session, applySession } = useAuth();
+  const action = useAction();
+  if (!session) return null;
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const full_name = String(new FormData(e.currentTarget).get('full_name'));
+    void action.run(async () => applySession(await api<SessionInfo>('/auth/me', { method: 'PATCH', body: { full_name } })));
+  };
+  return (
+    <Card title={t.account.title} subtitle={session.user.email}>
+      <form className="rc-form--inline" onSubmit={onSubmit}>
+        <Field label={t.account.name} name="full_name" defaultValue={session.user.full_name} required maxLength={120} />
+        <Button type="submit" variant="glass" loading={action.busy}>{t.account.save}</Button>
+      </form>
+      {action.ok && <p className="rc-form__ok" role="status">{t.account.saved}</p>}
+      {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
+    </Card>
+  );
+}
+
+export function OrganizationSection() {
+  const { t } = usePreferences();
+  const { session, can, refresh } = useAuth();
+  const action = useAction();
+  const org = session?.active_organization;
+  if (!org) return null;
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const name = String(new FormData(e.currentTarget).get('name'));
+    void action.run(async () => {
+      await api('/organizations/current', { method: 'PATCH', body: { name } });
+      await refresh();
+    });
+  };
+  return (
+    <Card title={t.account.orgTitle} subtitle={`${t.account.slug}: ${org.slug}`}>
+      <form className="rc-form--inline" onSubmit={onSubmit}>
+        <Field label={t.account.orgName} name="name" defaultValue={org.name} required maxLength={120} disabled={!can('org.update')} key={org.id} />
+        <Button type="submit" variant="glass" loading={action.busy} disabled={!can('org.update')} title={can('org.update') ? undefined : t.account.noPermission}>
+          {t.account.save}
+        </Button>
+      </form>
+      {action.ok && <p className="rc-form__ok" role="status">{t.account.saved}</p>}
+      {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
+    </Card>
+  );
+}
+
+export function MembersSection() {
+  const { t } = usePreferences();
+  const { session, can } = useAuth();
+  const orgId = session?.active_organization?.id ?? '';
+  const members = useApiResource<Member[]>(can('members.read') ? '/organizations/current/members' : null, orgId);
+  const action = useAction();
+  const manage = can('members.manage');
+
+  const onAdd = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    void action.run(async () => {
+      await api('/organizations/current/members', { method: 'POST', body: { email: data.get('email'), role: data.get('role') } });
+      form.reset();
+      members.reload();
+    });
+  };
+  const changeRole = (id: string, role: string) =>
+    void action.run(async () => {
+      await api(`/organizations/current/members/${id}`, { method: 'PATCH', body: { role } });
+      members.reload();
+    });
+  const remove = (id: string) =>
+    void action.run(async () => {
+      await api(`/organizations/current/members/${id}`, { method: 'DELETE' });
+      members.reload();
+    });
+
+  return (
+    <Card title={t.account.membersTitle} className="rc-span-2">
+      {members.loading && <Skeleton height={80} />}
+      {members.error != null && <ErrorState title={errorMessage(t, members.error)} onRetry={members.reload} />}
+      {members.data && (
+        <div className="rc-table-wrap">
+          <table className="rc-table">
+            <thead><tr><th scope="col">{t.account.name}</th><th scope="col">{t.auth.email}</th><th scope="col">{t.account.role}</th><th scope="col"><span className="sr-only">{t.account.remove}</span></th></tr></thead>
+            <tbody>
+              {members.data.map((m) => {
+                const isMe = m.user_id === session?.user.id;
+                return (
+                  <tr key={m.id}>
+                    <td>{m.full_name}{isMe && <span className="rc-list__meta"> ({t.account.you})</span>}</td>
+                    <td>{m.email}</td>
+                    <td>
+                      {manage ? (
+                        <select className="rc-select" value={m.role} aria-label={`${t.account.role}: ${m.full_name}`} disabled={action.busy}
+                          onChange={(e) => changeRole(m.id, e.target.value)}>
+                          {ROLES.map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
+                        </select>
+                      ) : <Badge tone="outline">{t.org.roles[m.role]}</Badge>}
+                    </td>
+                    <td className="rc-table__actions">
+                      {manage && !isMe && (
+                        <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} onClick={() => remove(m.id)} disabled={action.busy}
+                          aria-label={`${t.account.remove}: ${m.full_name}`}>
+                          {t.account.remove}
+                        </Button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      {manage && (
+        <form className="rc-form--inline" onSubmit={onAdd} aria-label={t.account.addMember}>
+          <Field label={t.account.memberEmail} name="email" type="email" required hint={t.account.addMemberHint} />
+          <div className="rc-field" style={{ flex: '0 0 auto' }}>
+            <label className="rc-field__label" htmlFor="new-member-role">{t.account.role}</label>
+            <select id="new-member-role" name="role" className="rc-select" defaultValue="member" style={{ minHeight: 44 }}>
+              {ROLES.filter((r) => r !== 'owner').map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
+            </select>
+          </div>
+          <Button type="submit" variant="primary" icon={<UserPlus size={15} />} loading={action.busy} style={{ marginBottom: 22 }}>
+            {t.account.addMember}
+          </Button>
+        </form>
+      )}
+      {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
+    </Card>
+  );
+}
+
+export function PlanSection() {
+  const { t, lang } = usePreferences();
+  const { session, can } = useAuth();
+  const sub = useApiResource<SubscriptionInfo>(can('billing.read') ? '/organizations/current/subscription' : null, session?.active_organization?.id);
+  if (!can('billing.read')) return null;
+  const p = sub.data?.plan;
+  return (
+    <Card title={t.account.planTitle}
+      actions={p && <Badge tone={p.code === 'free' ? 'outline' : 'accent'}>{p.code === 'free' ? t.account.free : `${formatCurrency(p.price_cents / 100, lang, p.currency)} ${t.account.perMonth}`}</Badge>}>
+      {sub.loading && <Skeleton height={80} />}
+      {sub.error != null && <ErrorState title={errorMessage(t, sub.error)} onRetry={sub.reload} />}
+      {p && sub.data && (
+        <>
+          <p className="rc-card__title">{p.name}</p>
+          <dl className="rc-limits">
+            <div><dt>{t.account.limitMembers}</dt><dd className="rc-tabular">{sub.data.usage.members ?? 0} / {p.max_members}</dd></div>
+            <div><dt>{t.account.limitAgents}</dt><dd className="rc-tabular">{sub.data.usage.active_agents ?? 0} / {p.max_active_agents}</dd></div>
+            <div><dt>{t.account.limitExecutions}</dt><dd className="rc-tabular">{formatNumber(p.max_monthly_executions, lang)}</dd></div>
+            <div><dt>{t.account.limitStorage}</dt><dd className="rc-tabular">{formatNumber(p.max_storage_mb, lang)} MB</dd></div>
+          </dl>
+          {!sub.data.billing_enabled && <p className="rc-list__meta">{t.account.billingDisabled}</p>}
+        </>
+      )}
+    </Card>
+  );
+}
+
+export function AuditSection() {
+  const { t, lang } = usePreferences();
+  const { session, can } = useAuth();
+  const logs = useApiResource<AuditEntry[]>(can('audit.read') ? '/organizations/current/audit-logs?limit=8' : null, session?.active_organization?.id);
+  if (!can('audit.read')) return null;
+  return (
+    <Card title={t.account.auditTitle}>
+      {logs.loading && <Skeleton height={80} />}
+      {logs.data && logs.data.length === 0 && <p className="rc-list__meta">{t.account.auditEmpty}</p>}
+      {logs.data && logs.data.length > 0 && (
+        <ul className="rc-events__list">
+          {logs.data.map((l) => (
+            <li key={l.id} className="rc-event">
+              <div><p><code>{l.action}</code></p><span className="rc-list__meta">{formatDate(new Date(l.created_at), lang, { dateStyle: 'medium', timeStyle: 'short' })}</span></div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
+export function DataSection() {
+  const { t } = usePreferences();
+  const { session, can, refresh } = useAuth();
+  const navigate = useNavigate();
+  const action = useAction();
+  const [confirm, setConfirm] = useState('');
+  const org = session?.active_organization;
+  if (!org || (!can('org.export') && !can('org.delete'))) return null;
+
+  const onExport = () =>
+    void action.run(async () => {
+      const data = await api<unknown>('/organizations/current/export');
+      const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${org.slug}-export.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  const onDelete = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void action.run(async () => {
+      await api('/organizations/current', { method: 'DELETE', body: { confirm_slug: confirm } });
+      await refresh();
+      navigate('/');
+    });
+  };
+
+  return (
+    <Card title={t.account.dataTitle} className="rc-span-2 rc-danger-zone">
+      {can('org.export') && (
+        <div className="rc-row" style={{ justifyContent: 'space-between' }}>
+          <p className="rc-list__meta">{t.account.exportHint}</p>
+          <Button variant="glass" icon={<Download size={15} />} onClick={onExport} loading={action.busy}>{t.account.export}</Button>
+        </div>
+      )}
+      {can('org.delete') && (
+        <form className="rc-form--inline" onSubmit={onDelete} aria-label={t.account.deleteOrg}>
+          <Field label={interpolate(t.account.deleteConfirm, { slug: org.slug })} hint={t.account.deleteHint} value={confirm}
+            onChange={(e) => setConfirm(e.target.value)} autoComplete="off" />
+          <Button type="submit" variant="danger" icon={<Trash2 size={15} />} disabled={confirm !== org.slug} loading={action.busy} style={{ marginBottom: 22 }}>
+            {t.account.deleteSubmit}
+          </Button>
+        </form>
+      )}
+      {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
+    </Card>
+  );
+}

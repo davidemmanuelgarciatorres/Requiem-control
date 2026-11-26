@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { usePreferences } from '../../app/preferences';
 import { Brand } from './Brand';
 import { NavList } from './NavList';
+import { OrgSwitcher } from './OrgSwitcher';
 
 /** Cajón de navegación para móvil: modal, cierra con Escape o al tocar fuera. */
 export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -35,6 +36,7 @@ export function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => 
             <X size={18} aria-hidden="true" />
           </button>
         </div>
+        <OrgSwitcher className="rc-org-btn rc-org-btn--block" />
         <nav aria-label={t.nav.label}>
           <NavList idPrefix="drawer" onNavigate={onClose} />
         </nav>

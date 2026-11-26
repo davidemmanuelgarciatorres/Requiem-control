@@ -1,48 +1,58 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **1 (fundamento visual) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **2 (autenticación y base de datos) — completa, pendiente de revisión**
 
 ## ✅ Implementado y probado
 
+### Fase 2 — Autenticación, base de datos y multi-organización
 | Funcionalidad | Cómo se verificó |
 |---|---|
-| Fondo ambiental animado, ciclo **exacto de 120 s** (azul espacial → turquesa → teal → violeta → azul espacial) | Unitaria: constante = 120, variable CSS inyectada, fotogramas de cada estrato. E2E (Chromium real): las 5 animaciones duran 120 000 ms e iteran infinito; opacidades en t = 0/30/60/90/105/120 s; el estado en 120 s es idéntico al de 0 s. |
-| Movimiento reducido (preferencia del SO y preferencia en la app) | E2E con `reducedMotion: 'reduce'` → 0 animaciones ambientales; E2E desde Configuración; unitaria del atributo `data-motion`. |
-| Shell responsivo: barra lateral (≥1200 px), riel de iconos (768–1199 px), cajón móvil (<768 px) | E2E: sin desbordamiento horizontal en 7 rutas × escritorio (1440×900) y móvil (Pixel 7); navegación por cajón en móvil y por barra lateral en escritorio. Capturas revisadas también a 900 px y 390 px. |
-| Cajón móvil accesible (foco inicial, Escape, cierre al navegar) | Unitaria. |
-| Búsqueda de módulos (combobox con teclado) | Unitaria (filtrar, Enter navega, sin resultados). |
-| Cambio de idioma es/en (persistido, actualiza `<html lang>`) | Unitaria; paridad de claves es/en verificada. |
-| Panel: estado vacío/onboarding por defecto (sin métricas inventadas) | Unitaria: 0 insignias DEMO, onboarding y estado del sistema visibles. |
-| Panel: vista de demostración con aviso y insignia DEMO en cada panel | Unitaria y E2E (≥9 insignias, sin errores de consola). |
-| Estados de carga (esqueleto), error (con reintento funcional) y vacío | Unitaria (cargador que falla y luego funciona). |
-| KPIs de demo derivados de las series (no escritos a mano) | Unitaria. |
-| Páginas honestas: módulos planificados, agentes (activación deshabilitada), integraciones (todas “No conectado”), configuración, sistema de diseño, 404 | Unitarias; todas las rutas renderizan. |
-| Enlace “Saltar al contenido” | E2E (escritorio). |
-| Lint, typecheck estricto, build de producción | `npm run check` sin errores ni advertencias. |
+| Esquema PostgreSQL con migración Alembic (`users`, `organizations`, `organization_members`, `roles`, `permissions`, `role_permissions`, `plans`, `subscriptions`, `user_sessions`, `audit_logs`, `usage_records`) | Las pruebas ejecutan `downgrade base` + `upgrade head` en cada corrida. |
+| **Row-Level Security** en todas las tablas de organización; la API usa un rol sin superusuario ni `BYPASSRLS` | pytest directo en SQL: sin contexto no se ve ninguna fila; con contexto de la org A no se ve ni se puede escribir nada de la B; el rol no puede saltarse RLS; auditoría solo de anexado. |
+| Registro (crea usuario + organización + propietario + plan gratuito, de forma atómica) | pytest + unitaria + e2e por UI. |
+| Contraseñas con **Argon2id**, longitud mínima 10, no igual al correo | pytest (hash `$argon2id$`, sin texto plano). |
+| Inicio de sesión con mensaje genérico, rotación de token, límite de intentos (5/min) | pytest (respuesta idéntica para correo inexistente y contraseña errónea; 6.º intento → 429). |
+| Sesiones en cookie `HttpOnly` + `SameSite=Lax`; token guardado solo como SHA-256; expiración; cierre de sesión invalida en servidor | pytest + e2e (inspección de cookie real). |
+| CSRF: token ligado a la sesión obligatorio en todo POST/PATCH/DELETE; verificación de `Origin`; solo `application/json` | pytest + e2e. |
+| Organizaciones: crear varias, cambiar la activa, renombrar, exportar (JSON), eliminar con confirmación | pytest + e2e (crear y cambiar por UI). |
+| Miembros: listar, agregar (usuarios registrados), cambiar rol, quitar; protección del último propietario; nadie gestiona a alguien de rango superior | pytest + unitarias + e2e. |
+| Roles del sistema `owner/admin/member/viewer` con 14 permisos; validación en servidor en cada endpoint | pytest (lector no puede gestionar ni ver auditoría). |
+| Planes configurables en BD (gratis: 2 agentes, 3 miembros…; Premium: MXN $400/mes) y **límites aplicados en el servidor** | pytest (4.º miembro en plan gratuito → 402; regla “máx. 2 agentes” lista para la Fase 4). |
+| Registro de auditoría (incl. intentos fallidos, que persisten aunque la petición falle) | pytest. |
+| Errores de API con forma estable, sin trazas ni SQL; cabeceras de seguridad | pytest. |
+| Frontend: inicio de sesión, registro, rutas protegidas, estado “API no disponible” con reintento, selector de organización (también en móvil), perfil con cierre de sesión, Configuración con cuenta/organización/miembros/plan/auditoría/datos, estado del sistema en vivo (`/api/health`) | 38 unitarias (API simulada) + e2e contra API real. |
+
+### Fase 1 — Fundamento visual (sigue vigente)
+Fondo ambiental de **120 s exactos** (verificado con la Web Animations API en Chromium), movimiento reducido, shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y demo etiquetada, estados de carga/vacío/error, sin desbordamiento horizontal en escritorio y móvil.
 
 ## 🟡 Implementado pero no probado automáticamente
-- Respaldo de vidrio sin `backdrop-filter` (`@supports not (...)`): implementado en `tokens.css`, no probado en un navegador sin soporte.
-- Navegadores distintos de Chromium (Safari/iOS, Firefox): no se ejecutaron pruebas; solo Chromium está disponible en el entorno.
-- Tooltip con teclado (flechas) en la gráfica de ingresos: implementado, sin prueba automatizada.
-- Contraste de color: elegido para cumplir AA en texto principal y secundario; no se ejecutó una auditoría automática (axe/Lighthouse).
+- Navegadores distintos de Chromium (Safari/iOS, Firefox).
+- Respaldo de vidrio sin `backdrop-filter`.
+- Auditoría automática de contraste/accesibilidad (axe/Lighthouse) no ejecutada.
+- Despliegue real con HTTPS (`COOKIE_SECURE=true`) y detrás de un proxy (IP real del cliente).
 
-## 🟠 Simulado (etiquetado como tal en la interfaz)
-- **Todas las cifras de `/?view=demo`** (ingresos, gastos, margen, calidad de datos, agentes, eventos, aprobaciones, recomendaciones, mapa de actividad). Fuente: `frontend/src/features/dashboard/demoData.ts`. Latencia de carga simulada (450 ms).
-- Botones “Ver análisis”, “Revisar”, “Activar”, “Conectar”: **deshabilitados** con explicación de la fase en que llegan.
+## 🟠 Simulado (etiquetado en la interfaz)
+- Cifras de `/?view=demo` (ficticias, `demoData.ts`).
+- Botones de agentes, aprobaciones e integraciones: deshabilitados con la fase en que llegan.
+- Uso en el plan (`active_agents`, `monthly_executions`, `storage_mb`) se reporta como 0 porque esas funciones aún no existen.
 
 ## ⏳ Pendiente
-- Backend, API, base de datos, migraciones (Fase 2).
-- Autenticación, organizaciones, roles, permisos, aislamiento multi-tenant (Fase 2).
-- Subida y procesamiento de CSV/XLSX (Fase 3).
-- Proveedores de IA, agentes, ejecuciones, aprobaciones, límites de plan (Fase 4).
-- Reportes reales y exportación (Fase 5) · Integraciones OAuth (Fase 6) · Agentes avanzados (Fase 7) · Facturación y producción (Fase 8).
+- Invitaciones por correo (requiere un proveedor de email; hoy solo se agregan usuarios ya registrados).
+- Recuperación de contraseña y verificación de correo (requieren envío de email).
+- 2FA y gestión de sesiones activas.
+- Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
+- Fases 3–8: importación CSV/XLSX, agentes de IA, reportes, integraciones, agentes avanzados, facturación.
 - CI (GitHub Actions) — propuesto, no activado sin autorización.
 
 ## Resultados de la última ejecución
 ```
-npm run lint        → 0 problemas
-npm run typecheck   → 0 errores
-npm run test        → 5 archivos, 26 pruebas, 26 aprobadas
-npm run build       → OK (JS 342 kB / 108 kB gzip; CSS 36 kB / 8 kB gzip)
-npm run e2e         → 27 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+backend:  ruff check .          → sin problemas
+          mypy app (strict)     → sin errores (19 archivos)
+          pytest                → 30 aprobadas (PostgreSQL 16 real)
+frontend: npm run lint          → 0 problemas
+          npm run typecheck     → 0 errores
+          npm run test          → 6 archivos, 38 aprobadas
+          npm run build         → OK
+          npm run e2e           → 39 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+                                   (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
 ```

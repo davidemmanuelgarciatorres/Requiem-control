@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** Lee las animaciones ambientales reales del navegador (Web Animations API). */
 async function ambientAnimations(page: Page) {
@@ -50,7 +51,7 @@ test.describe('ambient background', () => {
   test('reduced motion: no ambient animation, stable blue background', async ({ browser }) => {
     const ctx = await browser.newContext({ reducedMotion: 'reduce' });
     const page = await ctx.newPage();
-    await page.goto('/');
+    await page.goto('/login');
     expect(await ambientAnimations(page)).toEqual([]);
     const violet = await page.locator('[data-layer="violet"]').evaluate((el) => getComputedStyle(el).opacity);
     expect(violet).toBe('0');

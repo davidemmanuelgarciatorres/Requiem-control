@@ -1,16 +1,22 @@
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthProvider } from '../../app/auth';
+import { mockSignedIn } from '../../test/mockApi';
 import { PreferencesProvider } from '../../app/preferences';
 import { renderApp } from '../../test/renderApp';
 import { DashboardPage } from './DashboardPage';
 import { buildDemoDashboard, deriveKpis } from './demoData';
 
 describe('dashboard', () => {
-  it('shows onboarding (no fabricated metrics) when there is no data', () => {
+  beforeEach(() => {
+    mockSignedIn();
+  });
+
+  it('shows onboarding (no fabricated metrics) when there is no data', async () => {
     renderApp('/');
-    expect(screen.getByRole('heading', { name: 'Pon tu negocio bajo control' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Pon tu negocio bajo control' })).toBeInTheDocument();
     expect(screen.queryByTestId('demo-banner')).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-demo-badge]')).toHaveLength(0);
     expect(screen.getByText('Estado del sistema')).toBeInTheDocument();
@@ -18,6 +24,7 @@ describe('dashboard', () => {
 
   it('demo view shows a loading state, then data that is clearly labelled as demo', async () => {
     renderApp('/?view=demo');
+    await screen.findByRole('heading', { level: 1 });
     expect(screen.getByRole('status', { name: 'Cargando…' })).toBeInTheDocument();
     expect(await screen.findByTestId('demo-banner', {}, { timeout: 2000 })).toHaveTextContent('ficticias');
     // Each data panel carries a visible DEMO badge.
@@ -27,7 +34,7 @@ describe('dashboard', () => {
   it('toggles between onboarding and demo', async () => {
     const user = userEvent.setup();
     renderApp('/');
-    await user.click(screen.getByRole('button', { name: 'Ver vista de demostración' }));
+    await user.click(await screen.findByRole('button', { name: 'Ver vista de demostración' }));
     expect(await screen.findByTestId('demo-banner', {}, { timeout: 2000 })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Salir de la demostración' }));
     expect(screen.queryByTestId('demo-banner')).not.toBeInTheDocument();
@@ -38,9 +45,11 @@ describe('dashboard', () => {
     const loader = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue(buildDemoDashboard('es'));
     render(
       <PreferencesProvider initialLang="es">
-        <MemoryRouter initialEntries={['/?view=demo']}>
-          <DashboardPage loader={loader} />
-        </MemoryRouter>
+        <AuthProvider>
+          <MemoryRouter initialEntries={['/?view=demo']}>
+            <DashboardPage loader={loader} />
+          </MemoryRouter>
+        </AuthProvider>
       </PreferencesProvider>,
     );
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar el panel');

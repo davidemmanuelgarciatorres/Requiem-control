@@ -1,0 +1,9 @@
+# Generado a partir de pyproject.toml (versiones verificadas en desarrollo)
+fastapi[standard]==0.165.0
+sqlalchemy==2.1.9
+alembic==1.20.1
+psycopg[binary]==3.3.9
+argon2-cffi==25.1.0
+pydantic==2.14.4
+pydantic-settings==2.16.3
+email-validator==2.4.0

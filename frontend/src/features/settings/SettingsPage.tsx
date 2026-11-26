@@ -2,6 +2,7 @@ import { Clock } from 'lucide-react';
 import { DICTIONARIES, LANGUAGES, usePreferences, type MotionPreference } from '../../app/preferences';
 import { Card } from '../../components/ui/Card';
 import { PageHeader } from '../modules/PageHeader';
+import { AccountSection, AuditSection, DataSection, MembersSection, OrganizationSection, PlanSection } from './AccountSections';
 
 export function SettingsPage() {
   const { t, lang, setLang, motion, setMotion } = usePreferences();
@@ -13,6 +14,11 @@ export function SettingsPage() {
     <>
       <PageHeader eyebrow={t.nav.sectionPlatform} title={t.settings.title} lead={t.settings.description} />
       <div className="rc-grid rc-grid--2">
+        <AccountSection />
+        <OrganizationSection />
+        <MembersSection />
+        <PlanSection />
+        <AuditSection />
         <Card title={t.settings.language} subtitle={t.settings.languageHint}>
           <div className="rc-segmented" role="group" aria-label={t.settings.language}>
             {LANGUAGES.map((l) => (
@@ -27,6 +33,7 @@ export function SettingsPage() {
             ))}
           </div>
         </Card>
+        <DataSection />
         <Card title={t.settings.otherTitle} subtitle={t.settings.otherPending} className="rc-span-2">
           <ul className="rc-checklist rc-checklist--cols">
             {t.settings.otherItems.map((i) => <li key={i}><Clock size={14} aria-hidden="true" />{i}</li>)}
