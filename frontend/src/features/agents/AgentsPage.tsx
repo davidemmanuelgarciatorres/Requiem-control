@@ -47,7 +47,7 @@ function AgentsLive() {
   return (
     <>
       <PageHeader eyebrow={t.nav.sectionOperate} title={t.agents.title} lead={t.ai.lead} />
-      {provider.data && (
+      {provider.data && can('org.update') && (
         <p className={`rc-notice${provider.data.simulated ? ' rc-notice--warning' : ''}`} role="note" style={{ marginBottom: 'var(--rc-space-5)' }}>
           <Info size={18} aria-hidden="true" />
           <span>{provider.data.simulated ? t.ai.providerMock : interpolate(t.ai.providerReal, { model: provider.data.model })}{provider.data.note ? ` ${provider.data.note}` : ''}</span>

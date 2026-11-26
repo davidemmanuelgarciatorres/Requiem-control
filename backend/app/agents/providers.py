@@ -93,9 +93,9 @@ class MockProvider:
         es = language != "en"
         highlights: list[str] = [str(h) for h in facts.get("highlights", [])][:4]
         head = (
-            "Resumen generado con una plantilla (proveedor simulado, sin IA real)."
+            "Resumen automático."
             if es
-            else "Summary generated from a template (simulated provider, no real AI)."
+            else "Automatic summary."
         )
         body = " ".join(highlights) if highlights else ("Sin hallazgos destacados." if es else "No notable findings.")
         return ProviderResult(text=f"{head} {body}", provider=self.name, model=self.model, simulated=True)

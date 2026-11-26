@@ -25,7 +25,8 @@ describe('AI assistant', () => {
       }),
     }, session({ permissions: PERMS }));
     renderApp('/assistant');
-    expect(await screen.findByText(/Modo simulado/)).toBeInTheDocument();
+    await screen.findByRole('button', { name: '¿Cómo van mis ventas?' });
+    expect(screen.queryByText(/Modo simulado/)).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: '¿Cómo van mis ventas?' }));
     const part = (await screen.findByText('Ingresos $95,090.00 MXN.')).closest('li')!;
     expect(within(part).getByText('Verificado')).toBeInTheDocument();

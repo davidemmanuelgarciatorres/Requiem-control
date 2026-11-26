@@ -86,3 +86,17 @@ def test_plans_are_public_and_configurable(client):
     plans = {p["code"]: p for p in client.get("/api/plans").json()}
     assert plans["free"]["max_active_agents"] == 2 and plans["free"]["price_cents"] == 0
     assert plans["premium"]["price_cents"] == 40000 and plans["premium"]["currency"] == "MXN"
+
+
+def test_system_status_is_only_for_admins(client, make_client):
+    client.register("owner@example.com", org="Ferretería")
+    st = client.get("/api/system/status").json()
+    assert (
+        st["database"] == "ok" and st["ai"]["simulated"] is True and "GOOGLE_OAUTH_CLIENT_ID" in st["google"]["missing"]
+    )
+    member = make_client()
+    member.register("member@example.com", org="Propia")
+    client.send("POST", "/api/organizations/current/members", json={"email": "member@example.com", "role": "member"})
+    target = next(o for o in member.get("/api/organizations").json() if o["name"] == "Ferretería")
+    member.send("POST", "/api/auth/switch-organization", json={"organization_id": target["id"]})
+    assert member.get("/api/system/status").status_code == 403

@@ -1,59 +1,25 @@
-import { useEffect, useState } from 'react';
 import { Bot, Building2, Check, CircleCheck, Database, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
-import { api, type DatasetSummary, type Health } from '../../lib/api';
+import type { DatasetSummary } from '../../lib/api';
 import { useApiResource } from '../../lib/useApi';
-import { IS_DEMO } from '../../lib/env';
 import { usePreferences } from '../../app/preferences';
-import { Badge, type Tone } from '../../components/ui/Badge';
+import { Badge } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
-import { interpolate } from '../../lib/format';
 import { AGENT_CATALOG } from '../agents/catalog';
 
-/**
- * Estado sin datos (por defecto en la Fase 1). En lugar de métricas inventadas,
- * muestra el camino de incorporación y el estado real del sistema.
- */
+/** Estado sin datos: en lugar de métricas inventadas, muestra el camino de incorporación. */
 export function EmptyDashboard() {
   const { t } = usePreferences();
   const { session, can } = useAuth();
   const datasets = useApiResource<DatasetSummary[]>(can('data.read') ? '/datasets' : null, session?.active_organization?.id);
   const imported = (datasets.data?.length ?? 0) > 0;
-  const [health, setHealth] = useState<Health | 'down' | null>(null);
-  useEffect(() => {
-    const ctrl = new AbortController();
-    api<Health>('/health', { signal: ctrl.signal }).then(setHealth).catch((e: unknown) => {
-      if (!(e instanceof DOMException)) setHealth('down');
-    });
-    return () => ctrl.abort();
-  }, []);
-  const apiUp = health !== null && health !== 'down';
-  const dbUp = apiUp && health.database === 'ok';
   const steps = [
     { key: 'account', icon: Building2, phase: 2, done: true },
     { key: 'import', icon: Upload, phase: 3, done: imported },
     { key: 'analyze', icon: Bot, phase: 4, done: false },
   ] as const;
 
-  const status: { label: string; value: string; tone: Tone }[] = [
-    { label: t.dashboard.systemStatus.frontend, value: t.common.operational, tone: 'success' },
-    health === null
-      ? { label: t.dashboard.systemStatus.api, value: t.dashboard.systemStatus.checking, tone: 'outline' }
-      : IS_DEMO
-        ? { label: t.dashboard.systemStatus.api, value: t.demo.simulated, tone: 'warning' }
-        : { label: t.dashboard.systemStatus.api, value: apiUp ? t.common.operational : t.status.danger, tone: apiUp ? 'success' : 'danger' },
-    health === null
-      ? { label: t.dashboard.systemStatus.database, value: t.dashboard.systemStatus.checking, tone: 'outline' }
-      : IS_DEMO
-        ? { label: t.dashboard.systemStatus.database, value: t.demo.simulated, tone: 'warning' }
-        : { label: t.dashboard.systemStatus.database, value: dbUp ? t.common.operational : t.status.danger, tone: dbUp ? 'success' : 'danger' },
-    IS_DEMO
-      ? { label: t.dashboard.systemStatus.authentication, value: t.demo.simulated, tone: 'warning' }
-      : { label: t.dashboard.systemStatus.authentication, value: t.common.operational, tone: 'success' },
-    { label: t.dashboard.systemStatus.aiProvider, value: `${t.common.notConfigured} · ${interpolate(t.common.phase, { n: 4 })}`, tone: 'outline' },
-    { label: t.dashboard.systemStatus.integrations, value: `${t.common.notConnected} · ${interpolate(t.common.phase, { n: 6 })}`, tone: 'outline' },
-  ];
 
   return (
     <div className="rc-onboarding">
@@ -79,7 +45,7 @@ export function EmptyDashboard() {
                 ) : s.key === 'import' ? (
                   <Link to="/data" className="rc-btn rc-btn--glass rc-btn--sm">{t.dashboard.hero.ctaImport}</Link>
                 ) : (
-                  <Badge tone="outline">{interpolate(t.common.phase, { n: s.phase })}</Badge>
+                  <Link to="/agents" className="rc-btn rc-btn--glass rc-btn--sm">{t.agents.title}</Link>
                 )}
               </li>
             );
@@ -87,16 +53,6 @@ export function EmptyDashboard() {
         </ol>
       </Card>
 
-      <Card title={t.dashboard.systemStatus.title} subtitle={t.dashboard.systemStatus.subtitle} className="rc-onboarding__status">
-        <dl className="rc-status-list">
-          {status.map((s) => (
-            <div key={s.label} className="rc-status-list__row">
-              <dt>{s.label}</dt>
-              <dd><Badge tone={s.tone} dot={s.tone === 'success' || s.tone === 'danger'}>{s.value}</Badge></dd>
-            </div>
-          ))}
-        </dl>
-      </Card>
 
       <Card title={t.dashboard.mvpAgents.title} subtitle={t.dashboard.mvpAgents.body} className="rc-onboarding__agents">
         <ul className="rc-list">

@@ -28,7 +28,7 @@ function Answer({ m }: { m: AssistantMessage }) {
         ))}
       </ul>
       <p className="rc-list__meta">
-        {m.meta.simulated ? a.simulatedNote : `${m.meta.provider ?? ''} · ${m.meta.model ?? ''}`}
+        {m.meta.simulated ? a.simulatedNote : a.aiNote}
         {m.meta.provider_error ? ` · ${a.fallbackNote}` : ''}
       </p>
     </div>
@@ -37,7 +37,7 @@ function Answer({ m }: { m: AssistantMessage }) {
 
 export function AssistantPage() {
   const { t, lang } = usePreferences();
-  const { session } = useAuth();
+  const { session, can } = useAuth();
   const a = t.assistant;
   const orgKey = session?.active_organization?.id;
   const provider = useApiResource<ProviderInfo>('/agents/provider');
@@ -93,7 +93,7 @@ export function AssistantPage() {
   return (
     <>
       <PageHeader eyebrow={a.eyebrow} title={a.title} lead={a.lead} />
-      {provider.data && (
+      {provider.data && can('org.update') && (
         <p className={`rc-notice${provider.data.simulated ? ' rc-notice--warning' : ''}`} role="note">
           <span>{provider.data.simulated ? a.providerMock : `${a.providerReal} ${provider.data.model}.`}{provider.data.note ? ` ${provider.data.note}` : ''}</span>
         </p>

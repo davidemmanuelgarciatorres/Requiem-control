@@ -96,7 +96,7 @@ def test_financial_analyst_end_to_end(owner):
         "partial_period",
         "change_includes_unusual",
     }
-    assert out["summary"]["simulated"] is True and "sin IA real" in out["summary"]["text"]
+    assert out["summary"]["simulated"] is True and out["summary"]["text"].startswith("Resumen automático")
     assert e["usage"]["provider"] == "mock" and e["usage"]["cost_usd"] == 0
     assert "read_dataset" in e["usage"]["tools"]
     assert e["started_at"] and e["completed_at"]

@@ -19,7 +19,7 @@ describe('dashboard', () => {
     expect(await screen.findByRole('heading', { name: 'Pon tu negocio bajo control' })).toBeInTheDocument();
     expect(screen.queryByTestId('demo-banner')).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-demo-badge]')).toHaveLength(0);
-    expect(screen.getByRole('heading', { name: 'Estado del sistema' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Estado del sistema' })).not.toBeInTheDocument(); // solo en Configuración
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Controla.Analiza.Decide.');
   });
 

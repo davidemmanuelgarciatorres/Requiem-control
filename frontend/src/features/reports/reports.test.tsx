@@ -46,7 +46,7 @@ describe('Reports', () => {
     expect(row).toHaveTextContent('+50.0');
     expect(screen.getByText(/Frente a “Octubre”/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Exportar CSV' })).toHaveAttribute('href', '/api/reports/rep-2/export.csv');
-    expect(screen.getAllByText('Simulado · sin IA real').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Resumen automático').length).toBeGreaterThan(0);
     await user.click(screen.getByRole('button', { name: 'Imprimir / PDF' }));
     expect(print).toHaveBeenCalled();
   });
@@ -101,7 +101,6 @@ describe('Live dashboard', () => {
     expect(within(live).getByText('Último análisis financiero')).toBeInTheDocument();
     expect(within(live).getByText('Ventas · 2026-10-01 → 2026-11-06')).toBeInTheDocument();
     expect(within(live).getByRole('link', { name: 'Reporte de noviembre' })).toHaveAttribute('href', '/reports/rep-2');
-    expect(within(live).getByText(/no son de demostración/)).toBeInTheDocument();
   });
 
   it('keeps the onboarding when there is no activity yet', async () => {

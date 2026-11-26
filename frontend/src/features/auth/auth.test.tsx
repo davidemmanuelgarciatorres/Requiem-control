@@ -59,11 +59,25 @@ describe('authentication', () => {
     expect(screen.getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
   });
 
-  it('dashboard system status reflects the live health check', async () => {
-    mockApi({ 'GET /api/auth/me': json(200, session()), 'GET /api/health': json(200, { status: 'degraded', database: 'unavailable', version: 't' }) });
-    renderApp('/');
+  it('technical system status is only in settings, for admins', async () => {
+    mockApi({
+      'GET /api/auth/me': json(200, session()),
+      'GET /api/system/status': json(200, { environment: 'development', database: 'unavailable',
+        ai: { provider: 'mock', model: 'template-v1', simulated: true, configured: false, requested: 'mock', note: null },
+        google: { missing: ['GOOGLE_OAUTH_CLIENT_ID'], plan_allows: false, dev_override: false }, security: { cookie_secure: false } }),
+      'GET /api/organizations/current/members': json(200, []),
+      'GET /api/organizations/current/subscription': json(404, {}),
+    });
+    renderApp('/settings');
     const dbRow = (await screen.findByText('Base de datos')).closest('div')!;
-    expect(await screen.findByText('Crítico')).toBeInTheDocument();
-    expect(dbRow).toHaveTextContent('Crítico');
+    expect(dbRow).toHaveTextContent('No disponible');
+    expect(screen.getByText('GOOGLE_OAUTH_CLIENT_ID')).toBeInTheDocument();
+  });
+
+  it('the dashboard does not show technical system status to users', async () => {
+    mockApi({ 'GET /api/auth/me': json(200, session({ role: 'member', permissions: ['org.read', 'data.read'] })) });
+    renderApp('/');
+    await screen.findByRole('heading', { name: 'Pon tu negocio bajo control' });
+    expect(screen.queryByText('Base de datos')).not.toBeInTheDocument();
   });
 });

@@ -19,8 +19,8 @@ describe('secondary pages are honest about their state', () => {
       } }),
     });
     renderApp('/integrations', 'en');
-    expect(await screen.findByText(/Google is not configured on the server/)).toBeInTheDocument();
-    expect(screen.getByText(/GOOGLE_OAUTH_CLIENT_ID, INTEGRATIONS_ENCRYPTION_KEY/)).toBeInTheDocument();
+    expect(await screen.findByText(/Google is not configured on the server yet. See Settings/)).toBeInTheDocument();
+    expect(screen.queryByText(/GOOGLE_OAUTH_CLIENT_ID/)).not.toBeInTheDocument(); // nombres técnicos solo en Estado del sistema
     expect(screen.getByText('Not connected')).toBeInTheDocument();
     expect(screen.queryByText(/^Connected$/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Connect with Google' })).toBeDisabled();

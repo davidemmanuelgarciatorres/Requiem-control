@@ -3,7 +3,6 @@ import { ArrowLeft, Download, Printer, Trash2 } from 'lucide-react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
-import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
@@ -90,7 +89,7 @@ function ReportView({ report: r }: { report: Report }) {
             <div><dt>{t.reports.period}</dt><dd className="rc-tabular">{periodText(r.period_from, r.period_to)}</dd></div>
             <div><dt>{t.reports.sources}</dt><dd>{c.sources.map((s) => `${s.name} (${formatNumber(s.rows, lang)} ${t.data.rows.toLowerCase()})`).join(', ') || '—'}</dd></div>
             <div><dt>{t.reports.generatedBy}</dt><dd>
-              {c.generated_by?.simulated ? <Badge tone="warning">{t.ai.simulatedBadge}</Badge> : (c.generated_by?.model ?? '—')}
+              {c.generated_by?.simulated ? t.ai.simulatedBadge : t.ai.aiSummary}
             </dd></div>
             <div><dt>{t.reports.snapshot}</dt><dd>{t.reports.snapshotHint}</dd></div>
           </dl>

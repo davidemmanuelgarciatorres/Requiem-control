@@ -1,6 +1,6 @@
-import { Clock } from 'lucide-react';
 import { DICTIONARIES, LANGUAGES, usePreferences, type MotionPreference } from '../../app/preferences';
 import { Card } from '../../components/ui/Card';
+import { SystemStatus } from './SystemStatus';
 import { FloatersSettings } from '../floaters/FloatersSettings';
 import { PageHeader } from '../modules/PageHeader';
 import { AccountSection, AuditSection, DataSection, MembersSection, OrganizationSection, PlanSection } from './AccountSections';
@@ -36,11 +36,7 @@ export function SettingsPage() {
         </Card>
         <FloatersSettings />
         <DataSection />
-        <Card title={t.settings.otherTitle} subtitle={t.settings.otherPending} className="rc-span-2">
-          <ul className="rc-checklist rc-checklist--cols">
-            {t.settings.otherItems.map((i) => <li key={i}><Clock size={14} aria-hidden="true" />{i}</li>)}
-          </ul>
-        </Card>
+        <SystemStatus />
       </div>
     </>
   );

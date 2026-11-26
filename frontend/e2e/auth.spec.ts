@@ -26,7 +26,7 @@ test.describe('authentication & organizations (real API + PostgreSQL)', () => {
     await page.getByLabel('Nombre de tu negocio u organización').fill('Ferretería Ana');
     await page.getByRole('button', { name: 'Crear cuenta' }).click();
     await expect(page.getByText(/^Hola, Ana\./)).toBeVisible();
-    await expect(page.getByText('Operativo').first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Pon tu negocio bajo control' })).toBeVisible();
 
     const cookies = await page.context().cookies();
     const session = cookies.find((c) => c.name === 'rc_session');

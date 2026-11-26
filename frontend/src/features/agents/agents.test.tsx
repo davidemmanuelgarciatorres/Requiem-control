@@ -44,7 +44,8 @@ describe('AI agents', () => {
   it('shows the simulated provider honestly, the plan counters and planned agents', async () => {
     mockSignedIn({ ...common, 'GET /api/agents': json(200, agents()) }, session({ permissions: PERMS }));
     renderApp('/agents');
-    expect(await screen.findByText(/Proveedor de IA: simulado/)).toBeInTheDocument();
+    expect(await screen.findByText('Agentes activos: 0 de 2')).toBeInTheDocument();
+    expect(screen.queryByText(/Proveedor de IA/)).not.toBeInTheDocument(); // aviso técnico solo para administradores
     expect(screen.getByText('Agentes activos: 0 de 2')).toBeInTheDocument();
     expect(screen.getByText('Ejecuciones este mes: 3 de 100')).toBeInTheDocument();
     const email = screen.getByRole('article', { name: /Operaciones de correo/ });
@@ -87,7 +88,7 @@ describe('AI agents', () => {
       'POST /api/approvals/ap-1/decision': () => { status = 'executed'; return { status: 200, body: {} }; },
     }, session({ permissions: PERMS }));
     renderApp('/agents/runs/ex-1');
-    expect(await screen.findByText('Simulado · sin IA real')).toBeInTheDocument();
+    expect(await screen.findByText('Resumen automático')).toBeInTheDocument();
     expect(screen.getByText('Hay 1 filas duplicadas exactas.')).toBeInTheDocument();
     expect(screen.getByText('Filas: 18')).toBeInTheDocument();
     expect(screen.getByText('Eliminar 1 filas duplicadas de «Ventas»')).toBeInTheDocument();

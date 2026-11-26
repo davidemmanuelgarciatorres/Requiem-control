@@ -1,4 +1,4 @@
-import { ArrowRight, CircleCheck, FileText } from 'lucide-react';
+import { ArrowRight, FileText } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { usePreferences } from '../../app/preferences';
 import { AreaChart } from '../../components/charts/AreaChart';
@@ -88,7 +88,6 @@ export function LiveDashboard({ data }: { data: DashboardSummary }) {
           </ul>
         )}
       </Card>
-      <p className="rc-list__meta rc-span-2 rc-inline-icon"><CircleCheck size={14} aria-hidden="true" />{t.live.realDataNote}</p>
     </div>
   );
 }

@@ -30,7 +30,7 @@ test.describe('AI agents (real API + PostgreSQL, simulated AI provider)', () => 
     await importSales(page);
     await activateAndRun(page, /Analista financiero/);
     await expect(page.getByText('Completada').first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('Simulado · sin IA real', { exact: true })).toBeVisible();
+    await expect(page.getByText('Resumen automático', { exact: true })).toBeVisible();
     await expect(page.getByText(/Periodo analizado: 2026-10-01 a 2026-11-06/)).toBeVisible();
     await expect(page.getByRole('img', { name: 'Total por mes' })).toBeVisible();
     await expect(page.getByText(/Herramienta» concentra/)).toBeVisible();

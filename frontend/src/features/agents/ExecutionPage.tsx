@@ -127,7 +127,7 @@ function ExecutionView({ execution: ex, onChanged }: { execution: Execution; onC
 
         {out && <Results out={out} approvals={ex.approvals} onChanged={onChanged} />}
 
-        {ex.usage.provider && (
+        {ex.usage.provider && can('org.update') && (
           <Card title={t.ai.usageTitle} className="rc-span-2">
             <p className="rc-list__meta rc-tabular">
               {interpolate(t.ai.usageLine, {
@@ -171,7 +171,7 @@ export function Results({ out, approvals, onChanged }: { out: Omit<AgentOutput, 
   return (
     <>
       <Card title={t.ai.summaryTitle} className="rc-span-2"
-        actions={out.summary && <Badge tone={out.summary.simulated ? 'warning' : 'accent'}>{out.summary.simulated ? t.ai.simulatedBadge : interpolate(t.ai.realBadge, { model: out.summary.model })}</Badge>}>
+        actions={out.summary && <Badge tone={out.summary.simulated ? 'outline' : 'accent'}>{out.summary.simulated ? t.ai.simulatedBadge : t.ai.aiSummary}</Badge>}>
         {out.summary ? <p className="rc-summary">{out.summary.text}</p> : <p className="rc-list__meta">{interpolate(t.ai.summaryUnavailable, { code: out.summary_error ?? '—' })}</p>}
         {out.period && <p className="rc-list__meta">{interpolate(t.ai.periodLabel, { from: out.period.from, to: out.period.to })}</p>}
         {out.columns_used && <p className="rc-list__meta">{interpolate(t.ai.columnsUsed, { amount: out.columns_used.amount, date: out.columns_used.date })}</p>}

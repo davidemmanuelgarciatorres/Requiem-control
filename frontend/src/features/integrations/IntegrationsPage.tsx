@@ -188,7 +188,7 @@ export function IntegrationsPage() {
             {!g.configured && (
               <div className="rc-notice rc-notice--warning" role="note">
                 <CircleAlert size={16} aria-hidden="true" />
-                <span><strong>{i.notConfiguredTitle}.</strong> {interpolate(i.notConfiguredBody, { missing: g.missing.join(', ') })}</span>
+                <span>{g.can_manage ? i.notConfiguredAdmin : i.notConfiguredUser}</span>
               </div>
             )}
             {g.configured && !g.plan_allows && <p className="rc-notice rc-notice--warning" role="note"><span>{i.planBlocked}</span></p>}
