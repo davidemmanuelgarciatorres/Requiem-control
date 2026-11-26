@@ -5,6 +5,12 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
+# Si la base de datos quedó apagada (p. ej. tras reiniciar el Codespace), se vuelve a encender.
+if ! pg_isready -h localhost -q >/dev/null 2>&1; then
+  docker start requiem-db >/dev/null 2>&1 || sudo service postgresql start >/dev/null 2>&1 || true
+  for _ in $(seq 1 30); do pg_isready -h localhost -q >/dev/null 2>&1 && break; sleep 1; done
+fi
+
 if [ ! -x backend/.venv/bin/uvicorn ] || [ ! -d frontend/node_modules ]; then
   echo "Falta la instalación; ejecutando scripts/codespace-setup.sh…"
   bash scripts/codespace-setup.sh
@@ -26,6 +32,11 @@ if ! grep -q '^INTEGRATIONS_ENCRYPTION_KEY=' "$ENV_FILE"; then
   KEY="$(backend/.venv/bin/python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')"
   echo "INTEGRATIONS_ENCRYPTION_KEY=${KEY}" >> "$ENV_FILE"
 fi
+
+# Node 22 instalado con nvm (Codespaces genéricos).
+export NVM_DIR="${NVM_DIR:-/usr/local/share/nvm}"
+# shellcheck disable=SC1091
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" >/dev/null 2>&1 && nvm use 22 >/dev/null 2>&1 || true
 
 export ENVIRONMENT=development
 export ALLOWED_ORIGINS="[\"${URL}\"]"
