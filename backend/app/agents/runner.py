@@ -17,9 +17,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app import audit, entitlements
-from app.agents import data_analyst, financial_analyst
+from app.agents import customer_ops, data_analyst, email_ops, financial_analyst, inventory_analyst
 from app.agents.providers import ProviderError
 from app.agents.tools import AgentInputError, ToolContext, ToolNotAllowed
+from app.config import get_settings
 from app.db import _session_factory, set_tenant_context
 from app.errors import ApiError
 from app.models import AgentDefinition, AgentExecution, Approval, OrganizationAgent, User
@@ -29,7 +30,12 @@ log = logging.getLogger("requiem.agents")
 AGENT_IMPLEMENTATIONS: dict[str, Callable[[ToolContext, dict[str, Any]], dict[str, Any]]] = {
     "data-analyst": data_analyst.run,
     "financial-analyst": financial_analyst.run,
+    "inventory-analyst": inventory_analyst.run,
+    "customer-ops": customer_ops.run,
+    "email-ops": email_ops.run,
 }
+# Agentes que analizan un conjunto de datos importado (los demás leen de una integración).
+DATASET_AGENTS = {"data-analyst", "financial-analyst", "inventory-analyst", "customer-ops"}
 TERMINAL = {"completed", "failed", "cancelled"}
 
 
@@ -115,6 +121,8 @@ def create_execution(
     definition = db.get(AgentDefinition, agent_id)
     if definition is None or agent_id not in AGENT_IMPLEMENTATIONS:
         raise ApiError(404, "agent.not_found", "Agente no encontrado.")
+    if agent_id in DATASET_AGENTS and not params.get("dataset_id"):
+        raise ApiError(422, "agent.dataset_required", "Elige un conjunto de datos.")
     if agent_id not in active_agent_ids(db, org_id):
         raise ApiError(409, "agent.inactive", "Activa el agente antes de ejecutarlo.")
     ent = entitlements.for_organization(db, org_id)
@@ -138,6 +146,8 @@ def create_execution(
     db.flush()
     execution.status = "queued"
     execution.queued_at = now()
+    if get_settings().execution_mode == "inline":
+        execution.claimed_at = now()  # la ejecuta el propio servidor web; el worker no debe tomarla
     audit.record(
         db,
         "agent.run",

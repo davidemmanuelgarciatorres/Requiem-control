@@ -47,9 +47,10 @@ def owner(client):
 
 def test_catalog_and_activation_rules(owner, owner_engine):
     data = owner.get("/api/agents").json()
-    assert [a["id"] for a in data["agents"] if a["status"] == "available"] == ["data-analyst", "financial-analyst"]
-    assert len(data["agents"]) == 6 and data["active_count"] == 0 and data["active_limit"] == 2
-    assert activate(owner, "email-ops").json()["error"]["code"] == "agent.unavailable"
+    available = {a["id"] for a in data["agents"] if a["status"] == "available"}
+    assert available == {"data-analyst", "financial-analyst", "inventory-analyst", "customer-ops", "email-ops"}
+    assert len(data["agents"]) == 5 and data["active_count"] == 0 and data["active_limit"] == 2
+    assert activate(owner, "automation").json()["error"]["code"] in ("agent.unavailable", "agent.not_found")
     assert activate(owner, "data-analyst").status_code == 204
     # Límite del plan aplicado en el servidor (se reduce a 1 para probarlo).
     with owner_engine.begin() as c:

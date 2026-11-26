@@ -70,7 +70,11 @@ def list_agents(
     org = ctx.require_org()
     active = runner.active_agent_ids(db, org.id)
     ent = entitlements.for_organization(db, org.id)
-    defs = db.execute(select(AgentDefinition).order_by(AgentDefinition.phase, AgentDefinition.id)).scalars()
+    defs = db.execute(
+        select(AgentDefinition)
+        .where(AgentDefinition.status != "retired")
+        .order_by(AgentDefinition.phase, AgentDefinition.id)
+    ).scalars()
     return {
         "agents": [
             {
@@ -139,7 +143,7 @@ def run_agent(
         org_id=org.id,
         user_id=ctx.user.id,
         agent_id=agent_id,
-        params={"dataset_id": str(body.dataset_id)},
+        params={"dataset_id": str(body.dataset_id)} if body.dataset_id else {},
         idempotency_key=body.idempotency_key,
     )
     if created:

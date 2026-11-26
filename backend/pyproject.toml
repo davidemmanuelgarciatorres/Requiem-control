@@ -36,6 +36,7 @@ ignore = ["S101", "B008", "RUF001", "RUF002", "RUF003"]
 "tests/*" = ["S105", "S106", "S608", "E501", "RUF059"]
 "migrations/*" = ["E501", "S608"]  # SQL construido solo con constantes del propio archivo
 "app/assistant.py" = ["E501"]  # frases bilingües largas
+"app/agents/tools.py" = ["E501"]  # plantillas de correo
 
 [tool.mypy]
 python_version = "3.12"

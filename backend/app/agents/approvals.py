@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app import audit
 from app.agents.runner import now
 from app.errors import ApiError
-from app.models import AgentExecution, Approval, Dataset
+from app.models import AgentExecution, Approval, Dataset, Organization, Report
 
 
 def _remove_duplicates(db: Session, org_id: uuid.UUID, payload: dict[str, Any]) -> dict[str, Any]:
@@ -48,8 +48,74 @@ def _remove_duplicates(db: Session, org_id: uuid.UUID, payload: dict[str, Any]) 
     return {"removed_rows": removed_rows, "remaining_rows": remaining}
 
 
+def _list_report(
+    agent_id: str, title: str, key: str, columns: list[str]
+) -> Callable[[Session, uuid.UUID, dict[str, Any]], dict[str, Any]]:
+    """Guarda la lista aprobada como reporte (no toca los datos ni sistemas externos)."""
+
+    def handler(db: Session, org_id: uuid.UUID, payload: dict[str, Any]) -> dict[str, Any]:
+        org = db.get(Organization, org_id)
+        rows = payload.get(key, [])
+        report = Report(
+            organization_id=org_id,
+            agent_id=agent_id,
+            title=f"{title} · {payload.get('dataset_name', '')}"[:160],
+            dataset_id=uuid.UUID(payload["dataset_id"]) if payload.get("dataset_id") else None,
+            content={
+                "organization": org.name if org else "",
+                "agent_id": agent_id,
+                "agent_version": "1.0.0",
+                "sources": [
+                    {
+                        "type": "dataset",
+                        "id": payload.get("dataset_id"),
+                        "name": payload.get("dataset_name"),
+                        "rows": len(rows),
+                    }
+                ],
+                "metrics": [{"key": "items", "value": len(rows), "format": "number"}],
+                "tables": [{"key": key if key != "items" else "purchase_list", "columns": columns, "rows": rows}],
+                "recommendations": [],
+                "limitations": [{"code": "dataset_only", "params": {}}],
+                "summary": None,
+                "generated_by": {"provider": None, "simulated": True},
+                "execution": {"id": None, "completed_at": None},
+            },
+        )
+        db.add(report)
+        db.flush()
+        return {"report_id": str(report.id), "count": len(rows)}
+
+    return handler
+
+
+def _create_draft(db: Session, org_id: uuid.UUID, payload: dict[str, Any]) -> dict[str, Any]:
+    from app.integrations import google
+
+    draft_id = google.create_draft(
+        db,
+        org_id,
+        to=payload["to"],
+        subject=payload.get("subject", ""),
+        body=payload["body"],
+        thread_id=payload.get("thread_id"),
+        in_reply_to=payload.get("in_reply_to"),
+    )
+    return {"draft_id": draft_id, "to": payload["to"]}
+
+
 ACTION_HANDLERS: dict[str, Callable[[Session, uuid.UUID, dict[str, Any]], dict[str, Any]]] = {
     "dataset.remove_duplicates": _remove_duplicates,
+    "inventory.purchase_list": _list_report(
+        "inventory-analyst", "Lista de compra", "items", ["product", "stock", "minimum", "suggested"]
+    ),
+    "customers.follow_up_list": _list_report(
+        "customer-ops",
+        "Seguimiento de clientes",
+        "customers",
+        ["customer", "orders", "total", "last_purchase", "days_since"],
+    ),
+    "email.create_draft": _create_draft,
 }
 
 

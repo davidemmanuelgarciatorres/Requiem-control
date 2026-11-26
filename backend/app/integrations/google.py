@@ -46,6 +46,8 @@ SERVICE_SCOPES: dict[str, list[str]] = {
     ],
     "drive": ["https://www.googleapis.com/auth/drive.metadata.readonly"],
     "gmail": ["https://www.googleapis.com/auth/gmail.readonly"],
+    # Crear BORRADORES (nunca enviar): lo usa el agente de correo y solo tras aprobación humana.
+    "gmail_drafts": ["https://www.googleapis.com/auth/gmail.compose"],
 }
 SERVICES = tuple(SERVICE_SCOPES)
 STATE_TTL = timedelta(minutes=10)
@@ -448,3 +450,81 @@ def gmail_recent(db: Session, org_id: uuid.UUID) -> list[dict[str, Any]]:
                 }
             )
     return out
+
+
+def _post(db: Session, integ: Integration, http: httpx2.Client, url: str, body: dict[str, Any]) -> dict[str, Any]:
+    if integ.status != "connected" or not integ.access_token_enc:
+        raise ApiError(409, "integration.not_connected", "La integración no está conectada.")
+    token = crypto.decrypt(integ.access_token_enc)
+    if integ.token_expires_at and integ.token_expires_at - timedelta(seconds=60) < datetime.now(UTC):
+        token = _refresh(db, integ, http)
+    for attempt in range(2):
+        try:
+            r = http.post(url, json=body, headers={"Authorization": f"Bearer {token}"})
+        except httpx2.HTTPError as e:
+            raise _fail(db, integ, "integration.unreachable") from e
+        if r.status_code == 401 and attempt == 0:
+            token = _refresh(db, integ, http)
+            continue
+        if r.status_code == 403:
+            raise _fail(db, integ, "integration.forbidden", 403)
+        if r.status_code >= 400:
+            raise _fail(db, integ, "integration.provider_error", 502, http_status=r.status_code)
+        integ.last_sync_at = datetime.now(UTC)
+        return dict(r.json())
+    raise _fail(db, integ, "integration.reauth_required", 409)
+
+
+def gmail_for_agent(db: Session, org_id: uuid.UUID, limit: int = 15) -> list[dict[str, Any]]:
+    """Metadatos + fragmento corto (snippet) de los correos recientes de la bandeja de entrada, para clasificar.
+    No se guardan cuerpos completos."""
+    integ = _need(get(db, org_id), "gmail")
+    out = []
+    with client_factory() as http:
+        ids = _call(db, integ, http, f"{GMAIL_API}/messages", {"maxResults": limit, "labelIds": "INBOX"}).get(
+            "messages", []
+        )
+        for m in ids[:limit]:
+            msg = _call(
+                db,
+                integ,
+                http,
+                f"{GMAIL_API}/messages/{m['id']}",
+                {"format": "metadata", "metadataHeaders": ["From", "Subject", "Date", "Message-ID"]},
+            )
+            h = {x["name"].lower(): x["value"] for x in msg.get("payload", {}).get("headers", [])}
+            out.append(
+                {
+                    "id": m["id"],
+                    "thread_id": msg.get("threadId") or m.get("threadId"),
+                    "from": h.get("from", ""),
+                    "subject": h.get("subject", ""),
+                    "date": h.get("date", ""),
+                    "message_id": h.get("message-id"),
+                    "snippet": str(msg.get("snippet", ""))[:300],
+                }
+            )
+    return out
+
+
+def create_draft(
+    db: Session, org_id: uuid.UUID, *, to: str, subject: str, body: str, thread_id: str | None, in_reply_to: str | None
+) -> str:
+    """Crea un BORRADOR en Gmail (no lo envía). Devuelve el id del borrador."""
+    from email.message import EmailMessage
+
+    integ = _need(get(db, org_id), "gmail_drafts")
+    msg = EmailMessage()
+    msg["To"] = to
+    msg["Subject"] = subject if subject.lower().startswith("re:") else f"Re: {subject}"
+    if in_reply_to:
+        msg["In-Reply-To"] = in_reply_to
+        msg["References"] = in_reply_to
+    msg.set_content(body)
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    payload: dict[str, Any] = {"message": {"raw": raw}}
+    if thread_id:
+        payload["message"]["threadId"] = thread_id
+    with client_factory() as http:
+        data = _post(db, integ, http, f"{GMAIL_API}/drafts", payload)
+    return str(data.get("id", ""))
