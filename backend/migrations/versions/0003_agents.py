@@ -25,10 +25,30 @@ DATASET_INPUT = {
 
 # id, versión, estado, solo lectura, requiere aprobación, herramientas, permisos, timeout, reintentos, fase
 AGENTS = [
-    ("data-analyst", "1.0.0", "available", False, True, ["read_dataset", "dataset_quality", "summarize", "propose_action"],
-     ["data.read", "agents.run"], 120, 2, 4),
-    ("financial-analyst", "1.0.0", "available", True, False, ["read_dataset", "dataset_quality", "summarize"],
-     ["data.read", "agents.run"], 120, 2, 4),
+    (
+        "data-analyst",
+        "1.0.0",
+        "available",
+        False,
+        True,
+        ["read_dataset", "dataset_quality", "summarize", "propose_action"],
+        ["data.read", "agents.run"],
+        120,
+        2,
+        4,
+    ),
+    (
+        "financial-analyst",
+        "1.0.0",
+        "available",
+        True,
+        False,
+        ["read_dataset", "dataset_quality", "summarize"],
+        ["data.read", "agents.run"],
+        120,
+        2,
+        4,
+    ),
     ("inventory-analyst", "0.0.0", "planned", False, True, [], ["data.read", "agents.run"], 120, 2, 7),
     ("customer-ops", "0.0.0", "planned", False, True, [], ["data.read", "agents.run"], 120, 2, 7),
     ("email-ops", "0.0.0", "planned", False, True, [], ["agents.run"], 120, 2, 7),
@@ -115,7 +135,7 @@ def upgrade() -> None:
     END $$;
     """)
 
-    for (aid, version, status, ro, approval, tools, perms, timeout, retries, phase) in AGENTS:
+    for aid, version, status, ro, approval, tools, perms, timeout, retries, phase in AGENTS:
         op.execute(
             "INSERT INTO agent_definitions (id, version, status, read_only, requires_approval, allowed_tools, "
             "required_permissions, input_schema, timeout_seconds, max_retries, phase) VALUES "

@@ -35,6 +35,47 @@ const PERMS: Record<RoleCode, string[]> = {
 const RANK: Record<RoleCode, number> = { owner: 100, admin: 80, member: 50, viewer: 10 };
 const FREE_PLAN = { code: 'free', name: 'Gratis', price_cents: 0, currency: 'MXN', interval: 'month', max_active_agents: 2, max_monthly_executions: 100, max_storage_mb: 50, max_members: 3 };
 
+
+/** Reporte de EJEMPLO para la demostración (cifras ficticias, etiquetado como simulado). */
+const DEMO_REPORT_ID = 'demo-report';
+function demoReport(orgName: string) {
+  const series = [
+    { period: '2026-08', total: 182400, count: 212 }, { period: '2026-09', total: 176900, count: 205 },
+    { period: '2026-10', total: 194300, count: 228 }, { period: '2026-11', total: 168200, count: 197 },
+  ];
+  return {
+    id: DEMO_REPORT_ID, title: 'Análisis financiero · Ventas (ejemplo de demostración)', agent_id: 'financial-analyst',
+    dataset_id: null, period_from: '2026-08-01', period_to: '2026-11-30', created_at: '2026-11-26T15:00:00Z',
+    comparison: null,
+    content: {
+      organization: orgName, agent_id: 'financial-analyst', agent_version: '1.0.0',
+      sources: [{ type: 'dataset', id: null, name: 'Ventas (demo)', rows: 842 }],
+      columns_used: { amount: 'Monto', date: 'Fecha', group: 'Categoría' },
+      metrics: [
+        { key: 'total', value: 721800, format: 'currency' }, { key: 'transactions', value: 842, format: 'number' },
+        { key: 'average', value: 857.24, format: 'currency' }, { key: 'median', value: 640, format: 'currency' },
+        { key: 'change', value: -0.1343, format: 'percent' },
+      ],
+      series,
+      breakdown: { dimension: 'Categoría', role: 'category', items: [
+        { label: 'Herramienta', total: 361200, share: 0.5004 }, { label: 'Pintura', total: 201400, share: 0.279 },
+        { label: 'Eléctrico', total: 159200, share: 0.2206 },
+      ] },
+      unusual: [{ row_number: 417, date: '2026-10-14', amount: 18500, label: 'Herramienta' }],
+      recommendations: [
+        { code: 'revenue_change', severity: 'warning', evidence: { periods: ['2026-10', '2026-11'] },
+          params: { current_period: '2026-11', previous_period: '2026-10', pct: -0.1343, previous: 194300, current: 168200 } },
+        { code: 'concentration', severity: 'info', evidence: {}, params: { label: 'Herramienta', share: 0.5004, dimension: 'Categoría' } },
+        { code: 'unusual_transactions', severity: 'warning', evidence: { rows: [417] }, params: { count: 1 } },
+      ],
+      limitations: [{ code: 'not_accounting_advice', params: {} }, { code: 'dataset_only', params: {} }],
+      summary: { text: 'Resumen de ejemplo (simulado): las ventas bajaron 13 % en noviembre frente a octubre; Herramienta concentra la mitad del total.', provider: 'mock', model: 'mock', simulated: true },
+      generated_by: { provider: 'mock', model: 'mock', simulated: true, cost_usd: 0 },
+      execution: { id: 'demo', completed_at: '2026-11-26T15:00:00Z' },
+    },
+  };
+}
+
 let memory: DemoState | null = null;
 
 const now = () => new Date().toISOString();
@@ -185,6 +226,20 @@ export async function handleDemo(method: string, path: string, body: unknown): P
         return [];
       case 'GET /health':
         return { status: 'ok', database: 'ok', version: 'demo' };
+      case 'GET /reports': {
+        const { org } = requirePerm(s, 'data.read');
+        const { content: _c, comparison: _cmp, ...summary } = demoReport(org.name);
+        void _c; void _cmp;
+        return [summary];
+      }
+      case `GET /reports/${DEMO_REPORT_ID}`:
+        return demoReport(requirePerm(s, 'data.read').org.name);
+      case `DELETE /reports/${DEMO_REPORT_ID}`:
+        requirePerm(s, 'data.write');
+        return fail(403, 'demo.read_only', 'El reporte de ejemplo no se puede eliminar en la demostración.');
+      case 'GET /dashboard/summary':
+        requirePerm(s, 'data.read');
+        return { generated_at: now(), datasets: 0, storage_bytes: 0, active_agents: 0, pending_approvals: 0, financial: null, recent_executions: [], recommendations: [], reports: [] };
       case 'GET /plans':
         return [FREE_PLAN];
       case 'GET /auth/me':

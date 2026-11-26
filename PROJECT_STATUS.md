@@ -1,8 +1,27 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **4 (primeros agentes de IA) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **5 (reportes e inteligencia) — completa, pendiente de revisión**
 
 ## ✅ Implementado y probado
+
+### Fase 5 — Reportes e inteligencia
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Generar reporte desde un análisis completado (instantánea; idempotente; no cambia si luego se borra el conjunto) | pytest + unitaria + e2e. |
+| Solo ejecuciones completadas (fallidas → 409 explicado) | pytest. |
+| Comparación con el reporte anterior del mismo agente (cifras exactas de la diferencia) | pytest + unitaria. |
+| Exportación CSV de reportes y conjuntos con BOM UTF-8 y **celdas `= + - @` tab/CR neutralizadas** | pytest (fórmulas `=HYPERLINK`, `@SUM`, título malicioso) + e2e (descarga real). |
+| Imprimir / Guardar como PDF: la hoja de impresión oculta fondo, barras y botones | e2e con `emulateMedia('print')` en escritorio y móvil. |
+| Eliminar reporte requiere `data.write` (lector → 403); exportaciones y creación auditadas | pytest. |
+| Aislamiento: reportes y exportaciones de otra organización → 404; RLS sin contexto no ve filas | pytest. |
+| Panel con datos reales (último análisis, recomendaciones sin duplicados, actividad, reportes); sin datos → incorporación | pytest + 2 unitarias + e2e. |
+
+### Imágenes flotantes (petición del propietario)
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Máximo 3 por usuario, elegidas de galería/archivos; recorte previo; reducción automática a 256 px | pytest (4.ª → 409) + unitarias + e2e. |
+| Servidor re-codifica con Pillow, elimina EXIF/ubicación, rechaza no-imágenes y archivos > 2 MB; RLS por usuario | pytest (6). |
+| Tamaño ajustable con límite; color y forma del efecto de choque configurables; rebote en pared pequeño; movimiento reducido respetado | unitarias de física/efectos + e2e. |
 
 ### Fase 4 — Agentes de IA
 | Funcionalidad | Cómo se verificó |
@@ -88,20 +107,20 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - Recuperación de contraseña y verificación de correo (requieren envío de email).
 - 2FA y gestión de sesiones activas.
 - Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
-- Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, exportación CSV, importación en la demo sin servidor.
+- Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, importación en la demo sin servidor.
 - Agentes: worker separado, asistente conversacional, proveedor de IA real (requiere tu credencial y autorización de gasto).
-- Fases 5–8: reportes exportables, integraciones, agentes avanzados, facturación.
+- Fases 6–8: integraciones, agentes avanzados, facturación. Reportes programados/por correo y PDF de servidor.
 - CI (GitHub Actions) — propuesto, no activado sin autorización.
 
 ## Resultados de la última ejecución
 ```
 backend:  ruff check .          → sin problemas
-          mypy app (strict)     → sin errores (33 archivos)
-          pytest                → 84 aprobadas (PostgreSQL 16 real)
+          mypy app (strict)     → sin errores (38 archivos)
+          pytest                → 98 aprobadas (PostgreSQL 16 real)
 frontend: npm run lint          → 0 problemas
           npm run typecheck     → 0 errores
-          npm run test          → 9 archivos, 52 aprobadas
+          npm run test          → 11 archivos, 65 aprobadas
           npm run build         → OK (la API simulada de la demo no se incluye)
-          npm run e2e           → 57 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+          npm run e2e           → 67 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
                                    (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
 ```

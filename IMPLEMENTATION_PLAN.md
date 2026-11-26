@@ -8,9 +8,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | 1 | Fundamento visual | ✅ Completa |
 | 2 | Autenticación y base de datos | ✅ Completa |
 | 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa |
-| 4 | Primeros agentes de IA | ✅ Completa (pendiente de revisión) |
-| 5 | Reportes e inteligencia | ⏸ Siguiente — esperando autorización |
-| 6 | Integraciones (Gmail, Sheets, Drive) | Pendiente |
+| 4 | Primeros agentes de IA | ✅ Completa |
+| 5 | Reportes e inteligencia | ✅ Completa (pendiente de revisión) |
+| 6 | Integraciones (Gmail, Sheets, Drive) | ⏸ Siguiente — esperando autorización |
 | 7 | Agentes avanzados | Pendiente |
 | 8 | Facturación y preparación para producción | Pendiente |
 
@@ -59,9 +59,24 @@ importación en la demostración sin servidor.
 Pendiente del área: worker separado para ejecuciones largas, asistente conversacional (módulo Asistente IA),
 más acciones aprobables (requieren integraciones, Fase 6).
 
-## Fase 5 — Reportes e inteligencia (siguiente recomendada)
-Indicadores reales, comparaciones históricas, recomendaciones explicables (qué, evidencia, periodo, por qué,
-acción, limitaciones — formato ya prototipado en la demo), exportación CSV/PDF. Reevaluar librería de gráficas.
+## Extra — Imágenes flotantes ✅
+Hasta 3 imágenes por usuario (galería/archivos), recorte antes de subir, reducción automática a 256 px WebP en el
+navegador y re-codificación en el servidor (sin metadatos de ubicación), tamaño ajustable con límite, choques con
+efecto de color y forma configurables y rebote en paredes discreto. Tabla `user_floaters` con RLS por usuario.
+
+## Fase 5 — Reportes e inteligencia ✅
+- Tabla `reports` (RLS): instantánea inmutable de una ejecución completada (periodo, fuentes, indicadores, serie,
+  distribución, movimientos inusuales, recomendaciones, limitaciones, quién generó el resumen). Un reporte por
+  ejecución (idempotente).
+- Comparación con el reporte anterior del mismo agente (diferencia absoluta y porcentual por indicador).
+- Exportación CSV de reportes y conjuntos de datos con **neutralización de inyección de fórmulas**; impresión/PDF
+  con hoja de estilos de impresión (sin dependencias ni servicios externos).
+- Panel principal con datos reales: último análisis financiero, recomendaciones recientes (sin duplicados),
+  actividad de agentes y reportes. Sin datos, se conserva la incorporación.
+- Gráficas: se mantiene SVG propio (suficiente; evita ~100 kB de librería).
+
+Pendiente del área: reportes programados y envío por correo (requieren worker y proveedor de email), PDF generado
+en servidor (hoy se usa “Guardar como PDF” del navegador).
 
 ## Fase 6 — Integraciones
 OAuth oficial de Google con permisos mínimos, estado de conexión, última sincronización, errores, reconexión.

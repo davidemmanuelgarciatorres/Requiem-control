@@ -12,7 +12,7 @@ import { useApiResource } from '../../lib/useApi';
  * Portada del panel. Los indicadores de la derecha son datos REALES de la
  * organización activa (no de demostración).
  */
-export function DashboardHero({ demo, onToggleDemo }: { demo: boolean; onToggleDemo: () => void }) {
+export function DashboardHero({ demo, onToggleDemo, hasData = false }: { demo: boolean; onToggleDemo: () => void; hasData?: boolean }) {
   const { t } = usePreferences();
   const { session, can } = useAuth();
   const health = useApiResource<Health>('/health');
@@ -41,7 +41,7 @@ export function DashboardHero({ demo, onToggleDemo }: { demo: boolean; onToggleD
         </h1>
         <p className="rc-hero__lead">
           {firstName && <>{interpolate(h.hello, { name: firstName })} </>}
-          {demo ? t.dashboard.subtitleDemo : t.dashboard.subtitleEmpty}
+          {demo ? t.dashboard.subtitleDemo : hasData ? t.dashboard.subtitleLive : t.dashboard.subtitleEmpty}
         </p>
         <div className="rc-hero__actions">
           <Link to="/data" className="rc-btn rc-btn--primary rc-btn--lg">{h.ctaImport}</Link>

@@ -44,7 +44,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: 'inventory', path: '/inventory', icon: Boxes, status: 'planned', phase: 7, module: 'inventory' },
       { id: 'customers', path: '/customers', icon: Users, status: 'planned', phase: 7, module: 'customers' },
       { id: 'email', path: '/email', icon: Mail, status: 'planned', phase: 7, module: 'email' },
-      { id: 'reports', path: '/reports', icon: FileText, status: 'planned', phase: 5, module: 'reports' },
+      { id: 'reports', path: '/reports', icon: FileText, status: 'live', phase: 5 },
     ],
   },
   {

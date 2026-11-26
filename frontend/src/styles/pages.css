@@ -186,3 +186,24 @@ label.rc-btn.is-disabled { opacity: 0.45; pointer-events: none; }
 .rc-bars__track > span { display: block; height: 100%; background: var(--rc-accent); border-radius: inherit; }
 .rc-bars__value { grid-column: 1 / -1; color: var(--rc-text-muted); font-size: var(--rc-fs-xs); }
 .rc-approval-box { display: grid; gap: var(--rc-space-2); margin-top: var(--rc-space-2); padding: var(--rc-space-3); border-radius: var(--rc-radius-md); border: 1px dashed rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.05); font-size: var(--rc-fs-sm); }
+
+/* --- Reportes (Fase 5) ------------------------------------------------------ */
+.rc-delta--up { color: var(--rc-success, #7ee2a8); }
+.rc-delta--down { color: var(--rc-danger, #ff8a8a); }
+.rc-report .rc-table th[scope='row'] { font-weight: 500; text-align: left; }
+
+/* Impresión / “Guardar como PDF”: solo el contenido, fondo blanco y tinta negra. */
+@media print {
+  @page { margin: 14mm; }
+  html, body { background: #fff !important; color: #111 !important; }
+  .rc-ambient, .rc-sidebar, .rc-topbar, .rc-demo-strip, .rc-skip-link, .rc-no-print,
+  .rc-floaters, .rc-popover, .rc-drawer, canvas { display: none !important; }
+  .rc-shell, .rc-main-col, .rc-main { display: block !important; padding: 0 !important; margin: 0 !important; max-width: none !important; }
+  .rc-card { background: #fff !important; color: #111 !important; border: 1px solid #ccc !important; box-shadow: none !important;
+    backdrop-filter: none !important; -webkit-backdrop-filter: none !important; break-inside: avoid; }
+  .rc-card *, .rc-page-header * { color: #111 !important; }
+  .rc-grid { display: block !important; }
+  .rc-grid > * { margin-bottom: 10px; }
+  .rc-bars__track span { background: #555 !important; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  a { text-decoration: none; }
+}

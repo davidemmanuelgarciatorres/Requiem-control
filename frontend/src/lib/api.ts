@@ -189,3 +189,34 @@ export async function uploadFile<T>(path: string, file: File, fields: Record<str
   }
   return data as T;
 }
+
+export type ReportSummary = {
+  id: string; title: string; agent_id: string; dataset_id: string | null;
+  period_from: string | null; period_to: string | null; created_at: string;
+};
+export type ReportComparison = {
+  previous_id: string; previous_title: string; previous_created_at: string;
+  previous_period: { from: string | null; to: string | null };
+  metrics: { key: string; format: 'number' | 'percent' | 'currency'; current: number; previous: number; delta: number; delta_pct: number | null }[];
+};
+export type ReportContent = Omit<AgentOutput, 'dataset' | 'period'> & {
+  organization: string; agent_id: string; agent_version: string;
+  sources: { type: string; id: string | null; name: string; rows: number }[];
+  generated_by: Execution['usage']; execution: { id: string; completed_at: string | null };
+};
+export type Report = ReportSummary & { content: ReportContent; comparison: ReportComparison | null };
+export type DashboardSummary = {
+  generated_at: string; datasets: number; storage_bytes: number; active_agents: number; pending_approvals: number;
+  financial: {
+    execution_id: string; dataset: AgentOutput['dataset']; period: AgentOutput['period'];
+    metrics: AgentOutput['metrics']; series: AgentOutput['series'] | null; completed_at: string | null;
+  } | null;
+  recent_executions: { id: string; agent_id: string; status: ExecutionStatus; created_at: string; dataset: string | null }[];
+  recommendations: (Recommendation & { execution_id: string; agent_id: string; dataset: string | null })[];
+  reports: { id: string; title: string; created_at: string }[];
+};
+
+/** URL de descarga directa (GET con la cookie de sesión). En la demo no hay servidor: devuelve null. */
+export function downloadUrl(path: string): string | null {
+  return __DEMO__ ? null : `/api${path}`;
+}

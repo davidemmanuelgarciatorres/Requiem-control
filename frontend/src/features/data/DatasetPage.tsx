@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Download } from 'lucide-react';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import type { Language } from '../../app/preferences';
 import { usePreferences } from '../../app/preferences';
@@ -7,7 +7,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
-import type { ColumnReport, Dataset, DatasetColumn, DatasetRows } from '../../lib/api';
+import { downloadUrl, type ColumnReport, type Dataset, type DatasetColumn, type DatasetRows } from '../../lib/api';
 import { formatDate, formatNumber, formatPercent, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { PageHeader } from '../modules/PageHeader';
@@ -64,6 +64,11 @@ function DatasetView({ ds }: { ds: Dataset }) {
       <PageHeader
         eyebrow={<Link to="/data" className="rc-inline-icon"><ArrowLeft size={14} aria-hidden="true" /> {t.data.backToData}</Link>}
         title={ds.name}
+        aside={downloadUrl(`/datasets/${ds.id}/export.csv`) && (
+          <a className="rc-btn rc-btn--glass rc-btn--sm" href={downloadUrl(`/datasets/${ds.id}/export.csv`)!} download>
+            <Download size={14} aria-hidden="true" />{t.data.exportCsv}
+          </a>
+        )}
         lead={`${t.data.source}: ${ds.source_filename ?? '—'} · ${t.data.importedAt} ${formatDate(new Date(ds.created_at), lang, { dateStyle: 'medium', timeStyle: 'short' })}`}
       />
       <div className="rc-grid rc-grid--2">

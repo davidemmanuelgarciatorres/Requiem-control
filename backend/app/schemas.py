@@ -1,6 +1,6 @@
 """Contratos de la API (Pydantic). Toda entrada se valida aquí."""
 
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Literal
 from uuid import UUID
 
@@ -295,3 +295,24 @@ class FloatersOut(BaseModel):
     preferences: FloaterPreferences
     images: list[FloaterOut]
     max_images: int
+
+
+# --- Reportes (Fase 5) ---------------------------------------------------------
+class ReportCreateIn(Strict):
+    execution_id: UUID
+    title: str | None = Field(default=None, min_length=1, max_length=160)
+
+
+class ReportSummaryOut(BaseModel):
+    id: UUID
+    title: str
+    agent_id: str
+    dataset_id: UUID | None
+    period_from: date | None
+    period_to: date | None
+    created_at: datetime
+
+
+class ReportOut(ReportSummaryOut):
+    content: dict[str, Any]
+    comparison: dict[str, Any] | None

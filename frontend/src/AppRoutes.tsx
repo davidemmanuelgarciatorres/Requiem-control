@@ -14,6 +14,8 @@ import { DesignSystemPage } from './features/design-system/DesignSystemPage';
 import { IntegrationsPage } from './features/integrations/IntegrationsPage';
 import { ModulePage } from './features/modules/ModulePage';
 import { NotFoundPage } from './features/modules/NotFoundPage';
+import { ReportPage } from './features/reports/ReportPage';
+import { ReportsPage } from './features/reports/ReportsPage';
 import { SettingsPage } from './features/settings/SettingsPage';
 
 export function AppRoutes() {
@@ -28,6 +30,8 @@ export function AppRoutes() {
         <Route path="data" element={<DataPage />} />
         <Route path="data/import/:uploadId" element={<ImportReviewPage />} />
         <Route path="data/:datasetId" element={<DatasetPage />} />
+        <Route path="reports" element={<ReportsPage />} />
+        <Route path="reports/:reportId" element={<ReportPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="design-system" element={<DesignSystemPage />} />

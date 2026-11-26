@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, CircleAlert, X } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
+import { ArrowLeft, Check, CircleAlert, FileText, X } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
 import { AreaChart } from '../../components/charts/AreaChart';
@@ -8,7 +8,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
-import { api, type AgentOutput, type ApprovalInfo, type Execution, type ExecutionStatus } from '../../lib/api';
+import { api, type AgentOutput, type ApprovalInfo, type Execution, type ExecutionStatus, type Report } from '../../lib/api';
 import { formatCurrency, formatDate, formatNumber, formatPercent, interpolate } from '../../lib/format';
 import { notifyApprovalsChanged } from '../../components/layout/ApprovalsMenu';
 import { PageHeader } from '../modules/PageHeader';
@@ -72,6 +72,20 @@ function ExecutionView({ execution: ex, onChanged }: { execution: Execution; onC
   const [busy, setBusy] = useState(false);
   const out = ex.output;
   const cancellable = ['created', 'queued', 'awaiting_approval'].includes(ex.status) && can('agents.run');
+  const navigate = useNavigate();
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [reporting, setReporting] = useState(false);
+  const makeReport = async () => {
+    setReporting(true);
+    setReportError(null);
+    try {
+      const r = await api<Report>('/reports', { method: 'POST', body: { execution_id: ex.id } });
+      navigate(`/reports/${r.id}`, { state: { report: r } });
+    } catch (e) {
+      setReportError(aiErrorMessage(t, lang, e));
+      setReporting(false);
+    }
+  };
 
   const cancel = async () => {
     setBusy(true);
@@ -90,8 +104,16 @@ function ExecutionView({ execution: ex, onChanged }: { execution: Execution; onC
         eyebrow={<Link to="/agents" className="rc-inline-icon"><ArrowLeft size={14} aria-hidden="true" /> {t.agents.title}</Link>}
         title={`${agentName(t, ex.agent_id)}${out ? ` · ${out.dataset.name}` : ''}`}
         lead={formatDate(new Date(ex.created_at), lang, { dateStyle: 'medium', timeStyle: 'short' })}
-        aside={<Badge tone={STATUS_TONE[ex.status]} dot>{t.ai.status[ex.status]}</Badge>}
+        aside={
+          <div className="rc-row">
+            <Badge tone={STATUS_TONE[ex.status]} dot>{t.ai.status[ex.status]}</Badge>
+            {ex.status === 'completed' && out && can('data.read') && (
+              <Button size="sm" variant="primary" icon={<FileText size={14} />} loading={reporting} onClick={() => void makeReport()}>{t.reports.generate}</Button>
+            )}
+          </div>
+        }
       />
+      {reportError && <p className="rc-form__error" role="alert">{reportError}</p>}
       <div className="rc-grid rc-grid--2">
         <Card title={t.ai.lifecycle} className="rc-span-2" actions={cancellable && <Button size="sm" variant="ghost" loading={busy} onClick={() => void cancel()}>{t.ai.cancel}</Button>}>
           <Lifecycle status={ex.status} withApproval={ex.approvals.length > 0} />
@@ -141,7 +163,7 @@ function Lifecycle({ status, withApproval }: { status: ExecutionStatus; withAppr
   );
 }
 
-function Results({ out, approvals, onChanged }: { out: AgentOutput; approvals: ApprovalInfo[]; onChanged: () => void }) {
+export function Results({ out, approvals, onChanged }: { out: Omit<AgentOutput, 'dataset'>; approvals: ApprovalInfo[]; onChanged: () => void }) {
   const { t, lang } = usePreferences();
   const fmt = (m: AgentOutput['metrics'][number]) =>
     m.format === 'currency' ? formatCurrency(m.value, lang) : m.format === 'percent' ? formatPercent(m.value, lang, 1, m.key === 'change') : formatNumber(m.value, lang);

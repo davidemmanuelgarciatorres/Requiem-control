@@ -128,7 +128,10 @@ users ─┬─< organization_members >─┬─ organizations ─┬─ subscri
        │            │             │                 ├─< audit_logs
        │            └── roles ──< role_permissions >── permissions
        └─< user_sessions (active_organization_id)   ├─< usage_records
-                                                     └─< uploaded_files ─< datasets ─< dataset_rows
+                                                     ├─< uploaded_files ─< datasets ─< dataset_rows
+                                                     ├─< agent_executions ─< approvals
+                                                     └─< reports (instantánea JSONB de una ejecución)
+users ─< user_floaters (RLS por usuario)
 ```
 Todas las tablas con `organization_id` tienen RLS. Políticas clave: `organizations` visibles si son la activa o si el
 usuario es miembro; `organization_members` visibles si son de la org activa o del propio usuario (para listar sus
@@ -154,6 +157,10 @@ organizaciones); escritura solo en la org activa; `audit_logs` de solo anexado (
 | `POST /api/agents/{id}/executions` (202) · `GET …/executions[/{id}]` · `POST …/executions/{id}/cancel` | `agents.run` · `data.read` |
 | `GET /api/approvals` · `POST /api/approvals/{id}/decision` | `data.read` · `approvals.decide` |
 
+| `POST /api/reports` · `GET /api/reports[/{id}]` · `GET …/{id}/export.csv` · `DELETE …/{id}` | `data.read` · `data.write` (borrar) |
+| `GET /api/datasets/{id}/export.csv` · `GET /api/dashboard/summary` | `data.read` |
+| `GET/POST /api/me/floaters` (multipart) · `GET …/{id}/image` · `DELETE …/{id}` · `PATCH /api/me/preferences` | sesión (solo datos propios) |
+
 Documentación interactiva (solo fuera de producción): `/api/docs`.
 
 ### Agentes (Fase 4)
@@ -163,6 +170,12 @@ propia sesión con el contexto RLS de la organización, marca `running`, ejecuta
 permite las herramientas de su definición, pide al proveedor un resumen a partir de **hechos agregados** (nunca filas),
 y termina en `completed`, `awaiting_approval` (si propuso acciones) o `failed` (con código). Las aprobaciones se
 deciden con un `UPDATE … WHERE status = 'pending'` atómico y el servidor ejecuta la acción una sola vez.
+
+### Reportes (Fase 5)
+`app/reports.py` copia el resultado de una ejecución completada a `reports.content` (instantánea: no cambia si los
+datos cambian después), calcula la comparación con el reporte anterior del mismo agente al leerlo y arma las filas
+CSV; `app/exports.py` neutraliza fórmulas y añade BOM UTF-8. El PDF se obtiene con la impresión del navegador y una
+hoja `@media print` (sin servicio externo). `GET /api/dashboard/summary` agrega datos reales para el panel.
 
 ### Ingesta (Fase 3)
 `validation.detect` (firma de bytes, paquete OOXML, macros, cifrado, zip-bomb, codificación) → `parsing.parse`
