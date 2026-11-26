@@ -8,11 +8,14 @@ const API_TARGET = process.env.API_PROXY_TARGET ?? 'http://localhost:8000';
 const proxy = { '/api': { target: API_TARGET, changeOrigin: false } };
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
+  // La demo se publica bajo una ruta desconocida: rutas relativas.
+  base: mode === 'demo' ? './' : '/',
   plugins: [react()],
   server: { port: 5173, proxy },
   preview: { port: 4173, proxy },
   build: {
+    outDir: mode === 'demo' ? 'dist-demo' : 'dist',
     sourcemap: false,
     target: 'es2022',
   },
@@ -22,4 +25,4 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
   },
-});
+}));

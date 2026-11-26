@@ -351,6 +351,16 @@ export const en: Dictionary = {
     auditEmpty: 'No events.',
     noPermission: 'Your role does not allow this action.',
   },
+  demo: {
+    banner: 'Serverless demo',
+    bannerBody: 'API simulated in your browser. Data only exists on this device.',
+    reset: 'Reset demo',
+    creds: 'Demo account',
+    useDemo: 'Sign in with the demo account',
+    simulated: 'Simulated in the browser',
+    exportUnavailable: 'File downloads are not available in the demo.',
+    chip: 'Demo',
+  },
   notFound: { title: 'Page not found', body: 'The route you are looking for does not exist.' },
   status: { success: 'Success', warning: 'Warning', danger: 'Critical', info: 'Info' },
 };

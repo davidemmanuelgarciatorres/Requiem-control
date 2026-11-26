@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { AMBIENT_CYCLE_MS, EARTH_AXIAL_TILT_RAD, EARTH_MAX_FPS, EARTH_VIEW_PITCH_RAD, SUN_DIRECTION } from '../../config/ambient';
+import { assetUrl } from '../../lib/env';
 import { rotationAt } from './earthMath';
 import { FRAGMENT_SHADER, VERTEX_SHADER } from './earthShader';
 
-const TEXTURES = { day: '/earth/earth-day.webp', night: '/earth/earth-night.webp', masks: '/earth/earth-masks.webp' } as const;
+const TEXTURES = { day: assetUrl('earth/earth-day.webp'), night: assetUrl('earth/earth-night.webp'), masks: assetUrl('earth/earth-masks.webp') } as const;
 /** Fracción del lado menor del lienzo que ocupa el radio del globo (el resto es halo). */
 const RADIUS_FRACTION = 0.44;
 const MAX_DPR = 1.5;

@@ -7,7 +7,8 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
-import { api, type AuditEntry, type Member, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
+import { api, ApiError, type AuditEntry, type Member, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
+import { IS_DEMO } from '../../lib/env';
 import { formatCurrency, formatDate, formatNumber, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { errorMessage } from '../auth/errors';
@@ -233,6 +234,7 @@ export function DataSection() {
 
   const onExport = () =>
     void action.run(async () => {
+      if (IS_DEMO) throw new ApiError(0, 'demo.export_unavailable', t.demo.exportUnavailable);
       const data = await api<unknown>('/organizations/current/export');
       const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
       const a = document.createElement('a');

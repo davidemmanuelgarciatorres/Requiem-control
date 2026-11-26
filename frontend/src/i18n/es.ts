@@ -352,6 +352,16 @@ export const es = {
     auditEmpty: 'Sin eventos.',
     noPermission: 'Tu rol no permite esta acción.',
   },
+  demo: {
+    banner: 'Demostración sin servidor',
+    bannerBody: 'API simulada en tu navegador. Los datos solo existen en este dispositivo.',
+    reset: 'Reiniciar demo',
+    creds: 'Cuenta de demostración',
+    useDemo: 'Entrar con la cuenta demo',
+    simulated: 'Simulado en el navegador',
+    exportUnavailable: 'En la demostración no se pueden descargar archivos.',
+    chip: 'Demo',
+  },
   notFound: { title: 'Página no encontrada', body: 'La ruta que buscas no existe.' },
   status: { success: 'Correcto', warning: 'Advertencia', danger: 'Crítico', info: 'Información' },
 };

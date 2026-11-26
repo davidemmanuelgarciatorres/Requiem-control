@@ -5,6 +5,7 @@ import { usePreferences } from '../../app/preferences';
 import { Button } from '../../components/ui/Button';
 import type { Health, SubscriptionInfo } from '../../lib/api';
 import { interpolate } from '../../lib/format';
+import { IS_DEMO } from '../../lib/env';
 import { useApiResource } from '../../lib/useApi';
 
 /**
@@ -19,8 +20,8 @@ export function DashboardHero({ demo, onToggleDemo }: { demo: boolean; onToggleD
   const h = t.dashboard.hero;
   const firstName = session?.user.full_name.split(' ')[0] ?? '';
 
-  const state = health.loading ? 'checking' : health.data?.status === 'ok' ? 'ok' : 'down';
-  const stateLabel = state === 'checking' ? h.checking : state === 'ok' ? h.nominal : h.degraded;
+  const state = IS_DEMO ? 'demo' : health.loading ? 'checking' : health.data?.status === 'ok' ? 'ok' : 'down';
+  const stateLabel = state === 'demo' ? t.demo.chip : state === 'checking' ? h.checking : state === 'ok' ? h.nominal : h.degraded;
 
   const stats = [
     { icon: Building2, value: String(session?.memberships.length ?? 0), label: h.statOrganizations },

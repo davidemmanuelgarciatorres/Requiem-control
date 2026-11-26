@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Bot, Building2, Check, CircleCheck, Database, Upload } from 'lucide-react';
 import { api, type Health } from '../../lib/api';
+import { IS_DEMO } from '../../lib/env';
 import { usePreferences } from '../../app/preferences';
 import { Badge, type Tone } from '../../components/ui/Badge';
 import { Card } from '../../components/ui/Card';
@@ -33,11 +34,17 @@ export function EmptyDashboard() {
     { label: t.dashboard.systemStatus.frontend, value: t.common.operational, tone: 'success' },
     health === null
       ? { label: t.dashboard.systemStatus.api, value: t.dashboard.systemStatus.checking, tone: 'outline' }
-      : { label: t.dashboard.systemStatus.api, value: apiUp ? t.common.operational : t.status.danger, tone: apiUp ? 'success' : 'danger' },
+      : IS_DEMO
+        ? { label: t.dashboard.systemStatus.api, value: t.demo.simulated, tone: 'warning' }
+        : { label: t.dashboard.systemStatus.api, value: apiUp ? t.common.operational : t.status.danger, tone: apiUp ? 'success' : 'danger' },
     health === null
       ? { label: t.dashboard.systemStatus.database, value: t.dashboard.systemStatus.checking, tone: 'outline' }
-      : { label: t.dashboard.systemStatus.database, value: dbUp ? t.common.operational : t.status.danger, tone: dbUp ? 'success' : 'danger' },
-    { label: t.dashboard.systemStatus.authentication, value: t.common.operational, tone: 'success' },
+      : IS_DEMO
+        ? { label: t.dashboard.systemStatus.database, value: t.demo.simulated, tone: 'warning' }
+        : { label: t.dashboard.systemStatus.database, value: dbUp ? t.common.operational : t.status.danger, tone: dbUp ? 'success' : 'danger' },
+    IS_DEMO
+      ? { label: t.dashboard.systemStatus.authentication, value: t.demo.simulated, tone: 'warning' }
+      : { label: t.dashboard.systemStatus.authentication, value: t.common.operational, tone: 'success' },
     { label: t.dashboard.systemStatus.aiProvider, value: `${t.common.notConfigured} · ${interpolate(t.common.phase, { n: 4 })}`, tone: 'outline' },
     { label: t.dashboard.systemStatus.integrations, value: `${t.common.notConnected} · ${interpolate(t.common.phase, { n: 6 })}`, tone: 'outline' },
   ];

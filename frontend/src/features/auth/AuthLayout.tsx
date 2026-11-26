@@ -2,12 +2,14 @@ import type { ReactNode } from 'react';
 import { LANGUAGES, usePreferences } from '../../app/preferences';
 import { AmbientBackground } from '../../components/layout/AmbientBackground';
 import { Brand } from '../../components/layout/Brand';
+import { DemoBanner } from '../../components/layout/DemoBanner';
 
 export function AuthLayout({ title, subtitle, children, footer }: { title: string; subtitle: string; children: ReactNode; footer: ReactNode }) {
   const { lang, setLang, t } = usePreferences();
   return (
     <>
       <AmbientBackground />
+      <div className="rc-auth-top"><DemoBanner /></div>
       <div className="rc-auth rc-auth--split">
         <section className="rc-auth__intro" aria-hidden="true">
           <p className="rc-auth__title">{t.auth.heroTitle}<br /><em>{t.auth.heroAccent}</em></p>

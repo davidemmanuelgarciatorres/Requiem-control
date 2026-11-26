@@ -1,6 +1,7 @@
 # Dependencias y builds
 node_modules/
 dist/
+dist-demo/
 *.tsbuildinfo
 frontend/test-results/
 frontend/playwright-report/
