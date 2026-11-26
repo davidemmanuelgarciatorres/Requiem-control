@@ -13,6 +13,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app import audit, entitlements
+from app.agents.runner import active_agent_ids, monthly_executions
 from app.api.auth import build_session_out
 from app.api.deps import AuthContext, client_ip, get_auth, require_permission
 from app.api.serializers import member_out, org_out
@@ -266,8 +267,8 @@ def subscription(
         plan=PlanOut.model_validate(p, from_attributes=True),
         usage={
             "members": count_members(db, org.id),
-            "active_agents": 0,
-            "monthly_executions": 0,
+            "active_agents": len(active_agent_ids(db, org.id)),
+            "monthly_executions": monthly_executions(db, org.id),
             "storage_bytes": (used := storage_used_bytes(db, org.id)),
             "storage_mb": round(used / (1024 * 1024), 2),
             "datasets": count_datasets(db, org.id),

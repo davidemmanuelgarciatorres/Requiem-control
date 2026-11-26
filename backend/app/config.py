@@ -37,6 +37,17 @@ class Settings(BaseSettings):
     max_import_rows: int = Field(default=100_000, ge=1)
     max_import_columns: int = Field(default=200, ge=1)
 
+    # Proveedor de IA (Fase 4). "mock" por defecto: no consume créditos. Para usar Claude:
+    # AI_PROVIDER=anthropic y una credencial del SDK (ANTHROPIC_API_KEY o `ant auth login`).
+    ai_provider: Literal["mock", "anthropic"] = "mock"
+    anthropic_model: str = "claude-opus-5-5"
+    anthropic_effort: Literal["low", "medium", "high"] = "medium"
+    ai_timeout_seconds: float = Field(default=90.0, gt=0)
+    ai_max_retries: int = Field(default=2, ge=0, le=5)
+    # Precios por millón de tokens (USD) para estimar el costo; configurables.
+    anthropic_input_usd_per_mtok: float = 4.0
+    anthropic_output_usd_per_mtok: float = 20.0
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -201,3 +201,73 @@ class DatasetRowsOut(BaseModel):
     offset: int
     limit: int
     rows: list[dict[str, Any]]
+
+
+# --- Agentes (Fase 4) ---------------------------------------------------------
+class ActivationIn(Strict):
+    active: bool
+
+
+class RunAgentIn(Strict):
+    dataset_id: UUID
+    idempotency_key: str | None = Field(default=None, min_length=8, max_length=64, pattern=r"^[A-Za-z0-9_\-]+$")
+
+
+class DecisionIn(Strict):
+    decision: Literal["approve", "reject"]
+
+
+class AgentOut(BaseModel):
+    id: str
+    version: str
+    status: str
+    read_only: bool
+    requires_approval: bool
+    allowed_tools: list[str]
+    required_permissions: list[str]
+    timeout_seconds: int
+    phase: int
+    active: bool
+
+
+class AgentsOut(BaseModel):
+    agents: list[AgentOut]
+    active_count: int
+    active_limit: int
+    monthly_executions: int
+    monthly_limit: int
+
+
+class ProviderOut(BaseModel):
+    provider: str
+    model: str
+    simulated: bool
+    configured: bool
+    note: str | None
+
+
+class ApprovalOut(BaseModel):
+    id: UUID
+    execution_id: UUID
+    action_type: str
+    payload: dict[str, Any]
+    status: str
+    requested_at: datetime
+    decided_at: datetime | None
+    result: dict[str, Any] | None
+
+
+class ExecutionOut(BaseModel):
+    id: UUID
+    agent_id: str
+    agent_version: str
+    status: str
+    input: dict[str, Any]
+    output: dict[str, Any] | None
+    error: dict[str, Any] | None
+    usage: dict[str, Any]
+    created_at: datetime
+    queued_at: datetime | None
+    started_at: datetime | None
+    completed_at: datetime | None
+    approvals: list[ApprovalOut] = []
