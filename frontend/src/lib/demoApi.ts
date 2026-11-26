@@ -237,6 +237,11 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case `DELETE /reports/${DEMO_REPORT_ID}`:
         requirePerm(s, 'data.write');
         return fail(403, 'demo.read_only', 'El reporte de ejemplo no se puede eliminar en la demostración.');
+      case 'GET /integrations':
+        requirePerm(s, 'org.read');
+        return { google: { configured: false, missing: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET', 'INTEGRATIONS_ENCRYPTION_KEY'],
+          plan_allows: false, can_manage: true, status: 'disconnected', services: [], account_email: null, connected_at: null,
+          last_sync_at: null, last_error: null, available_services: ['sheets', 'drive', 'gmail'], scopes: { sheets: [], drive: [], gmail: [] } } };
       case 'GET /finance/overview':
         requirePerm(s, 'data.read');
         return { datasets: [], dataset: null };

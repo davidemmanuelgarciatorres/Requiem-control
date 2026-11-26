@@ -9,9 +9,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | 2 | Autenticación y base de datos | ✅ Completa |
 | 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa |
 | 4 | Primeros agentes de IA | ✅ Completa |
-| 5 | Reportes e inteligencia | ✅ Completa (pendiente de revisión) |
-| 6 | Integraciones (Gmail, Sheets, Drive) | ⏸ Siguiente — esperando autorización |
-| 7 | Agentes avanzados | Pendiente |
+| 5 | Reportes e inteligencia | ✅ Completa |
+| 6 | Integraciones (Gmail, Sheets, Drive) | ✅ Completa (pendiente de credenciales de Google y revisión) |
+| 7 | Agentes avanzados | ⏸ Siguiente — esperando autorización |
 | 8 | Facturación y preparación para producción | Pendiente |
 
 ## Fase 0 — Auditoría ✅
@@ -78,8 +78,23 @@ efecto de color y forma configurables y rebote en paredes discreto. Tabla `user_
 Pendiente del área: reportes programados y envío por correo (requieren worker y proveedor de email), PDF generado
 en servidor (hoy se usa “Guardar como PDF” del navegador).
 
-## Fase 6 — Integraciones
-OAuth oficial de Google con permisos mínimos, estado de conexión, última sincronización, errores, reconexión.
+## Pendientes de la Fase 4 completados ✅
+- **Inteligencia financiera** (`/finance`): ingresos, gastos, resultado, margen, flujo acumulado, comparación de periodos
+  elegible, categorías, observaciones e inusuales; cada indicador muestra su fórmula. Cálculo determinista (sin IA ni costo).
+- **Asistente IA** (`/assistant`): preguntas sobre los datos, reportes y agentes; cada parte se marca como verificado,
+  estimación o sugerencia. Motor de reglas con el proveedor simulado; Claude o Gemini con proveedor real (solo contexto
+  agregado). Conversaciones privadas por persona, 30 preguntas por hora.
+- **Gemini** como tercer proveedor (además del simulado y Claude/Haiku), elegido con `AI_PROVIDER`.
+
+## Fase 6 — Integraciones ✅
+OAuth oficial de Google (código de autorización + PKCE + `state` de un solo uso), permisos mínimos de solo lectura por
+servicio (Sheets, metadatos de Drive, Gmail solo lectura), autorización incremental, tokens cifrados (Fernet), renovación
+automática, estado/última sincronización/último error, reconexión, desconexión con revocación en Google. Importación de
+Google Sheets por el mismo flujo seguro de archivos. Drive: archivos recientes (solo nombres). Gmail: remitente/asunto/fecha
+de los recientes (no se guardan). Requiere el plan con integraciones (o `ALLOW_INTEGRATIONS_ON_FREE` solo en desarrollo).
+
+Pendiente del área: credenciales de Google del propietario (proyecto gratuito en Google Cloud); verificación de la app por
+Google para usar Gmail con usuarios externos (Gmail de solo lectura es un permiso "restringido"); sincronización programada.
 
 ## Fase 7 — Agentes avanzados
 Inventario, clientes, correo, automatizaciones — todos con aprobación para acciones externas.

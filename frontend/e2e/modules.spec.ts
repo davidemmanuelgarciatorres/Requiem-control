@@ -40,3 +40,12 @@ test.describe('Financial intelligence and AI assistant (real API + PostgreSQL)',
     expect(overflow).toBeLessThanOrEqual(1);
   });
 });
+
+test('integrations without Google credentials on the server never pretend to be connected', async ({ page }) => {
+  await page.goto('/integrations');
+  await expect(page.getByText(/Falta configurar Google en el servidor/)).toBeVisible();
+  await expect(page.getByText('No conectado')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Conectar con Google' })).toBeDisabled();
+  const r = await page.request.post('/api/integrations/google/connect', { data: { services: ['sheets'] } });
+  expect(r.status()).toBe(403); // sin token CSRF ni configuración: nunca llega a Google
+});

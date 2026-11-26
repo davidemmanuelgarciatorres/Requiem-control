@@ -1,8 +1,30 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **5 (reportes e inteligencia) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **6 (integraciones) — completa, pendiente de credenciales de Google y revisión**
 
 ## ✅ Implementado y probado
+
+### Fase 6 — Integraciones con Google
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| OAuth con PKCE S256 y `state` aleatorio de un solo uso (10 min, ligado a persona y organización; solo se guarda su hash) | pytest: reutilizar, caducado, de otra cuenta, inventado, cancelado → rechazados con código claro. |
+| Permisos mínimos de solo lectura por servicio; se verifica lo concedido; autorización incremental | pytest (sin permisos de escritura en la URL; permisos no concedidos → error). |
+| Tokens cifrados en reposo; nunca salen del servidor; jamás “conectado” sin intercambio real | pytest (bytes en BD no contienen el token; intercambio fallido → sigue “No conectado”). |
+| Renovación automática del token; reconexión requerida con estado y último error visibles | pytest. |
+| Sheets: buscar e importar por el flujo seguro (validación, vista previa, mapeo); Drive y Gmail de solo lectura (metadatos) | pytest + unitarias. |
+| Desconectar: revoca en Google y borra tokens; auditoría de conexión, fallos, importación y desconexión | pytest. |
+| Permiso `integrations.manage` (propietario/administrador); miembros solo leen; aislamiento entre organizaciones; plan | pytest + unitarias + e2e (sin credenciales: aviso honesto y botón deshabilitado). |
+| **Sin credenciales de Google no se pudo probar contra Google real** | Todo se probó con un Google simulado (transporte HTTP). |
+
+### Pendientes de la Fase 4 (completados)
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Inteligencia financiera con fórmula visible por indicador, flujo acumulado, comparación elegible, categorías, observaciones, inusuales | pytest (cifras exactas, incluye un error real encontrado en e2e y corregido) + unitarias + e2e. |
+| Asistente IA con partes etiquetadas (verificado/estimación/sugerencia), historial privado por persona (RLS), límite por hora, respaldo con reglas si falla el proveedor | pytest (incl. que al proveedor real solo van agregados) + unitarias + e2e. |
+| Proveedor Gemini (clave en cabecera, nunca en la URL; errores controlados) | pytest con transporte simulado. **No se hizo ninguna llamada real.** |
+
+### Imágenes flotantes (segunda ronda)
+- 7 efectos nuevos estilo anime/manga/cómic, botón “Probar efecto”, carga rápida de fotos grandes (reducción única a 1024 px). Unitarias + e2e + revisión visual.
 
 ### Fase 5 — Reportes e inteligencia
 | Funcionalidad | Cómo se verificó |
@@ -108,19 +130,20 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - 2FA y gestión de sesiones activas.
 - Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
 - Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, importación en la demo sin servidor.
-- Agentes: worker separado, asistente conversacional, proveedor de IA real (requiere tu credencial y autorización de gasto).
-- Fases 6–8: integraciones, agentes avanzados, facturación. Reportes programados/por correo y PDF de servidor.
+- Agentes: worker separado; proveedor de IA real (Claude/Haiku o Gemini) listo, requiere tu clave.
+- Fases 7–8: agentes avanzados (inventario, clientes, correo con borradores aprobables, automatizaciones), facturación.
+- Credenciales de Google del propietario y verificación de la app por Google (Gmail con usuarios externos).
+- Reportes programados/por correo y PDF de servidor; sincronización programada de integraciones.
 - CI (GitHub Actions) — propuesto, no activado sin autorización.
 
 ## Resultados de la última ejecución
 ```
 backend:  ruff check .          → sin problemas
-          mypy app (strict)     → sin errores (38 archivos)
-          pytest                → 98 aprobadas (PostgreSQL 16 real)
+          mypy app (strict)     → sin errores (46 archivos)
+          pytest                → 124 aprobadas (PostgreSQL 16 real; Google y proveedores de IA simulados)
 frontend: npm run lint          → 0 problemas
           npm run typecheck     → 0 errores
-          npm run test          → 11 archivos, 65 aprobadas
-          npm run build         → OK (la API simulada de la demo no se incluye)
-          npm run e2e           → 67 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
-                                   (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
+          npm run test          → 87 aprobadas
+          npm run build         → OK
+          npm run e2e           → 73 aprobadas, 1 omitida a propósito (escritorio 1440×900 y Pixel 7)
 ```

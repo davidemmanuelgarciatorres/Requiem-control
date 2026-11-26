@@ -1,6 +1,6 @@
 # SECURITY — REQUIEM CONTROL
 
-## 1. Controles implementados (Fases 1–5) — todos con pruebas automatizadas
+## 1. Controles implementados (Fases 1–6) — todos con pruebas automatizadas
 
 | Área | Control |
 |---|---|
@@ -20,6 +20,8 @@
 | Agentes de IA | Herramientas permitidas por agente en la base de datos y verificadas en cada llamada; sin ejecución de código arbitrario; acciones que modifican datos solo como **propuestas** que ejecuta el servidor tras aprobación humana atómica (idempotente); límites de plan en el servidor; ejecuciones y aprobaciones con RLS y auditoría. Al proveedor de IA solo se envían **hechos agregados** (no filas), marcados como datos y no instrucciones (mitiga *prompt injection* desde columnas o celdas). Las credenciales del proveedor solo existen en el servidor; sin credencial se usa el proveedor simulado. |
 | Exportaciones (Fase 5) | CSV con neutralización de inyección de fórmulas (celdas de texto que empiezan con `=`, `+`, `-`, `@`, tab o CR reciben `'`; los números no se alteran); nombre de archivo saneado; descarga solo con sesión y permiso `data.read`; auditadas (`report.export`, `data.export`). Reportes con RLS; borrar requiere `data.write`. |
 | Imágenes de usuario | Solo PNG/JPEG/WebP/GIF verificados por Pillow (no por nombre), máx. 2 MB y límite de píxeles; re-codificadas a WebP ≤256 px (se descartan EXIF/GPS y cualquier carga oculta); máx. 3 por usuario; RLS por usuario; servidas con `Content-Type` fijo y `nosniff`. |
+| Integraciones (Fase 6) | OAuth oficial con PKCE (S256) y `state` de un solo uso (hash en BD, 10 min, ligado a persona+organización, protegido además por RLS); permisos mínimos de solo lectura y verificación de los concedidos; tokens y verificador PKCE cifrados (Fernet) con clave solo en el servidor; los tokens nunca se envían al navegador; la clave va en cabecera (no en URL); revocación al desconectar; errores persistidos sin datos sensibles; permiso `integrations.manage`; límite del plan en el servidor. |
+| Asistente IA | Solo contexto agregado (nunca filas) marcado como datos; conversaciones privadas por persona (RLS por organización **y** usuario); 30 preguntas/hora; si el proveedor falla se responde con reglas y se indica. |
 | Datos personales | Exportación JSON de la organización (`org.export`) y eliminación completa con confirmación por identificador (`org.delete`, borrado en cascada). |
 | Secretos | Ninguno en el repositorio. `.env` ignorado por Git. Contraseñas de `init_dev_db.sh` son solo para desarrollo local y se pueden sobrescribir por variables. |
 | Frontend | React escapa todo; sin `dangerouslySetInnerHTML` ni `eval`; sin CDNs de terceros; `localStorage` solo para preferencias de interfaz; redirección tras login solo a rutas internas (sin redirección abierta). |
@@ -45,9 +47,9 @@
 - Worker aislado con límites de CPU/memoria por ejecución cuando las ejecuciones crezcan.
 - Presupuesto de gasto del proveedor real por organización (además del límite de ejecuciones) antes de activarlo.
 
-### Integraciones (Fase 6)
-- OAuth oficial con alcances mínimos; tokens cifrados en reposo; secretos de cliente solo en el servidor.
-- Nunca simular una conexión exitosa.
+### Integraciones — pendiente
+- Rotación de `INTEGRATIONS_ENCRYPTION_KEY` (hoy cambiarla obliga a reconectar).
+- Verificación de la app por Google antes de ofrecer Gmail a usuarios externos (permiso restringido).
 
 ### Secretos y operación
 - Variables de entorno o gestor de secretos del proveedor de hosting; nada en Git.

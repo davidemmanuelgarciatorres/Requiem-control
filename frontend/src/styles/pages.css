@@ -239,3 +239,7 @@ label.rc-btn.is-disabled { opacity: 0.45; pointer-events: none; }
   .rc-chat__form { flex-direction: column; align-items: stretch; }
 }
 textarea.rc-input { font: inherit; line-height: 1.4; }
+.rc-services { border: 0; padding: 0; margin: 12px 0; display: grid; gap: 10px; }
+.rc-services:disabled { opacity: 0.7; }
+.rc-service { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.04); cursor: pointer; }
+.rc-service input { margin-top: 3px; }

@@ -10,12 +10,20 @@ const settingsApi = {
 };
 
 describe('secondary pages are honest about their state', () => {
-  it('integrations: nothing is shown as connected and connect is disabled', async () => {
-    mockSignedIn();
+  it('integrations: not configured on the server → honest notice, nothing connected, connect disabled', async () => {
+    mockSignedIn({
+      'GET /api/integrations': json(200, { google: {
+        configured: false, missing: ['GOOGLE_OAUTH_CLIENT_ID', 'INTEGRATIONS_ENCRYPTION_KEY'], plan_allows: false, can_manage: true,
+        status: 'disconnected', services: [], account_email: null, connected_at: null, last_sync_at: null, last_error: null,
+        available_services: ['sheets', 'drive', 'gmail'], scopes: { sheets: [], drive: [], gmail: [] },
+      } }),
+    });
     renderApp('/integrations', 'en');
-    expect(await screen.findAllByText('Not connected')).toHaveLength(3);
+    expect(await screen.findByText(/Google is not configured on the server/)).toBeInTheDocument();
+    expect(screen.getByText(/GOOGLE_OAUTH_CLIENT_ID, INTEGRATIONS_ENCRYPTION_KEY/)).toBeInTheDocument();
+    expect(screen.getByText('Not connected')).toBeInTheDocument();
     expect(screen.queryByText(/^Connected$/)).not.toBeInTheDocument();
-    for (const b of screen.getAllByRole('button', { name: /Connect/ })) expect(b).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Connect with Google' })).toBeDisabled();
   });
 
   it('planned modules declare they are not operational', async () => {

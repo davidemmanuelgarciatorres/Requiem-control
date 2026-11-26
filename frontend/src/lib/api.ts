@@ -248,3 +248,13 @@ export type AssistantMessage = {
   created_at: string;
 };
 export type AssistantConversation = { id: string; title: string; updated_at: string; messages: number };
+
+export type GoogleService = 'sheets' | 'drive' | 'gmail';
+export type IntegrationsInfo = {
+  google: {
+    configured: boolean; missing: string[]; plan_allows: boolean; can_manage: boolean;
+    status: 'connected' | 'disconnected' | 'error'; services: GoogleService[]; account_email: string | null;
+    connected_at: string | null; last_sync_at: string | null; last_error: { code: string; at: string } | null;
+    available_services: GoogleService[]; scopes: Record<GoogleService, string[]>;
+  };
+};

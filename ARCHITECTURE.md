@@ -132,6 +132,8 @@ users ─┬─< organization_members >─┬─ organizations ─┬─ subscri
                                                      ├─< agent_executions ─< approvals
                                                      └─< reports (instantánea JSONB de una ejecución)
 users ─< user_floaters (RLS por usuario)
+organizations ─< assistant_messages (RLS por organización Y usuario)
+organizations ─< integrations (tokens cifrados) · oauth_states (state de un solo uso, RLS por usuario)
 ```
 Todas las tablas con `organization_id` tienen RLS. Políticas clave: `organizations` visibles si son la activa o si el
 usuario es miembro; `organization_members` visibles si son de la org activa o del propio usuario (para listar sus
@@ -159,6 +161,11 @@ organizaciones); escritura solo en la org activa; `audit_logs` de solo anexado (
 
 | `POST /api/reports` · `GET /api/reports[/{id}]` · `GET …/{id}/export.csv` · `DELETE …/{id}` | `data.read` · `data.write` (borrar) |
 | `GET /api/datasets/{id}/export.csv` · `GET /api/dashboard/summary` | `data.read` |
+| `GET /api/finance/overview?dataset_id&period_a&period_b` | `data.read` |
+| `POST /api/assistant/messages` · `GET /api/assistant/conversations[/{id}]` · `DELETE …/{id}` | `data.read` (solo conversaciones propias) |
+| `GET /api/integrations` | `org.read` |
+| `POST /api/integrations/google/connect` · `POST …/disconnect` · `GET …/callback` | `integrations.manage` |
+| `GET …/google/sheets[/{id}]` · `POST …/google/sheets/import` · `GET …/google/drive/recent` · `GET …/google/gmail/recent` | `data.read` · `data.write` (importar) |
 | `GET/POST /api/me/floaters` (multipart) · `GET …/{id}/image` · `DELETE …/{id}` · `PATCH /api/me/preferences` | sesión (solo datos propios) |
 
 Documentación interactiva (solo fuera de producción): `/api/docs`.
@@ -176,6 +183,18 @@ deciden con un `UPDATE … WHERE status = 'pending'` atómico y el servidor ejec
 datos cambian después), calcula la comparación con el reporte anterior del mismo agente al leerlo y arma las filas
 CSV; `app/exports.py` neutraliza fórmulas y añade BOM UTF-8. El PDF se obtiene con la impresión del navegador y una
 hoja `@media print` (sin servicio externo). `GET /api/dashboard/summary` agrega datos reales para el panel.
+
+### Integraciones (Fase 6)
+`app/integrations/google.py`: `start` crea el `state` (hash) y el verificador PKCE cifrado y devuelve la URL de Google;
+`finish` (callback, mismo dominio para que viaje la cookie `SameSite=Lax`) valida el `state`, intercambia el código con
+el verificador, comprueba los permisos concedidos y guarda los tokens cifrados. `_call` renueva el token si caduca y ante
+un 401; los errores se guardan en `last_error` (confirmados aunque la petición falle). La importación de Sheets genera un
+CSV y usa `ingestion.create_upload`, así hereda todas las validaciones.
+
+### Asistente (Fase 4)
+`app/assistant.py`: `build_context` resume datos, finanzas, reportes, agentes y aprobaciones (agregados); con el proveedor
+simulado responde `rule_based_answer`; con uno real se usa `provider.complete()` (Claude o Gemini) y `parse_tagged`
+separa las partes etiquetadas.
 
 ### Ingesta (Fase 3)
 `validation.detect` (firma de bytes, paquete OOXML, macros, cifrado, zip-bomb, codificación) → `parsing.parse`
