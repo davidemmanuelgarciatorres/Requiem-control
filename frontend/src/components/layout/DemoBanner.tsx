@@ -11,11 +11,14 @@ export function DemoBanner() {
   const [busy, setBusy] = useState(false);
   if (!IS_DEMO) return null;
   const reset = async () => {
-    setBusy(true);
-    const { resetDemo } = await import('../../lib/demoApi');
-    await resetDemo();
-    await refresh();
-    setBusy(false);
+    if (__DEMO__) {
+      // Condicionado a la constante para que la compilación normal no incluya la API simulada.
+      setBusy(true);
+      const { resetDemo } = await import('../../lib/demoApi');
+      await resetDemo();
+      await refresh();
+      setBusy(false);
+    }
   };
   return (
     <div className="rc-demo-strip" role="note">

@@ -5,8 +5,6 @@
  * - Toda petición que cambia estado envía el token CSRF ligado a la sesión.
  */
 
-import { IS_DEMO } from './env';
-
 export type RoleCode = 'owner' | 'admin' | 'member' | 'viewer';
 
 export type Organization = { id: string; name: string; slug: string; country: string; currency: string; created_at: string };
@@ -47,7 +45,7 @@ export function setCsrfToken(token: string | null): void {
 
 export async function api<T>(path: string, init: { method?: string; body?: unknown; signal?: AbortSignal } = {}): Promise<T> {
   const method = init.method ?? 'GET';
-  if (IS_DEMO) {
+  if (__DEMO__) {
     // Compilación de demostración: API simulada en el navegador (carga diferida).
     const { handleDemo } = await import('./demoApi');
     return (await handleDemo(method, path, init.body)) as T;

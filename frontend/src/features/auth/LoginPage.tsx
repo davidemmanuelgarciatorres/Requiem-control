@@ -36,8 +36,10 @@ export function LoginPage() {
   };
 
   const signInWithDemo = async () => {
-    const { DEMO_EMAIL, DEMO_PASSWORD } = await import('../../lib/demoApi');
-    await signIn(DEMO_EMAIL, DEMO_PASSWORD);
+    if (__DEMO__) {
+      const { DEMO_EMAIL, DEMO_PASSWORD } = await import('../../lib/demoApi');
+      await signIn(DEMO_EMAIL, DEMO_PASSWORD);
+    }
   };
 
   return (

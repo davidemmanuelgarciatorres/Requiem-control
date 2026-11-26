@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => ({
   // La demo se publica bajo una ruta desconocida: rutas relativas.
   base: mode === 'demo' ? './' : '/',
   plugins: [react()],
+  // Constante de compilación: permite eliminar por completo el código de la demo en producción.
+  define: { __DEMO__: JSON.stringify(mode === 'demo') },
   server: { port: 5173, proxy },
   preview: { port: 4173, proxy },
   build: {
