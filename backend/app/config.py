@@ -56,6 +56,17 @@ class Settings(BaseSettings):
     gemini_input_usd_per_mtok: float = 0.0
     gemini_output_usd_per_mtok: float = 0.0
 
+    # --- Fase 6 — Integraciones (solo servidor) ---------------------------------------------
+    # Clave Fernet (urlsafe base64 de 32 bytes) para cifrar tokens OAuth en la base de datos.
+    # Generar: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+    integrations_encryption_key: SecretStr | None = None
+    google_oauth_client_id: str | None = None
+    google_oauth_client_secret: SecretStr | None = None
+    # Debe coincidir EXACTAMENTE con la URI registrada en Google Cloud (mismo dominio que la app).
+    google_oauth_redirect_uri: str = "http://localhost:5173/api/integrations/google/callback"
+    # Solo para desarrollo/pruebas: permite integraciones en el plan gratuito (en producción: false).
+    allow_integrations_on_free: bool = False
+
 
 @lru_cache
 def get_settings() -> Settings:

@@ -10,7 +10,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __doc__ as _doc
-from app.api import agents, assistant, auth, datasets, finance, me, organizations, reports
+from app.api import agents, assistant, auth, datasets, finance, integrations, me, organizations, reports
 from app.config import get_settings
 from app.db import get_engine
 from app.errors import ApiError
@@ -107,6 +107,7 @@ def create_app() -> FastAPI:
     app.include_router(reports.router)
     app.include_router(finance.router)
     app.include_router(assistant.router)
+    app.include_router(integrations.router)
     return app
 
 

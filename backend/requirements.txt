@@ -12,4 +12,5 @@ openpyxl==3.1.5
 python-multipart==0.0.34
 anthropic==2.14.0
 httpx2==2.16.2
+cryptography==46.0.7
 pillow==13.0.0
