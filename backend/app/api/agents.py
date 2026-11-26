@@ -12,6 +12,7 @@ from app.agents import approvals as approvals_service
 from app.agents import runner
 from app.agents.providers import provider_status
 from app.api.deps import AuthContext, client_ip, require_permission
+from app.config import get_settings
 from app.db import get_db, set_tenant_context
 from app.errors import not_found
 from app.models import AgentDefinition, AgentExecution, Approval
@@ -147,7 +148,9 @@ def run_agent(
         set_tenant_context(db, user_id=ctx.user.id, org_id=org.id)
     out = _execution_out(db, execution)
     if created:
-        background.add_task(runner.run_execution, execution.id, org.id, ctx.user.id)
+        if get_settings().execution_mode == "inline":
+            background.add_task(runner.run_execution, execution.id, org.id, ctx.user.id)
+        # En modo "worker" la ejecución queda en cola y la toma `python -m app.worker`.
     else:
         response.status_code = 200
     return out

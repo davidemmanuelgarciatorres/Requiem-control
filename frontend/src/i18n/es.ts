@@ -424,6 +424,7 @@ export const es = {
       'agent.dataset_not_found': 'El conjunto de datos no existe o no pertenece a esta organización.',
       'agent.tool_not_allowed': 'El agente intentó usar una herramienta que no tiene permitida ({tool}). La ejecución se detuvo.',
       'agent.timeout': 'La ejecución superó el tiempo máximo.',
+      'agent.interrupted': 'La ejecución se interrumpió; vuelve a intentarlo.',
       'agent.internal_error': 'Ocurrió un error inesperado durante la ejecución.',
       'approval.already_decided': 'Esta acción ya fue decidida.',
       'report.execution_not_completed': 'Solo se pueden generar reportes de análisis completados.',

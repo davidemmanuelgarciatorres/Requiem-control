@@ -59,6 +59,12 @@ class Settings(BaseSettings):
     gemini_input_usd_per_mtok: float = 0.0
     gemini_output_usd_per_mtok: float = 0.0
 
+    # Ejecución de agentes: "inline" (tarea en segundo plano del propio servidor web; desarrollo y pruebas)
+    # o "worker" (la API solo encola; `python -m app.worker` las procesa en otro proceso; producción).
+    execution_mode: Literal["inline", "worker"] = "inline"
+    worker_poll_seconds: float = Field(default=2.0, gt=0)
+    worker_stale_minutes: int = Field(default=15, ge=1)
+
     # --- Fase 6 — Integraciones (solo servidor) ---------------------------------------------
     # Clave Fernet (urlsafe base64 de 32 bytes) para cifrar tokens OAuth en la base de datos.
     # Generar: python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

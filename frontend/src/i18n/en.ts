@@ -423,6 +423,7 @@ export const en: Dictionary = {
       'agent.dataset_not_found': 'The dataset does not exist or does not belong to this organization.',
       'agent.tool_not_allowed': 'The agent tried to use a tool it is not allowed to use ({tool}). The run was stopped.',
       'agent.timeout': 'The run exceeded the time limit.',
+      'agent.interrupted': 'The run was interrupted; please try again.',
       'agent.internal_error': 'An unexpected error occurred during the run.',
       'approval.already_decided': 'This action was already decided.',
       'report.execution_not_completed': 'Reports can only be generated from completed analyses.',
