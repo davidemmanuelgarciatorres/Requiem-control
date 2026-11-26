@@ -4,13 +4,51 @@ import { usePreferences } from '../../app/preferences';
 import { Button } from '../../components/ui/Button';
 
 export const OUTPUT_SIZE = 256; // px: la imagen final se reduce siempre a este tamaño
+const PREVIEW_MAX = 1024; // px: la foto se reduce UNA vez al abrir; recortar y mover ya no maneja 12 MP
+
+type Source = { canvas: HTMLCanvasElement; url: string; naturalWidth: number; naturalHeight: number };
+
+async function decode(file: File): Promise<CanvasImageSource & { width: number; height: number; close?: () => void }> {
+  if (typeof createImageBitmap === 'function') {
+    try {
+      return await createImageBitmap(file); // decodifica fuera del hilo principal y respeta la orientación EXIF
+    } catch {
+      /* formato no soportado por createImageBitmap: se intenta con <img> */
+    }
+  }
+  const url = URL.createObjectURL(file);
+  try {
+    const el = new Image();
+    await new Promise<void>((resolve, reject) => {
+      el.onload = () => resolve();
+      el.onerror = () => reject(new Error('decode'));
+      el.src = url;
+    });
+    return Object.assign(el, { width: el.naturalWidth, height: el.naturalHeight });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function prepare(file: File): Promise<Source> {
+  const bmp = await decode(file);
+  const k = Math.min(1, PREVIEW_MAX / Math.max(bmp.width, bmp.height));
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.round(bmp.width * k));
+  canvas.height = Math.max(1, Math.round(bmp.height * k));
+  canvas.getContext('2d')?.drawImage(bmp, 0, 0, canvas.width, canvas.height);
+  bmp.close?.();
+  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', 0.9));
+  if (!blob) throw new Error('encode');
+  return { canvas, url: URL.createObjectURL(blob), naturalWidth: canvas.width, naturalHeight: canvas.height };
+}
 
 type Props = { file: File; onCancel: () => void; onDone: (blob: Blob) => void };
 
 /** Recorte cuadrado: arrastrar para mover, deslizador o pellizco para acercar, flechas y +/− con teclado. */
 export function CropDialog({ file, onCancel, onDone }: Props) {
   const { t } = usePreferences();
-  const [img, setImg] = useState<HTMLImageElement | null>(null);
+  const [img, setImg] = useState<Source | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
@@ -21,12 +59,19 @@ export function CropDialog({ file, onCancel, onDone }: Props) {
   const [view, setView] = useState(280);
 
   useEffect(() => {
-    const url = URL.createObjectURL(file);
-    const el = new Image();
-    el.onload = () => setImg(el);
-    el.onerror = () => setError(t.floaters.notImage);
-    el.src = url;
-    return () => URL.revokeObjectURL(url);
+    let cancelled = false;
+    let made: Source | null = null;
+    prepare(file)
+      .then((src) => {
+        made = src;
+        if (cancelled) URL.revokeObjectURL(src.url);
+        else setImg(src);
+      })
+      .catch(() => !cancelled && setError(t.floaters.notImage));
+    return () => {
+      cancelled = true;
+      if (made) URL.revokeObjectURL(made.url);
+    };
   }, [file, t.floaters.notImage]);
 
   useEffect(() => {
@@ -100,7 +145,7 @@ export function CropDialog({ file, onCancel, onDone }: Props) {
     const sx = img.naturalWidth / 2 - (view / 2 + offset.x) / scale;
     const sy = img.naturalHeight / 2 - (view / 2 + offset.y) / scale;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(img, sx, sy, src, src, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
+    ctx.drawImage(img.canvas, sx, sy, src, src, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
     const toBlob = (type: string, q: number) => new Promise<Blob | null>((res) => canvas.toBlob(res, type, q));
     let blob = await toBlob('image/webp', 0.85);
     if (!blob || blob.type !== 'image/webp') blob = await toBlob('image/jpeg', 0.9); // navegadores sin WebP
@@ -128,9 +173,10 @@ export function CropDialog({ file, onCancel, onDone }: Props) {
             onKeyDown={onKey}
             onWheel={(e) => setZoomClamped(zoom - e.deltaY * 0.002)}
           >
+            {!img && <span className="rc-crop__loading" role="status" aria-label={t.common.loading}><span className="rc-btn__spinner" /></span>}
             {img && (
               <img
-                src={img.src}
+                src={img.url}
                 alt=""
                 draggable={false}
                 style={{

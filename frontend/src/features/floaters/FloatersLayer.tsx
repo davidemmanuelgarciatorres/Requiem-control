@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { usePreferences } from '../../app/preferences';
-import { drawParticles, spawnCollision, spawnWall, type Particle } from './effects';
+import { drawParticles, PREVIEW_EVENT, spawnCollision, spawnWall, type Particle } from './effects';
 import { useFloaters } from './FloatersContext';
 import { setSpeed, spawnBodies, SPEEDS, step, type Body } from './physics';
 
@@ -130,10 +130,17 @@ export function FloatersLayer() {
       }
       if (reducedMotion()) staticFrame();
     };
+    const onPreview = () => {
+      if (reducedMotion()) return;
+      const p = prefsRef.current;
+      particles.push(...spawnCollision(p.effect_shape, p.effect_color, width / 2, height / 2, performance.now(), size));
+    };
     window.addEventListener('resize', onResize);
+    window.addEventListener(PREVIEW_EVENT, onPreview);
     document.addEventListener('visibilitychange', start);
     start();
     return () => {
+      window.removeEventListener(PREVIEW_EVENT, onPreview);
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
       document.removeEventListener('visibilitychange', start);

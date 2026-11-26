@@ -6,7 +6,9 @@
 import { api, uploadFile } from '../../lib/api';
 import { IS_DEMO } from '../../lib/env';
 
-export type FloaterShape = 'splash' | 'stars' | 'hearts' | 'ring' | 'sparks';
+export type FloaterShape =
+  | 'impact' | 'comic' | 'anger' | 'sparkle' | 'lightning' | 'sweat' | 'scribble'
+  | 'splash' | 'stars' | 'hearts' | 'ring' | 'sparks';
 export type FloaterPrefs = {
   enabled: boolean;
   size: number;
@@ -18,7 +20,7 @@ export type FloaterPrefs = {
 export type FloaterImage = { id: string; url: string };
 export type FloaterState = { preferences: FloaterPrefs; images: FloaterImage[]; max: number };
 
-export const DEFAULT_PREFS: FloaterPrefs = { enabled: true, size: 64, speed: 'normal', effect_shape: 'splash', effect_color: '#ff6a1a', layer: 'front' };
+export const DEFAULT_PREFS: FloaterPrefs = { enabled: true, size: 64, speed: 'normal', effect_shape: 'impact', effect_color: '#ffd23f', layer: 'front' };
 export const SIZE_MIN = 32;
 export const SIZE_MAX = 120;
 export const MAX_IMAGES = 3;

@@ -1,16 +1,17 @@
 import { useRef, useState } from 'react';
-import { ImagePlus, Trash2 } from 'lucide-react';
+import { ImagePlus, Trash2, Zap } from 'lucide-react';
 import { usePreferences } from '../../app/preferences';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ApiError } from '../../lib/api';
 import { interpolate } from '../../lib/format';
 import { CropDialog } from './CropDialog';
+import { EFFECT_SHAPES, previewEffect } from './effects';
 import { useFloaters } from './FloatersContext';
 import { SIZE_MAX, SIZE_MIN, type FloaterPrefs, type FloaterShape } from './floaterStore';
 
 const MAX_SOURCE_BYTES = 15 * 1024 * 1024;
-const SHAPES: FloaterShape[] = ['splash', 'stars', 'hearts', 'ring', 'sparks'];
+const SHAPES: FloaterShape[] = EFFECT_SHAPES;
 const PRESETS = ['#ff6a1a', '#39ff8f', '#b8f0cc', '#ff4fa3', '#4aa8ff', '#ffd23f'];
 
 export function FloatersSettings() {
@@ -49,7 +50,10 @@ export function FloatersSettings() {
       <span className="rc-field__label" id={`fl-${String(key)}`}>{label}</span>
       <div className="rc-segmented rc-segmented--wrap" role="group" aria-labelledby={`fl-${String(key)}`}>
         {values.map((v) => (
-          <button key={String(v)} type="button" aria-pressed={p[key] === v} onClick={() => f.setPrefs({ [key]: v } as Partial<FloaterPrefs>)}>
+          <button key={String(v)} type="button" aria-pressed={p[key] === v} onClick={() => {
+            f.setPrefs({ [key]: v } as Partial<FloaterPrefs>);
+            if (key === 'effect_shape' || key === 'effect_color') previewEffect();
+          }}>
             {labels[String(v)]}
           </button>
         ))}
@@ -101,7 +105,7 @@ export function FloatersSettings() {
           <span className="rc-field__label" id="fl-color">{t.floaters.effectColor}</span>
           <div className="rc-row" role="group" aria-labelledby="fl-color">
             {PRESETS.map((c) => (
-              <button key={c} type="button" className="rc-swatch-btn" style={{ background: c }} aria-label={c} aria-pressed={p.effect_color.toLowerCase() === c} onClick={() => f.setPrefs({ effect_color: c })} />
+              <button key={c} type="button" className="rc-swatch-btn" style={{ background: c }} aria-label={c} aria-pressed={p.effect_color.toLowerCase() === c} onClick={() => { f.setPrefs({ effect_color: c }); previewEffect(); }} />
             ))}
             <label className="rc-color-input">
               <input type="color" value={p.effect_color} onChange={(e) => f.setPrefs({ effect_color: e.target.value })} aria-label={t.floaters.customColor} />
@@ -109,6 +113,12 @@ export function FloatersSettings() {
           </div>
         </div>
         {seg('layer', ['front', 'back'], t.floaters.layers, t.floaters.layer)}
+        <div>
+          <Button size="sm" variant="primary" icon={<Zap size={14} />} disabled={!p.enabled || f.images.length === 0} onClick={() => previewEffect()}>
+            {t.floaters.preview}
+          </Button>
+          {f.images.length === 0 && <span className="rc-list__meta"> {t.floaters.previewHint}</span>}
+        </div>
       </div>
       <p className="rc-list__meta">{t.floaters.wallNote} {t.floaters.reducedNote}</p>
       {file && <CropDialog file={file} onCancel={() => setFile(null)} onDone={(b) => void upload(b)} />}

@@ -278,8 +278,21 @@ class FloaterPreferences(Strict):
     enabled: bool = True
     size: int = Field(default=64, ge=32, le=120)  # px en pantalla
     speed: Literal["slow", "normal", "fast"] = "normal"
-    effect_shape: Literal["splash", "stars", "hearts", "ring", "sparks"] = "splash"
-    effect_color: str = Field(default="#ff6a1a", pattern=r"^#[0-9a-fA-F]{6}$")
+    effect_shape: Literal[
+        "impact",
+        "comic",
+        "anger",
+        "sparkle",
+        "lightning",
+        "sweat",
+        "scribble",
+        "splash",
+        "stars",
+        "hearts",
+        "ring",
+        "sparks",
+    ] = "impact"
+    effect_color: str = Field(default="#ffd23f", pattern=r"^#[0-9a-fA-F]{6}$")
     layer: Literal["front", "back"] = "front"
 
 

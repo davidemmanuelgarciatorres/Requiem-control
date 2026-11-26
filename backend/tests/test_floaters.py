@@ -56,8 +56,8 @@ def test_upload_list_image_delete_and_limit(client):
         "enabled": True,
         "size": 64,
         "speed": "normal",
-        "effect_shape": "splash",
-        "effect_color": "#ff6a1a",
+        "effect_shape": "impact",
+        "effect_color": "#ffd23f",
         "layer": "front",
     }
     ids = [upload(client).json()["id"] for _ in range(3)]
