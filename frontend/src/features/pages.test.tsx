@@ -18,14 +18,6 @@ describe('secondary pages are honest about their state', () => {
     for (const b of screen.getAllByRole('button', { name: /Connect/ })) expect(b).toBeDisabled();
   });
 
-  it('agents: catalog lists 6 agents, 2 MVP priority, activation disabled', async () => {
-    mockSignedIn();
-    renderApp('/agents', 'en');
-    expect(await screen.findAllByRole('article')).toHaveLength(6);
-    expect(screen.getAllByText('MVP priority')).toHaveLength(2);
-    for (const b of screen.getAllByRole('button', { name: 'Activate' })) expect(b).toBeDisabled();
-  });
-
   it('planned modules declare they are not operational', async () => {
     mockSignedIn();
     renderApp('/finance', 'en');

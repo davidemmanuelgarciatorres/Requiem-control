@@ -1,6 +1,6 @@
 # SECURITY — REQUIEM CONTROL
 
-## 1. Controles implementados (Fases 1–3) — todos con pruebas automatizadas
+## 1. Controles implementados (Fases 1–4) — todos con pruebas automatizadas
 
 | Área | Control |
 |---|---|
@@ -17,6 +17,7 @@
 | Cabeceras | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `Cache-Control: no-store` en `/api`. Documentación OpenAPI desactivada en producción. |
 | Auditoría | `audit_logs` de solo anexado (la API no tiene UPDATE/DELETE): registro, login, fallos de login (persisten aunque la petición falle), cambio de organización, cambios de miembros, edición, exportación y eliminación. Sin contraseñas ni tokens. |
 | Archivos subidos | Formato por contenido (firma y estructura), nunca por nombre/MIME; sin macros (`.xlsm`, `vbaProject.bin`), sin libros cifrados ni `.xls`; anti zip-bomb (tamaño descomprimido y razón de compresión); XLSX en modo solo-valores (no se evalúan fórmulas ni vínculos externos); CSV debe ser texto; límites de 10 MB / 100,000 filas / 200 columnas y de almacenamiento del plan; el archivo se guarda en la base de datos bajo RLS; los rechazos se auditan. |
+| Agentes de IA | Herramientas permitidas por agente en la base de datos y verificadas en cada llamada; sin ejecución de código arbitrario; acciones que modifican datos solo como **propuestas** que ejecuta el servidor tras aprobación humana atómica (idempotente); límites de plan en el servidor; ejecuciones y aprobaciones con RLS y auditoría. Al proveedor de IA solo se envían **hechos agregados** (no filas), marcados como datos y no instrucciones (mitiga *prompt injection* desde columnas o celdas). Las credenciales del proveedor solo existen en el servidor; sin credencial se usa el proveedor simulado. |
 | Datos personales | Exportación JSON de la organización (`org.export`) y eliminación completa con confirmación por identificador (`org.delete`, borrado en cascada). |
 | Secretos | Ninguno en el repositorio. `.env` ignorado por Git. Contraseñas de `init_dev_db.sh` son solo para desarrollo local y se pueden sobrescribir por variables. |
 | Frontend | React escapa todo; sin `dangerouslySetInnerHTML` ni `eval`; sin CDNs de terceros; `localStorage` solo para preferencias de interfaz; redirección tras login solo a rutas internas (sin redirección abierta). |
@@ -39,13 +40,9 @@
 - Al exportar conjuntos a CSV (Fase 5), neutralizar inyección de fórmulas (`=`, `+`, `-`, `@`).
 - Antivirus/escaneo de contenido si se aceptan más formatos en el futuro.
 
-### Agentes de IA (Fase 4)
-- Herramientas con permisos explícitos por agente; un agente de solo lectura no puede escribir.
-- Sin ejecución de código arbitrario.
-- Acciones consecuentes (enviar correo, modificar registros) → flujo de **aprobación humana** con **clave de
-  idempotencia** para impedir ejecuciones duplicadas; todo queda en `audit_logs`.
-- Contenido de archivos/correos tratado como datos, nunca como instrucciones (mitigación de *prompt injection*).
-- Claves de proveedores solo en el servidor; sin clave → proveedor mock claramente identificado.
+### Agentes de IA — pendiente
+- Worker aislado con límites de CPU/memoria por ejecución cuando las ejecuciones crezcan.
+- Presupuesto de gasto del proveedor real por organización (además del límite de ejecuciones) antes de activarlo.
 
 ### Integraciones (Fase 6)
 - OAuth oficial con alcances mínimos; tokens cifrados en reposo; secretos de cliente solo en el servidor.

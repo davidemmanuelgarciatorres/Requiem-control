@@ -1,7 +1,8 @@
-import { Bell, CircleUser, ListChecks, LogOut, Menu } from 'lucide-react';
+import { Bell, CircleUser, LogOut, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { Button } from '../ui/Button';
+import { ApprovalsMenu } from './ApprovalsMenu';
 import { OrgSwitcher } from './OrgSwitcher';
 import { LANGUAGES, usePreferences } from '../../app/preferences';
 import { Popover } from '../ui/Popover';
@@ -42,17 +43,7 @@ export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuO
           ))}
         </div>
 
-        <Popover
-          title={t.topbar.approvals}
-          trigger={(p) => (
-            <button type="button" className="rc-icon-btn" aria-label={`${t.topbar.approvals}: 0`} {...p}>
-              <ListChecks size={18} aria-hidden="true" />
-            </button>
-          )}
-        >
-          <p>{t.topbar.approvalsEmpty}</p>
-          <p className="rc-popover__hint">{t.topbar.approvalsHint}</p>
-        </Popover>
+        <ApprovalsMenu />
 
         <Popover
           title={t.topbar.notifications}

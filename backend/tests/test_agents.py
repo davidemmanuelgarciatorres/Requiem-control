@@ -91,7 +91,11 @@ def test_financial_analyst_end_to_end(owner):
     assert {"revenue_change", "concentration", "unusual_transactions"} <= codes
     unusual_rows = sorted(u["row_number"] for u in out["unusual"])
     assert unusual_rows == [17, 18]  # filas del archivo original
-    assert {lim["code"] for lim in out["limitations"]} >= {"not_accounting_advice", "partial_period"}
+    assert {lim["code"] for lim in out["limitations"]} >= {
+        "not_accounting_advice",
+        "partial_period",
+        "change_includes_unusual",
+    }
     assert out["summary"]["simulated"] is True and "sin IA real" in out["summary"]["text"]
     assert e["usage"]["provider"] == "mock" and e["usage"]["cost_usd"] == 0
     assert "read_dataset" in e["usage"]["tools"]

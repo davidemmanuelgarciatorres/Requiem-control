@@ -73,6 +73,41 @@ export type DatasetColumn = { key: string; name: string; source: string; type: C
 export type DatasetSummary = { id: string; name: string; row_count: number; column_count: number; completeness: number; issue_count: number; source_filename: string | null; created_at: string };
 export type Dataset = DatasetSummary & { columns: DatasetColumn[]; report: QualityReport };
 export type DatasetRows = { total: number; offset: number; limit: number; rows: { row_number: number; data: Record<string, string | number | boolean | null> }[] };
+export type AgentInfo = {
+  id: string; version: string; status: 'available' | 'planned' | 'retired'; read_only: boolean; requires_approval: boolean;
+  allowed_tools: string[]; required_permissions: string[]; timeout_seconds: number; phase: number; active: boolean;
+};
+export type AgentsInfo = { agents: AgentInfo[]; active_count: number; active_limit: number; monthly_executions: number; monthly_limit: number };
+export type ProviderInfo = { provider: string; model: string; simulated: boolean; configured: boolean; note: string | null };
+export type ExecutionStatus = 'created' | 'queued' | 'running' | 'awaiting_approval' | 'completed' | 'failed' | 'cancelled';
+export type ApprovalInfo = {
+  id: string; execution_id: string; action_type: string; payload: Record<string, string | number>;
+  status: 'pending' | 'approved' | 'rejected' | 'executed' | 'failed' | 'cancelled';
+  requested_at: string; decided_at: string | null; result: Record<string, number | string> | null;
+};
+export type Recommendation = {
+  code: string; severity: 'warning' | 'info'; params: Record<string, string | number | string[]>;
+  evidence: { rows?: number[]; periods?: string[]; examples?: string[] }; approval_id?: string;
+};
+export type AgentOutput = {
+  dataset: { id: string; name: string; row_count: number };
+  period: { from: string; to: string } | null;
+  columns_used?: { amount: string; date: string; group: string | null };
+  metrics: { key: string; value: number; format: 'number' | 'percent' | 'currency' }[];
+  series?: { period: string; total: number; count: number }[];
+  breakdown?: { dimension: string; role: string; items: { label: string; total: number; share: number }[] } | null;
+  unusual?: { row_number: number; date: string; amount: number; label: string | null }[];
+  recommendations: Recommendation[];
+  limitations: { code: string; params: Record<string, string | number> }[];
+  summary: { text: string; provider: string; model: string; simulated: boolean } | null;
+  summary_error?: string;
+};
+export type Execution = {
+  id: string; agent_id: string; agent_version: string; status: ExecutionStatus; input: { dataset_id: string };
+  output: AgentOutput | null; error: { code: string; message: string; params: Record<string, unknown> } | null;
+  usage: { provider?: string | null; model?: string; simulated?: boolean; input_tokens?: number; output_tokens?: number; cost_usd?: number; tools?: string[] };
+  created_at: string; queued_at: string | null; started_at: string | null; completed_at: string | null; approvals: ApprovalInfo[];
+};
 export type Health = { status: 'ok' | 'degraded'; database: 'ok' | 'unavailable'; version: string };
 
 export class ApiError extends Error {

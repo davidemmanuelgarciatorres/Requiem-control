@@ -2,12 +2,14 @@
 
 Plataforma SaaS de inteligencia de negocio y automatización de operaciones con agentes de IA.
 
-> **Estado actual: Fase 3 completa — importación de CSV/XLSX con análisis de calidad explicable** (sobre la Fase 2: autenticación, base de datos y multi-organización).
+> **Estado actual: Fase 4 completa — primeros agentes de IA (Analista de datos y Analista financiero) con aprobación humana**, sobre la importación de CSV/XLSX (Fase 3) y la autenticación multi-organización (Fase 2).
 > Funcionan de verdad: registro e inicio de sesión, organizaciones, miembros con roles y permisos,
 > límites del plan aplicados en el servidor, auditoría, exportación y eliminación de datos,
 > con aislamiento entre organizaciones en la API **y** en PostgreSQL (Row-Level Security).
 > Importación de CSV/XLSX con validación segura, vista previa, mapeo de columnas, reporte de calidad e historial.
-> Aún **no** hay agentes de IA, reportes financieros, integraciones ni pagos.
+> Agentes con herramientas acotadas, ciclo de vida, límites del plan y acciones que esperan tu aprobación. El proveedor de IA es
+> **simulado por defecto** (sin costo, etiquetado); Claude se activa con `AI_PROVIDER=anthropic` y tu credencial.
+> Aún **no** hay reportes exportables, integraciones ni pagos.
 > Las cifras de la “vista de demostración” son ficticias y están etiquetadas como tales.
 
 ## Documentación

@@ -164,3 +164,25 @@ label.rc-btn.is-disabled { opacity: 0.45; pointer-events: none; }
 .rc-dataset-item { flex-wrap: wrap; }
 .rc-dataset-item__link:hover { text-decoration: underline; }
 .rc-limits dt::first-letter { text-transform: uppercase; }
+
+/* --- Agentes ------------------------------------------------------------- */
+.rc-agent-history { margin-top: var(--rc-space-5); }
+.rc-summary { font-size: 1rem; line-height: 1.6; color: var(--rc-text); max-width: 75ch; }
+.rc-steps-line { display: flex; flex-wrap: wrap; gap: var(--rc-space-2) var(--rc-space-5); font-size: var(--rc-fs-sm); color: var(--rc-text-muted); }
+.rc-steps-line li { display: inline-flex; align-items: center; gap: var(--rc-space-2); }
+.rc-steps-line__dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--rc-glass-border-strong); }
+.rc-steps-line li.is-done { color: var(--rc-text-secondary); }
+.rc-steps-line li.is-done .rc-steps-line__dot { background: var(--rc-accent); border-color: var(--rc-accent); }
+.rc-steps-line li.is-current { color: var(--rc-text); font-weight: 600; }
+.rc-steps-line li.is-current .rc-steps-line__dot { border-color: var(--rc-accent); box-shadow: 0 0 0 4px var(--rc-accent-soft); animation: rc-pulse 1.4s ease-in-out infinite; }
+.rc-steps-line li.is-error { color: var(--rc-danger); font-weight: 600; }
+.rc-steps-line li.is-error .rc-steps-line__dot { background: var(--rc-danger); border-color: var(--rc-danger); }
+@keyframes rc-pulse { 50% { box-shadow: 0 0 0 7px transparent; } }
+@media (prefers-reduced-motion: reduce) { .rc-steps-line li.is-current .rc-steps-line__dot { animation: none; } }
+.rc-bars { display: grid; gap: var(--rc-space-3); }
+.rc-bars li { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 4px var(--rc-space-3); align-items: center; font-size: var(--rc-fs-sm); }
+.rc-bars__label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rc-bars__track { height: 8px; border-radius: 99px; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+.rc-bars__track > span { display: block; height: 100%; background: var(--rc-accent); border-radius: inherit; }
+.rc-bars__value { grid-column: 1 / -1; color: var(--rc-text-muted); font-size: var(--rc-fs-xs); }
+.rc-approval-box { display: grid; gap: var(--rc-space-2); margin-top: var(--rc-space-2); padding: var(--rc-space-3); border-radius: var(--rc-radius-md); border: 1px dashed rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.05); font-size: var(--rc-fs-sm); }

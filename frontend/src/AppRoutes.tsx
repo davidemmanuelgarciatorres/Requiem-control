@@ -5,6 +5,7 @@ import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RequireAuth';
 import { AgentsPage } from './features/agents/AgentsPage';
+import { ExecutionPage } from './features/agents/ExecutionPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { DataPage } from './features/data/DataPage';
 import { DatasetPage } from './features/data/DatasetPage';
@@ -23,6 +24,7 @@ export function AppRoutes() {
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
         <Route path="agents" element={<AgentsPage />} />
+        <Route path="agents/runs/:executionId" element={<ExecutionPage />} />
         <Route path="data" element={<DataPage />} />
         <Route path="data/import/:uploadId" element={<ImportReviewPage />} />
         <Route path="data/:datasetId" element={<DatasetPage />} />

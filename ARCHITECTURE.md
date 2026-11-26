@@ -11,8 +11,8 @@
                  │ Backend Python (FastAPI)     │  monolito modular      ← EXISTE (Fase 2)
                  │  ├─ api/ auth, orgs, planes  │  ← EXISTE
                  │  ├─ ingestion/ CSV, XLSX     │  ← EXISTE (Fase 3)
-                 │  ├─ agents/ orquestación     │  ← Fase 4
-                 │  ├─ providers/ IA (+ mock)   │
+                 │  ├─ agents/ orquestación     │  ← EXISTE (Fase 4)
+                 │  ├─ providers IA (mock+Claude)│  ← EXISTE (Fase 4)
                  │  ├─ reporting/               │  ← Fase 5
                  │  └─ integrations/ OAuth      │  ← Fase 6
                  └───────┬──────────────┬───────┘
@@ -46,10 +46,12 @@ workers; la separación en servicios solo ocurre cuando la demanda real lo justi
 │  │  ├─ audit.py          registro de auditoría
 │  │  ├─ errors.py         errores {"error": {code, message}}
 │  │  ├─ security/         passwords (Argon2id), tokens (SHA-256), rate_limit
+│  │  ├─ agents/           providers.py, tools.py, data_analyst.py, financial_analyst.py, runner.py, approvals.py
 │  │  ├─ ingestion/        validation.py (seguridad), parsing.py (CSV/XLSX), analysis.py (tipos y calidad), service.py
-│  │  └─ api/              deps (auth, CSRF, permisos), auth.py, organizations.py, datasets.py, serializers.py
+│  │  └─ api/              deps (auth, CSRF, permisos), auth.py, organizations.py, datasets.py, agents.py, serializers.py
 │  ├─ migrations/versions/0001_identity_tenancy.py   DDL + políticas RLS + semillas
 │  ├─ migrations/versions/0002_data_ingestion.py     archivos, conjuntos y filas (RLS)
+│  ├─ migrations/versions/0003_agents.py             agentes, ejecuciones, aprobaciones (RLS)
 │  ├─ scripts/init_dev_db.sh                          roles y bases locales
 │  └─ tests/               pytest contra PostgreSQL real (API, permisos, aislamiento, RLS)
 └─ frontend/
@@ -148,7 +150,19 @@ organizaciones); escritura solo en la org activa; `audit_logs` de solo anexado (
 | `POST /api/datasets/uploads/{id}/confirm` | `data.write` |
 | `GET /api/datasets` · `GET …/{id}` · `GET …/{id}/rows` · `DELETE …/{id}` | `data.read` · `data.write` |
 
+| `GET /api/agents` · `GET /api/agents/provider` · `PUT /api/agents/{id}/activation` | `org.read` · `agents.manage` |
+| `POST /api/agents/{id}/executions` (202) · `GET …/executions[/{id}]` · `POST …/executions/{id}/cancel` | `agents.run` · `data.read` |
+| `GET /api/approvals` · `POST /api/approvals/{id}/decision` | `data.read` · `approvals.decide` |
+
 Documentación interactiva (solo fuera de producción): `/api/docs`.
+
+### Agentes (Fase 4)
+`POST …/executions` valida (agente activo, límite mensual, idempotencia), crea la ejecución (`created → queued`),
+**confirma la transacción** y encola `runner.run_execution` como tarea en segundo plano de la API. La tarea abre su
+propia sesión con el contexto RLS de la organización, marca `running`, ejecuta el agente con un `ToolContext` que solo
+permite las herramientas de su definición, pide al proveedor un resumen a partir de **hechos agregados** (nunca filas),
+y termina en `completed`, `awaiting_approval` (si propuso acciones) o `failed` (con código). Las aprobaciones se
+deciden con un `UPDATE … WHERE status = 'pending'` atómico y el servidor ejecuta la acción una sola vez.
 
 ### Ingesta (Fase 3)
 `validation.detect` (firma de bytes, paquete OOXML, macros, cifrado, zip-bomb, codificación) → `parsing.parse`

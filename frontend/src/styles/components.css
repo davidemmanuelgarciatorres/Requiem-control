@@ -102,6 +102,7 @@
 }
 .rc-icon-btn:hover { background: var(--rc-glass-bg-hover); color: var(--rc-text); }
 .rc-icon-btn[aria-expanded='true'] { color: var(--rc-text); border-color: rgba(184, 240, 204, 0.35); }
+.rc-icon-btn__count--alert { background: var(--rc-warning) !important; color: #1a1204 !important; border-color: transparent !important; }
 .rc-icon-btn__count {
   position: absolute;
   top: -3px; right: -3px;

@@ -1,8 +1,28 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **3 (ingesta de datos) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **4 (primeros agentes de IA) — completa, pendiente de revisión**
 
 ## ✅ Implementado y probado
+
+### Fase 4 — Agentes de IA
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Catálogo y activación por organización; **plan gratuito: máximo 2 agentes activos** y 100 ejecuciones/mes, aplicados en el servidor | pytest (límites reducidos a 1 para probar el rechazo 402). |
+| Ciclo de vida explícito con marcas de tiempo; **ejecuciones fallidas registradas** con código y sin trazas internas | pytest + e2e (dataset sin roles → falla explicada). |
+| **Un agente no puede usar herramientas fuera de sus permisos** (incluso si su código lo intenta) | pytest (agente de solo lectura que intenta proponer cambios → falla `agent.tool_not_allowed`, sin aprobación creada). |
+| **Solicitudes duplicadas no ejecutan dos veces**: clave de idempotencia en ejecuciones; decisión de aprobación atómica | pytest (segunda aprobación → 409, filas borradas una sola vez, un solo evento de auditoría). |
+| Analista de datos: recomendaciones explicables a partir de la calidad; propone eliminar duplicados (requiere aprobación) | pytest + e2e (nada cambia hasta aprobar; luego 17 → 16 filas). |
+| Analista financiero: total, movimientos, ticket promedio, mediana, serie mensual, cambio entre meses, concentración, movimientos inusuales con fila de origen, limitaciones (incl. mes incompleto y cambio influido por atípicos) | pytest con cifras exactas + e2e. |
+| **Proveedor simulado claramente identificado** (insignia, aviso y uso “mock”, costo 0); **sin credenciales la app no falla** y usa el simulado | pytest + unitarias + e2e. |
+| Adaptador de Claude (SDK `anthropic`, `claude-opus-5-5`, esfuerzo medio, respaldo del servidor ante rechazos, manejo de errores, costo estimado) | pytest con transporte HTTP simulado: forma exacta de la petición, cálculo de costo, rechazo y límite → errores controlados. **No se hizo ninguna llamada real.** |
+| Si el proveedor falla, el análisis se entrega igual sin resumen | pytest. |
+| Aislamiento: ejecuciones y aprobaciones de otra organización → 404; un agente no lee datasets ajenos; RLS | pytest. |
+| Interfaz: agentes en vivo, ejecutar con clave de idempotencia, seguimiento del ciclo de vida, resultados, aprobar/rechazar, aprobaciones pendientes en la barra superior | 6 unitarias + 3 e2e × escritorio y móvil. |
+
+### Diseño móvil (corregido a partir de capturas del propietario)
+- Paneles de la barra superior: en el teléfono bajan desde arriba a todo lo ancho con rastro de gotas verde neón; nunca quedan cortados. E2E a 360 px.
+- Barra superior a 360 px: todos los botones dentro de la píldora. E2E a 360 px.
+
 
 ### Fase 3 — Importación de CSV/XLSX
 | Funcionalidad | Cómo se verificó |
@@ -57,6 +77,7 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - Despliegue real con HTTPS (`COOKIE_SECURE=true`) y detrás de un proxy (IP real del cliente).
 
 ## 🟠 Simulado (etiquetado en la interfaz)
+- **Resúmenes de los agentes**: plantilla del proveedor simulado (los cálculos sí son reales). Etiquetados “Simulado · sin IA real”.
 - **Demostración sin servidor** (`npm run build:demo`, publicada para el teléfono): API simulada en el navegador con aviso permanente; no hay importación de archivos en esa versión.
 - Cifras de `/?view=demo` (ficticias, `demoData.ts`).
 - Botones de agentes, aprobaciones e integraciones: deshabilitados con la fase en que llegan.
@@ -68,18 +89,19 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - 2FA y gestión de sesiones activas.
 - Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
 - Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, exportación CSV, importación en la demo sin servidor.
-- Fases 4–8: agentes de IA, reportes, integraciones, agentes avanzados, facturación.
+- Agentes: worker separado, asistente conversacional, proveedor de IA real (requiere tu credencial y autorización de gasto).
+- Fases 5–8: reportes exportables, integraciones, agentes avanzados, facturación.
 - CI (GitHub Actions) — propuesto, no activado sin autorización.
 
 ## Resultados de la última ejecución
 ```
 backend:  ruff check .          → sin problemas
-          mypy app (strict)     → sin errores (25 archivos)
-          pytest                → 68 aprobadas (PostgreSQL 16 real)
+          mypy app (strict)     → sin errores (33 archivos)
+          pytest                → 84 aprobadas (PostgreSQL 16 real)
 frontend: npm run lint          → 0 problemas
           npm run typecheck     → 0 errores
-          npm run test          → 8 archivos, 47 aprobadas
+          npm run test          → 9 archivos, 52 aprobadas
           npm run build         → OK (la API simulada de la demo no se incluye)
-          npm run e2e           → 47 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+          npm run e2e           → 57 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
                                    (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
 ```

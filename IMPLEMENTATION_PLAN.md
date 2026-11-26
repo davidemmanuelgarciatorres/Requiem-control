@@ -7,9 +7,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | 0 | Auditoría | ✅ Completa |
 | 1 | Fundamento visual | ✅ Completa |
 | 2 | Autenticación y base de datos | ✅ Completa |
-| 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa (pendiente de revisión) |
-| 4 | Primeros agentes de IA | ⏸ Siguiente — esperando autorización |
-| 5 | Reportes e inteligencia | Pendiente |
+| 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa |
+| 4 | Primeros agentes de IA | ✅ Completa (pendiente de revisión) |
+| 5 | Reportes e inteligencia | ⏸ Siguiente — esperando autorización |
 | 6 | Integraciones (Gmail, Sheets, Drive) | Pendiente |
 | 7 | Agentes avanzados | Pendiente |
 | 8 | Facturación y preparación para producción | Pendiente |
@@ -46,15 +46,20 @@ Pendiente dentro del área: procesamiento en segundo plano para archivos más gr
 la interfaz (la API ya acepta `sheet`), exportación de conjuntos a CSV (con neutralización de fórmulas, Fase 5),
 importación en la demostración sin servidor.
 
-## Fase 4 — Primeros agentes (siguiente recomendada)
-Abstracción de proveedores de IA (interfaz común, timeouts, reintentos, uso/costo), **proveedor mock claramente
-identificado** cuando no haya clave, Analista de datos y Analista financiero, ciclo de vida
-(`created → queued → running → awaiting_approval → completed | failed | cancelled`), herramientas con permisos,
-aprobaciones humanas con idempotencia, límites de plan en el servidor (gratis: 2 agentes). Tablas
-`agent_definitions`, `agent_executions`, `approvals`. Cola de trabajos en segundo plano (empezar con tabla en
-PostgreSQL + worker; evaluar Redis solo si hace falta).
+## Fase 4 — Primeros agentes ✅
+- Catálogo en `agent_definitions` (6 agentes; Analista de datos y Analista financiero disponibles, el resto planificado).
+- Activación por organización con límite del plan en el servidor (gratis: 2) y límite mensual de ejecuciones (gratis: 100).
+- Ciclo de vida `created → queued → running → awaiting_approval → completed | failed | cancelled`, con clave de
+  idempotencia, tiempo máximo y registro de fallos.
+- Herramientas acotadas por agente (`read_dataset`, `dataset_quality`, `summarize`, `propose_action`); sin código arbitrario.
+- Aprobación humana atómica: la acción propuesta (eliminar duplicados) solo se ejecuta una vez y tras aprobarla.
+- Proveedor de IA: simulado por defecto; adaptador de Claude (`claude-opus-5-5`, SDK oficial, respaldo ante rechazos)
+  listo y probado contra un transporte HTTP simulado, **sin llamadas reales** hasta que el propietario lo autorice.
 
-## Fase 5 — Reportes e inteligencia
+Pendiente del área: worker separado para ejecuciones largas, asistente conversacional (módulo Asistente IA),
+más acciones aprobables (requieren integraciones, Fase 6).
+
+## Fase 5 — Reportes e inteligencia (siguiente recomendada)
 Indicadores reales, comparaciones históricas, recomendaciones explicables (qué, evidencia, periodo, por qué,
 acción, limitaciones — formato ya prototipado en la demo), exportación CSV/PDF. Reevaluar librería de gráficas.
 

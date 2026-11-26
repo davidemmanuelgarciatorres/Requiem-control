@@ -152,6 +152,10 @@ def run(ctx: ToolContext, params: dict[str, Any]) -> dict[str, Any]:
                     }
                 )
 
+    if change is not None and unusual and any(u["date"][:7] == series[-1]["period"] for u in unusual):
+        # El cambio entre meses está influido por movimientos atípicos del último mes.
+        limitations.append({"code": "change_includes_unusual", "params": {"period": series[-1]["period"]}})
+
     negatives = data[data["amount"] < 0]
     if len(negatives):
         recommendations.append(
