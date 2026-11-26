@@ -10,7 +10,7 @@
                  ┌──────────────▼───────────────┐
                  │ Backend Python (FastAPI)     │  monolito modular      ← EXISTE (Fase 2)
                  │  ├─ api/ auth, orgs, planes  │  ← EXISTE
-                 │  ├─ ingestion/ CSV, XLSX     │  ← Fase 3
+                 │  ├─ ingestion/ CSV, XLSX     │  ← EXISTE (Fase 3)
                  │  ├─ agents/ orquestación     │  ← Fase 4
                  │  ├─ providers/ IA (+ mock)   │
                  │  ├─ reporting/               │  ← Fase 5
@@ -46,8 +46,10 @@ workers; la separación en servicios solo ocurre cuando la demanda real lo justi
 │  │  ├─ audit.py          registro de auditoría
 │  │  ├─ errors.py         errores {"error": {code, message}}
 │  │  ├─ security/         passwords (Argon2id), tokens (SHA-256), rate_limit
-│  │  └─ api/              deps (auth, CSRF, permisos), auth.py, organizations.py, serializers.py
+│  │  ├─ ingestion/        validation.py (seguridad), parsing.py (CSV/XLSX), analysis.py (tipos y calidad), service.py
+│  │  └─ api/              deps (auth, CSRF, permisos), auth.py, organizations.py, datasets.py, serializers.py
 │  ├─ migrations/versions/0001_identity_tenancy.py   DDL + políticas RLS + semillas
+│  ├─ migrations/versions/0002_data_ingestion.py     archivos, conjuntos y filas (RLS)
 │  ├─ scripts/init_dev_db.sh                          roles y bases locales
 │  └─ tests/               pytest contra PostgreSQL real (API, permisos, aislamiento, RLS)
 └─ frontend/
@@ -74,8 +76,7 @@ workers; la separación en servicios solo ocurre cuando la demanda real lo justi
       └─ test/           setup y utilidades de render
 ```
 
-Módulos previstos en `backend/app/` para fases siguientes (se crearán al implementarlas): `ingestion/`,
-`analysis/`, `agents/`, `providers/`, `orchestration/`, `reporting/`, `integrations/`.
+Módulos previstos en `backend/app/` para fases siguientes (se crearán al implementarlas): `agents/`, `providers/`, `orchestration/`, `reporting/`, `integrations/`.
 
 ## 3. Frontend — decisiones clave
 
@@ -124,7 +125,8 @@ Módulos previstos en `backend/app/` para fases siguientes (se crearán al imple
 users ─┬─< organization_members >─┬─ organizations ─┬─ subscriptions ── plans
        │            │             │                 ├─< audit_logs
        │            └── roles ──< role_permissions >── permissions
-       └─< user_sessions (active_organization_id)   └─< usage_records
+       └─< user_sessions (active_organization_id)   ├─< usage_records
+                                                     └─< uploaded_files ─< datasets ─< dataset_rows
 ```
 Todas las tablas con `organization_id` tienen RLS. Políticas clave: `organizations` visibles si son la activa o si el
 usuario es miembro; `organization_members` visibles si son de la org activa o del propio usuario (para listar sus
@@ -142,7 +144,18 @@ organizaciones); escritura solo en la org activa; `audit_logs` de solo anexado (
 | `GET /api/organizations/current/subscription` | `billing.read` |
 | `GET /api/organizations/current/audit-logs` · `GET …/export` | `audit.read` · `org.export` |
 
+| `POST /api/datasets/uploads` (multipart) · `GET …/uploads` · `GET/DELETE …/uploads/{id}` | `data.write` · `data.read` |
+| `POST /api/datasets/uploads/{id}/confirm` | `data.write` |
+| `GET /api/datasets` · `GET …/{id}` · `GET …/{id}/rows` · `DELETE …/{id}` | `data.read` · `data.write` |
+
 Documentación interactiva (solo fuera de producción): `/api/docs`.
+
+### Ingesta (Fase 3)
+`validation.detect` (firma de bytes, paquete OOXML, macros, cifrado, zip-bomb, codificación) → `parsing.parse`
+(todo como texto; XLSX solo valores) → `analysis.analyze` (inferencia de tipos, hallazgos con filas de evidencia,
+estadísticas por columna) → vista previa. Al confirmar se vuelve a leer el archivo **guardado** (no se confía en lo
+que reenvía el cliente), se aplica el mapeo, se convierten los valores y se insertan las filas en lotes de 1,000.
+Cada fila guarda el número de fila del archivo original para trazar cualquier cifra a su origen.
 
 ### Frontend ↔ API
 Mismo origen: Vite (dev y preview) reenvía `/api` a FastAPI, así la cookie es de primera parte y no hace falta CORS.

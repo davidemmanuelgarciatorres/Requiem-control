@@ -170,3 +170,16 @@ def test_row_and_column_limits():
     with pytest.raises(UploadRejected) as e:
         parse(wide, "csv", encoding="utf-8-sig", max_rows=10, max_cols=5)
     assert e.value.code == "upload.too_many_columns"
+
+
+def test_money_with_cents_is_number_not_integer():
+    values = ["$1,200.00", "$350.50", "$2,100.00", "$90", "$480.00"]
+    assert infer_type(values) == "number"
+    r = analyze(["Monto"], [[v] for v in values])
+    assert not [i for i in r["issues"] if i["code"] == "mixed_types"]
+
+
+def test_outlier_lower_bound_omitted_when_below_observed_values():
+    rows = [[str(v)] for v in [100, 110, 120, 105, 95, 115, 108, 112, 50000]]
+    issue = next(i for i in analyze(["Monto"], rows)["issues"] if i["code"] == "outliers")
+    assert issue["low"] is None and issue["high"] > 120

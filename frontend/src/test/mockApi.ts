@@ -46,7 +46,7 @@ export function mockApi(routes: Routes) {
     const key = `${init.method ?? 'GET'} ${String(input)}`;
     const handler = all[key];
     if (!handler) return new Response(JSON.stringify({ error: { code: 'test.unmocked', message: key } }), { status: 404 });
-    const res = await handler(init.body ? JSON.parse(String(init.body)) : undefined, init);
+    const res = await handler(typeof init.body === 'string' ? JSON.parse(init.body) : init.body, init);
     if (res.status === 204) return new Response(null, { status: 204 });
     return new Response(JSON.stringify(res.body ?? {}), { status: res.status, headers: { 'Content-Type': 'application/json' } });
   });

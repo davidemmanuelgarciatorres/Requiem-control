@@ -149,10 +149,18 @@ def infer_type(values: list[str]) -> ColumnType:
     if not present:
         return "empty"
     sample = present[:5000]
-    for t in ("boolean", "integer", "number", "date"):
-        ok = sum(1 for v in sample if _matches(v, t))
-        if ok / len(sample) >= DOMINANT_SHARE:
-            return t
+    share = {
+        t: sum(1 for v in sample if _matches(v, t)) / len(sample) for t in ("boolean", "integer", "number", "date")
+    }
+    if share["boolean"] >= DOMINANT_SHARE:
+        return "boolean"
+    # Si hay decimales (p. ej. $350.50 entre montos redondos), la columna es numérica, no entera.
+    if share["integer"] >= DOMINANT_SHARE and share["number"] <= share["integer"]:
+        return "integer"
+    if share["number"] >= DOMINANT_SHARE:
+        return "number"
+    if share["date"] >= DOMINANT_SHARE:
+        return "date"
     return "text"
 
 
@@ -267,6 +275,8 @@ def analyze(
                 iqr = q3 - q1
                 if iqr > 0:
                     low, high = q1 - 3 * iqr, q3 + 3 * iqr  # valla amplia: solo valores muy alejados
+                    # Un límite fuera del rango observado (p. ej. negativo con montos positivos) no aporta.
+                    low_out = float(low) if low > nums.min() else None
                     out_mask = (nums < low) | (nums > high)
                     if out_mask.any():
                         issues.append(
@@ -275,7 +285,7 @@ def analyze(
                                 "severity": "info",
                                 "column": header,
                                 "count": int(out_mask.sum()),
-                                "low": float(low),
+                                "low": low_out,
                                 "high": float(high),
                                 "rows": _row_numbers(out_mask.reindex(col.index, fill_value=False)),
                             }

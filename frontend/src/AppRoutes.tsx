@@ -6,6 +6,9 @@ import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RequireAuth';
 import { AgentsPage } from './features/agents/AgentsPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { DataPage } from './features/data/DataPage';
+import { DatasetPage } from './features/data/DatasetPage';
+import { ImportReviewPage } from './features/data/ImportReviewPage';
 import { DesignSystemPage } from './features/design-system/DesignSystemPage';
 import { IntegrationsPage } from './features/integrations/IntegrationsPage';
 import { ModulePage } from './features/modules/ModulePage';
@@ -20,6 +23,9 @@ export function AppRoutes() {
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
         <Route path="agents" element={<AgentsPage />} />
+        <Route path="data" element={<DataPage />} />
+        <Route path="data/import/:uploadId" element={<ImportReviewPage />} />
+        <Route path="data/:datasetId" element={<DatasetPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
         <Route path="design-system" element={<DesignSystemPage />} />

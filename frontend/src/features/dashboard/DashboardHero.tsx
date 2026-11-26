@@ -1,4 +1,4 @@
-import { Bot, Building2, Eye, Users, X } from 'lucide-react';
+import { Bot, Building2, Eye, Table2, Users, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
@@ -25,6 +25,7 @@ export function DashboardHero({ demo, onToggleDemo }: { demo: boolean; onToggleD
 
   const stats = [
     { icon: Building2, value: String(session?.memberships.length ?? 0), label: h.statOrganizations },
+    sub.data && { icon: Table2, value: String(sub.data.usage.datasets ?? 0), label: h.statDatasets },
     sub.data && { icon: Users, value: `${sub.data.usage.members ?? 0}/${sub.data.plan.max_members}`, label: h.statMembers },
     sub.data && { icon: Bot, value: `${sub.data.usage.active_agents ?? 0}/${sub.data.plan.max_active_agents}`, label: h.statAgents },
   ].filter(Boolean) as { icon: typeof Bot; value: string; label: string }[];
@@ -43,7 +44,7 @@ export function DashboardHero({ demo, onToggleDemo }: { demo: boolean; onToggleD
           {demo ? t.dashboard.subtitleDemo : t.dashboard.subtitleEmpty}
         </p>
         <div className="rc-hero__actions">
-          <Link to="/settings" className="rc-btn rc-btn--primary rc-btn--lg">{h.ctaTeam}</Link>
+          <Link to="/data" className="rc-btn rc-btn--primary rc-btn--lg">{h.ctaImport}</Link>
           <Button variant="glass" size="lg" icon={demo ? <X size={16} /> : <Eye size={16} />} onClick={onToggleDemo}>
             {demo ? t.dashboard.hideDemo : t.dashboard.showDemo}
           </Button>

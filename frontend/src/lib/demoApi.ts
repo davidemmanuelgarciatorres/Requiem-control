@@ -179,6 +179,10 @@ export async function handleDemo(method: string, path: string, body: unknown): P
 
   try {
     switch (key) {
+      case 'GET /datasets':
+      case 'GET /datasets/uploads':
+        requireAuth(s);
+        return [];
       case 'GET /health':
         return { status: 'ok', database: 'ok', version: 'demo' };
       case 'GET /plans':

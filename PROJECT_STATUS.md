@@ -1,8 +1,23 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **2 (autenticación y base de datos) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **3 (ingesta de datos) — completa, pendiente de revisión**
 
 ## ✅ Implementado y probado
+
+### Fase 3 — Importación de CSV/XLSX
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Validación por **contenido** (no por nombre ni MIME): CSV de texto, paquete XLSX real; extensión coherente | pytest: PDF, XLSX falso, binario, ZIP que no es libro, .xls/cifrado, archivo truncado → rechazados con código claro. E2E: XLSX disfrazado rechazado en la UI. |
+| Sin macros ni fórmulas: `.xlsm` y libros con `vbaProject.bin` (aunque se renombren) rechazados; XLSX leído en modo solo-valores | pytest (libro con macro renombrado a .xlsx; fórmula sin valor guardado → celda vacía). |
+| Anti zip-bomb, límites de tamaño, filas y columnas, y de almacenamiento del plan | pytest (bomba 20 MB → rechazada; límites de filas/columnas; plan sin espacio → 402). |
+| Lectura: separador (`,` `;` tab `\|`) y codificación (UTF-8, BOM, Windows-1252) detectados; encabezados duplicados/vacíos normalizados; filas vacías omitidas | pytest. |
+| Tipos con formatos de México: `$1,234.50`, `1.234,50`, `(1,000.00)`, `15%`, `dd/mm/aaaa`; montos con centavos = número | pytest (incluye un error real encontrado al revisar capturas y corregido). |
+| Hallazgos explicables: faltantes, duplicados, tipos inconsistentes, atípicos, columnas vacías, filas con celdas de más — con filas de evidencia, por qué importa y qué hacer | pytest (filas exactas) + unitarias + e2e. |
+| Mapeo de columnas (renombrar, tipo, rol, excluir) validado en servidor; conversión con conteo de fallos por columna; trazabilidad a la fila del archivo | pytest + e2e. |
+| Historial, archivos pendientes, descartar, eliminar (libera almacenamiento), aviso de archivo duplicado | pytest + unitarias. |
+| Permisos `data.read`/`data.write`, CSRF en la subida multipart, auditoría (incl. rechazos), **aislamiento por organización** en API y RLS | pytest. |
+| Interfaz: arrastrar/elegir archivo, revisión, mapeo, reporte, filas paginadas; móvil sin desbordamiento | 6 unitarias nuevas + 2 e2e × escritorio y móvil. |
+
 
 ### Fase 2 — Autenticación, base de datos y multi-organización
 | Funcionalidad | Cómo se verificó |
@@ -42,6 +57,7 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - Despliegue real con HTTPS (`COOKIE_SECURE=true`) y detrás de un proxy (IP real del cliente).
 
 ## 🟠 Simulado (etiquetado en la interfaz)
+- **Demostración sin servidor** (`npm run build:demo`, publicada para el teléfono): API simulada en el navegador con aviso permanente; no hay importación de archivos en esa versión.
 - Cifras de `/?view=demo` (ficticias, `demoData.ts`).
 - Botones de agentes, aprobaciones e integraciones: deshabilitados con la fase en que llegan.
 - Uso en el plan (`active_agents`, `monthly_executions`, `storage_mb`) se reporta como 0 porque esas funciones aún no existen.
@@ -51,18 +67,19 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 - Recuperación de contraseña y verificación de correo (requieren envío de email).
 - 2FA y gestión de sesiones activas.
 - Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
-- Fases 3–8: importación CSV/XLSX, agentes de IA, reportes, integraciones, agentes avanzados, facturación.
+- Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, exportación CSV, importación en la demo sin servidor.
+- Fases 4–8: agentes de IA, reportes, integraciones, agentes avanzados, facturación.
 - CI (GitHub Actions) — propuesto, no activado sin autorización.
 
 ## Resultados de la última ejecución
 ```
 backend:  ruff check .          → sin problemas
-          mypy app (strict)     → sin errores (19 archivos)
-          pytest                → 30 aprobadas (PostgreSQL 16 real)
+          mypy app (strict)     → sin errores (25 archivos)
+          pytest                → 68 aprobadas (PostgreSQL 16 real)
 frontend: npm run lint          → 0 problemas
           npm run typecheck     → 0 errores
-          npm run test          → 6 archivos, 38 aprobadas
-          npm run build         → OK
-          npm run e2e           → 41 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+          npm run test          → 8 archivos, 47 aprobadas
+          npm run build         → OK (la API simulada de la demo no se incluye)
+          npm run e2e           → 47 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
                                    (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
 ```

@@ -2,11 +2,12 @@
 
 Plataforma SaaS de inteligencia de negocio y automatización de operaciones con agentes de IA.
 
-> **Estado actual: Fase 2 completa — autenticación, base de datos y multi-organización.**
+> **Estado actual: Fase 3 completa — importación de CSV/XLSX con análisis de calidad explicable** (sobre la Fase 2: autenticación, base de datos y multi-organización).
 > Funcionan de verdad: registro e inicio de sesión, organizaciones, miembros con roles y permisos,
 > límites del plan aplicados en el servidor, auditoría, exportación y eliminación de datos,
 > con aislamiento entre organizaciones en la API **y** en PostgreSQL (Row-Level Security).
-> Aún **no** hay importación de archivos, agentes de IA, reportes, integraciones ni pagos.
+> Importación de CSV/XLSX con validación segura, vista previa, mapeo de columnas, reporte de calidad e historial.
+> Aún **no** hay agentes de IA, reportes financieros, integraciones ni pagos.
 > Las cifras de la “vista de demostración” son ficticias y están etiquetadas como tales.
 
 ## Documentación
@@ -57,5 +58,7 @@ cd backend  && .venv/bin/ruff check . && .venv/bin/mypy app && .venv/bin/pytest
 cd frontend && npm run check                    # lint + typecheck + unitarias + build
 cd frontend && npm run build && npm run e2e     # e2e: levanta API + preview (base requiem_control_e2e migrada)
 ```
+
+Demostración sin servidor (API simulada en el navegador, para probar en el teléfono): `npm run build:demo` → `frontend/dist-demo/`.
 
 Para la base e2e: `MIGRATION_DATABASE_URL=postgresql+psycopg://requiem_owner:requiem_owner_dev@localhost:5432/requiem_control_e2e .venv/bin/alembic upgrade head`.

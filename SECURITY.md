@@ -1,6 +1,6 @@
 # SECURITY — REQUIEM CONTROL
 
-## 1. Controles implementados (Fases 1–2) — todos con pruebas automatizadas
+## 1. Controles implementados (Fases 1–3) — todos con pruebas automatizadas
 
 | Área | Control |
 |---|---|
@@ -16,6 +16,7 @@
 | Errores | Forma estable `{"error": {code, message}}`; errores 500 genéricos con detalle solo en el log del servidor; sin trazas ni SQL al cliente. |
 | Cabeceras | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: same-origin`, `Cache-Control: no-store` en `/api`. Documentación OpenAPI desactivada en producción. |
 | Auditoría | `audit_logs` de solo anexado (la API no tiene UPDATE/DELETE): registro, login, fallos de login (persisten aunque la petición falle), cambio de organización, cambios de miembros, edición, exportación y eliminación. Sin contraseñas ni tokens. |
+| Archivos subidos | Formato por contenido (firma y estructura), nunca por nombre/MIME; sin macros (`.xlsm`, `vbaProject.bin`), sin libros cifrados ni `.xls`; anti zip-bomb (tamaño descomprimido y razón de compresión); XLSX en modo solo-valores (no se evalúan fórmulas ni vínculos externos); CSV debe ser texto; límites de 10 MB / 100,000 filas / 200 columnas y de almacenamiento del plan; el archivo se guarda en la base de datos bajo RLS; los rechazos se auditan. |
 | Datos personales | Exportación JSON de la organización (`org.export`) y eliminación completa con confirmación por identificador (`org.delete`, borrado en cascada). |
 | Secretos | Ninguno en el repositorio. `.env` ignorado por Git. Contraseñas de `init_dev_db.sh` son solo para desarrollo local y se pueden sobrescribir por variables. |
 | Frontend | React escapa todo; sin `dangerouslySetInnerHTML` ni `eval`; sin CDNs de terceros; `localStorage` solo para preferencias de interfaz; redirección tras login solo a rutas internas (sin redirección abierta). |
@@ -34,12 +35,9 @@
 ### Toda tabla nueva de datos de negocio (Fases 3+)
 - `organization_id NOT NULL` + RLS con la misma política que las tablas actuales + prueba de aislamiento.
 
-### Archivos subidos (Fase 3)
-- Límite de tamaño y de filas/columnas; verificación por *magic bytes*, no por nombre ni MIME del cliente.
-- XLSX: protección contra bombas zip (límite de tamaño descomprimido), OpenPyXL `read_only=True, data_only=True`;
-  **nunca** se ejecutan macros (`.xlsm` rechazado por defecto) ni se evalúan fórmulas.
-- CSV: neutralizar inyección de fórmulas (`=`, `+`, `-`, `@`) al re-exportar.
-- Almacenamiento temporal fuera del directorio web, nombres aleatorios, borrado tras procesar, propiedad por organización.
+### Archivos subidos — pendiente
+- Al exportar conjuntos a CSV (Fase 5), neutralizar inyección de fórmulas (`=`, `+`, `-`, `@`).
+- Antivirus/escaneo de contenido si se aceptan más formatos en el futuro.
 
 ### Agentes de IA (Fase 4)
 - Herramientas con permisos explícitos por agente; un agente de solo lectura no puede escribir.

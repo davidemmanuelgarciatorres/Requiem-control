@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Bot, Building2, Check, CircleCheck, Database, Upload } from 'lucide-react';
-import { api, type Health } from '../../lib/api';
+import { Link } from 'react-router-dom';
+import { useAuth } from '../../app/auth';
+import { api, type DatasetSummary, type Health } from '../../lib/api';
+import { useApiResource } from '../../lib/useApi';
 import { IS_DEMO } from '../../lib/env';
 import { usePreferences } from '../../app/preferences';
 import { Badge, type Tone } from '../../components/ui/Badge';
@@ -14,6 +17,9 @@ import { AGENT_CATALOG } from '../agents/catalog';
  */
 export function EmptyDashboard() {
   const { t } = usePreferences();
+  const { session, can } = useAuth();
+  const datasets = useApiResource<DatasetSummary[]>(can('data.read') ? '/datasets' : null, session?.active_organization?.id);
+  const imported = (datasets.data?.length ?? 0) > 0;
   const [health, setHealth] = useState<Health | 'down' | null>(null);
   useEffect(() => {
     const ctrl = new AbortController();
@@ -26,7 +32,7 @@ export function EmptyDashboard() {
   const dbUp = apiUp && health.database === 'ok';
   const steps = [
     { key: 'account', icon: Building2, phase: 2, done: true },
-    { key: 'import', icon: Upload, phase: 3, done: false },
+    { key: 'import', icon: Upload, phase: 3, done: imported },
     { key: 'analyze', icon: Bot, phase: 4, done: false },
   ] as const;
 
@@ -68,9 +74,13 @@ export function EmptyDashboard() {
                   <p className="rc-step__title">{copy.title}</p>
                   <p className="rc-step__text">{copy.body}</p>
                 </div>
-                {s.done
-                  ? <Badge tone="success"><CircleCheck size={12} aria-hidden="true" />{t.common.completed}</Badge>
-                  : <Badge tone="outline">{interpolate(t.common.phase, { n: s.phase })}</Badge>}
+                {s.done ? (
+                  <Badge tone="success"><CircleCheck size={12} aria-hidden="true" />{t.common.completed}</Badge>
+                ) : s.key === 'import' ? (
+                  <Link to="/data" className="rc-btn rc-btn--glass rc-btn--sm">{t.dashboard.hero.ctaImport}</Link>
+                ) : (
+                  <Badge tone="outline">{interpolate(t.common.phase, { n: s.phase })}</Badge>
+                )}
               </li>
             );
           })}

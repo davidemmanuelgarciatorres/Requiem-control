@@ -6,9 +6,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 |---|---|---|
 | 0 | Auditoría | ✅ Completa |
 | 1 | Fundamento visual | ✅ Completa |
-| 2 | Autenticación y base de datos | ✅ Completa (pendiente de revisión) |
-| 3 | Ingesta de datos (CSV/XLSX) | ⏸ Siguiente — esperando autorización |
-| 4 | Primeros agentes de IA | Pendiente |
+| 2 | Autenticación y base de datos | ✅ Completa |
+| 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa (pendiente de revisión) |
+| 4 | Primeros agentes de IA | ⏸ Siguiente — esperando autorización |
 | 5 | Reportes e inteligencia | Pendiente |
 | 6 | Integraciones (Gmail, Sheets, Drive) | Pendiente |
 | 7 | Agentes avanzados | Pendiente |
@@ -35,12 +35,18 @@ Decisiones tomadas (recomendadas en la Fase 0 y autorizadas por el propietario):
 Pendiente dentro del área (requiere proveedor de email, autorización de costo): invitaciones por correo,
 verificación de correo, recuperación de contraseña.
 
-## Fase 3 — Ingesta de datos (siguiente recomendada)
-Subida CSV/XLSX con límites de tamaño, validación por *magic bytes* (no por nombre/MIME), OpenPyXL en modo
-`read_only`/`data_only` (sin macros ni fórmulas), almacenamiento temporal seguro, vista previa, mapeo de columnas,
-detección de duplicados/faltantes, procedencia e historial. Tablas `data_sources`, `uploaded_files`, `datasets` (con `organization_id` y RLS como el resto). Procesamiento con Pandas en el mismo backend; archivos grandes en un worker.
+## Fase 3 — Ingesta de datos ✅
+Flujo: subir → validar por contenido → leer → vista previa con hallazgos explicados → mapeo de columnas (nombre,
+tipo, rol, incluir) → confirmar → reporte de calidad + filas paginadas → historial. Tablas `uploaded_files`
+(archivo original en `bytea`), `datasets`, `dataset_rows` (JSONB por fila), todas con RLS. Límites: 10 MB por
+archivo, 100,000 filas, 200 columnas, almacenamiento del plan (gratis: 50 MB). Procesamiento síncrono dentro de
+esos límites.
 
-## Fase 4 — Primeros agentes
+Pendiente dentro del área: procesamiento en segundo plano para archivos más grandes (worker), elección de hoja en
+la interfaz (la API ya acepta `sheet`), exportación de conjuntos a CSV (con neutralización de fórmulas, Fase 5),
+importación en la demostración sin servidor.
+
+## Fase 4 — Primeros agentes (siguiente recomendada)
 Abstracción de proveedores de IA (interfaz común, timeouts, reintentos, uso/costo), **proveedor mock claramente
 identificado** cuando no haya clave, Analista de datos y Analista financiero, ciclo de vida
 (`created → queued → running → awaiting_approval → completed | failed | cancelled`), herramientas con permisos,
