@@ -6,8 +6,8 @@
   color-scheme: dark;
 
   /* --- Superficies base ------------------------------------------------- */
-  --rc-bg: #04060c;               /* carbón azul-negro */
-  --rc-bg-elevated: #0a0f1c;
+  --rc-bg: #030407;               /* negro espacial */
+  --rc-bg-elevated: #0a0c11;
 
   /* --- Atmósfera (fondo ambiental) -------------------------------------- */
   --rc-atmo-space: #1d3f8f;       /* azul espacial profundo */
@@ -24,10 +24,13 @@
   --ambient-cycle: 120s;
 
   /* --- Acento ----------------------------------------------------------- */
-  --rc-accent: #c8f560;           /* verde lima luminoso */
-  --rc-accent-strong: #b5e63f;
-  --rc-accent-soft: rgba(200, 245, 96, 0.14);
-  --rc-on-accent: #0b1004;
+  --rc-accent: #b8f0cc;           /* menta pálida (estado, selección, datos) */
+  --rc-accent-strong: #9fe3b8;
+  --rc-accent-soft: rgba(184, 240, 204, 0.12);
+  --rc-on-accent: #05140b;
+  --rc-warm: #f0c48e;             /* luz solar (acentos editoriales) */
+  --rc-cta: #f4f6f8;              /* acción principal: blanco */
+  --rc-on-cta: #05070a;
 
   /* --- Texto ------------------------------------------------------------ */
   --rc-text: #f4f7fb;
@@ -52,22 +55,23 @@
   --rc-chart-axis: var(--rc-text-muted);
 
   /* --- Vidrio (glassmorphism controlado) -------------------------------- */
-  --rc-glass-bg: rgba(10, 14, 26, 0.5);
-  --rc-glass-bg-strong: rgba(8, 12, 22, 0.72);
+  --rc-glass-bg: rgba(8, 10, 14, 0.46);
+  --rc-glass-bg-strong: rgba(6, 8, 12, 0.66);
   --rc-glass-bg-subtle: rgba(255, 255, 255, 0.04);
   --rc-glass-bg-hover: rgba(255, 255, 255, 0.07);
-  --rc-glass-border: rgba(255, 255, 255, 0.1);
-  --rc-glass-border-strong: rgba(255, 255, 255, 0.14);
+  --rc-glass-border: rgba(255, 255, 255, 0.09);
+  --rc-glass-border-strong: rgba(255, 255, 255, 0.16);
   --rc-glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.06);
-  --rc-glass-blur: 18px;
-  --rc-glass-saturate: 140%;
+  --rc-glass-blur: 22px;
+  --rc-glass-saturate: 120%;
   --rc-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.6);
   --rc-shadow-2: 0 24px 60px -24px rgba(0, 0, 0, 0.75);
 
   /* --- Tipografía ------------------------------------------------------- */
   --rc-font: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --rc-fs-display: clamp(2.25rem, 1.2rem + 4.2vw, 4.5rem);
-  --rc-fs-h1: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);
+  --rc-fs-h1: clamp(1.75rem, 1.3rem + 1.4vw, 2.5rem);
+  --rc-fs-hero: clamp(2.5rem, 1.4rem + 4.4vw, 5rem);
   --rc-fs-h2: 1.125rem;
   --rc-fs-h3: 0.9375rem;
   --rc-fs-kpi: clamp(2.25rem, 1.6rem + 2.4vw, 3.5rem);
@@ -87,16 +91,17 @@
   --rc-space-10: 40px;
   --rc-radius-sm: 8px;
   --rc-radius-md: 12px;
-  --rc-radius-lg: 18px;
-  --rc-radius-xl: 24px;
+  --rc-radius-lg: 22px;
+  --rc-radius-xl: 28px;
   --rc-radius-pill: 999px;
   --rc-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
   --rc-duration: 180ms;
   --rc-focus-ring: 0 0 0 2px var(--rc-bg), 0 0 0 4px var(--rc-accent);
 
   /* --- Layout ----------------------------------------------------------- */
-  --rc-sidebar-w: 256px;
-  --rc-sidebar-rail-w: 76px;
+  --rc-sidebar-w: 264px;
+  --rc-sidebar-rail-w: 84px;
+  --rc-frame: 12px;               /* margen de los paneles flotantes */
   --rc-topbar-h: 64px;
   --rc-gutter: 16px;
   --rc-content-max: 1520px;
@@ -105,8 +110,8 @@
 /* Navegadores sin backdrop-filter: vidrio más opaco para conservar legibilidad. */
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root {
-    --rc-glass-bg: rgba(12, 17, 30, 0.92);
-    --rc-glass-bg-strong: rgba(8, 12, 22, 0.97);
+    --rc-glass-bg: rgba(8, 10, 14, 0.9);
+    --rc-glass-bg-strong: rgba(6, 8, 12, 0.96);
   }
 }
 

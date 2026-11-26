@@ -22,12 +22,22 @@
 | Errores de API con forma estable, sin trazas ni SQL; cabeceras de seguridad | pytest. |
 | Frontend: inicio de sesión, registro, rutas protegidas, estado “API no disponible” con reintento, selector de organización (también en móvil), perfil con cierre de sesión, Configuración con cuenta/organización/miembros/plan/auditoría/datos, estado del sistema en vivo (`/api/health`) | 38 unitarias (API simulada) + e2e contra API real. |
 
+### Dirección visual “espacio” (actualizada a petición del propietario)
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Fondo: **la Tierra girando al centro** (WebGL2), una vuelta cada **120 s exactos**, todos los continentes pasan por la vista | Unitarias (periodicidad, las 36 franjas de longitud pasan por el centro). E2E en Chromium con reloj controlado: el fotograma a t y t+120 s es idéntico píxel a píxel; a t+30 s es distinto. |
+| **Luces de ciudad solo de noche**: el lado iluminado no las muestra; el nocturno sí | Unitaria (`nightFactor`: 0 de día, 1 de noche, transición gradual). E2E: análisis de píxeles del lienzo (lado de día brillante; lado de noche oscuro con >40 puntos de luz cálida). Revisión visual de capturas. |
+| Movimiento reducido (SO y preferencia en la app) → fotograma fijo | E2E: dos fotogramas a 30 s de distancia son idénticos. |
+| Respaldo sin WebGL | Unitaria (jsdom sin WebGL → `data-status="fallback"`). |
+| Rediseño estilo misión espacial / editorial: negro espacial, vidrio translúcido, acción principal blanca, acento menta, tono cálido solar; barra lateral y superior flotantes; portada “CONTROLA. ANALIZA. DECIDE.” con estado del sistema en vivo e indicadores **reales** (organizaciones, miembros/límite, agentes activos/límite); acceso con titular editorial | Unitarias + e2e de navegación y sin desbordamiento horizontal en 7 rutas × escritorio y móvil; capturas revisadas. |
+
 ### Fase 1 — Fundamento visual (sigue vigente)
-Fondo ambiental de **120 s exactos** (verificado con la Web Animations API en Chromium), movimiento reducido, shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y demo etiquetada, estados de carga/vacío/error, sin desbordamiento horizontal en escritorio y móvil.
+Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y demo etiquetada, estados de carga/vacío/error. El ciclo de color de 120 s original se sustituyó por la rotación terrestre de 120 s.
 
 ## 🟡 Implementado pero no probado automáticamente
 - Navegadores distintos de Chromium (Safari/iOS, Firefox).
 - Respaldo de vidrio sin `backdrop-filter`.
+- Rendimiento del globo en GPUs móviles reales (solo se probó con el renderizador por software de Chromium).
 - Auditoría automática de contraste/accesibilidad (axe/Lighthouse) no ejecutada.
 - Despliegue real con HTTPS (`COOKIE_SECURE=true`) y detrás de un proxy (IP real del cliente).
 
@@ -53,6 +63,6 @@ frontend: npm run lint          → 0 problemas
           npm run typecheck     → 0 errores
           npm run test          → 6 archivos, 38 aprobadas
           npm run build         → OK
-          npm run e2e           → 39 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
+          npm run e2e           → 41 aprobadas, 1 omitida a propósito (skip-link solo en escritorio)
                                    (API FastAPI + PostgreSQL reales; escritorio 1440×900 y Pixel 7)
 ```

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Bot, Building2, Check, CircleCheck, Database, Eye, Upload } from 'lucide-react';
+import { Bot, Building2, Check, CircleCheck, Database, Upload } from 'lucide-react';
 import { api, type Health } from '../../lib/api';
 import { usePreferences } from '../../app/preferences';
 import { Badge, type Tone } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { interpolate } from '../../lib/format';
 import { AGENT_CATALOG } from '../agents/catalog';
@@ -12,7 +11,7 @@ import { AGENT_CATALOG } from '../agents/catalog';
  * Estado sin datos (por defecto en la Fase 1). En lugar de métricas inventadas,
  * muestra el camino de incorporación y el estado real del sistema.
  */
-export function EmptyDashboard({ onShowDemo }: { onShowDemo: () => void }) {
+export function EmptyDashboard() {
   const { t } = usePreferences();
   const [health, setHealth] = useState<Health | 'down' | null>(null);
   useEffect(() => {
@@ -69,9 +68,6 @@ export function EmptyDashboard({ onShowDemo }: { onShowDemo: () => void }) {
             );
           })}
         </ol>
-        <div>
-          <Button variant="primary" icon={<Eye size={16} />} onClick={onShowDemo}>{t.dashboard.showDemo}</Button>
-        </div>
       </Card>
 
       <Card title={t.dashboard.systemStatus.title} subtitle={t.dashboard.systemStatus.subtitle} className="rc-onboarding__status">

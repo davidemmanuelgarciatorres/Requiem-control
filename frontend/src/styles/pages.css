@@ -19,11 +19,13 @@
 .rc-swatches code { color: var(--rc-text-muted); font-size: 0.6875rem; }
 .rc-swatch { height: 44px; border-radius: var(--rc-radius-md); border: 1px solid var(--rc-glass-border-strong); }
 
-.rc-ambient-strip { display: grid; grid-template-columns: repeat(5, 1fr); height: 64px; border-radius: var(--rc-radius-md); overflow: hidden; border: 1px solid var(--rc-glass-border); }
+.rc-ambient-strip { display: grid; grid-template-columns: 1fr 1fr; height: 64px; border-radius: var(--rc-radius-md); overflow: hidden; border: 1px solid var(--rc-glass-border); }
 .rc-ambient-strip span { display: flex; align-items: flex-end; padding: 6px; }
+.rc-ambient-strip__day { background: linear-gradient(90deg, #0b2a5e, #2c6fb8 60%, #e6f0ff); }
+.rc-ambient-strip__night { background: radial-gradient(circle at 30% 60%, rgba(255, 190, 110, 0.9) 0 2px, transparent 3px), radial-gradient(circle at 60% 40%, rgba(255, 200, 120, 0.8) 0 1.5px, transparent 3px), radial-gradient(circle at 75% 70%, rgba(255, 190, 110, 0.8) 0 1.5px, transparent 3px), #03060d; }
 .rc-ambient-strip small { font-size: 0.6875rem; color: rgba(255, 255, 255, 0.85); }
 
-.rc-hero__wordmark-demo { font-size: var(--rc-fs-display); font-weight: 200; letter-spacing: 0.16em; line-height: 1; color: rgba(255, 255, 255, 0.9); overflow-wrap: anywhere; }
+.rc-hero__wordmark-demo { font-size: var(--rc-fs-hero); font-weight: 300; text-transform: uppercase; line-height: 1; color: var(--rc-text); overflow-wrap: anywhere; }
 
 /* --- Autenticación ------------------------------------------------------- */
 .rc-auth {
@@ -34,18 +36,21 @@
   place-items: center;
   padding: var(--rc-space-8) var(--rc-gutter);
 }
-.rc-auth__card { position: relative; z-index: 1; width: min(440px, 100%); display: grid; gap: var(--rc-space-4); padding: var(--rc-space-6); border-radius: var(--rc-radius-xl); }
+.rc-auth__card { position: relative; z-index: 1; width: min(420px, 100%); justify-self: center; display: grid; gap: var(--rc-space-4); padding: var(--rc-space-6); border-radius: var(--rc-radius-xl); }
 @media (min-width: 768px) { .rc-auth__card { padding: var(--rc-space-8); } }
 .rc-auth__head { display: flex; align-items: center; justify-content: space-between; gap: var(--rc-space-3); }
 .rc-auth__head .rc-brand { padding: 0; }
 .rc-auth__footer { font-size: var(--rc-fs-sm); color: var(--rc-text-muted); text-align: center; }
-.rc-auth__wordmark {
-  position: fixed; z-index: 0; left: var(--rc-gutter); bottom: var(--rc-space-6);
-  display: none; flex-direction: column;
-  font-size: var(--rc-fs-display); font-weight: 200; letter-spacing: 0.16em; line-height: 1;
-  color: rgba(255, 255, 255, 0.07); pointer-events: none;
+.rc-auth--split { gap: var(--rc-space-8); align-content: center; }
+@media (min-width: 1024px) {
+  .rc-auth--split { grid-template-columns: minmax(0, 1fr) auto; place-items: center stretch; padding-inline: clamp(32px, 6vw, 96px); }
 }
-@media (min-width: 1024px) { .rc-auth__wordmark { display: flex; } }
+.rc-auth__intro { display: none; position: relative; z-index: 1; max-width: 520px; }
+@media (min-width: 1024px) { .rc-auth__intro { display: grid; gap: var(--rc-space-5); } }
+.rc-auth__title { font-size: clamp(2.5rem, 1.5rem + 2.8vw, 4.25rem); font-weight: 300; line-height: 1.05; letter-spacing: -0.02em; text-shadow: 0 2px 30px rgba(0, 0, 0, 0.7); }
+.rc-auth__title em { font-style: normal; color: var(--rc-warm); }
+.rc-auth__rule { width: 48px; height: 1px; background: rgba(255, 255, 255, 0.4); }
+.rc-auth__body { color: var(--rc-text-secondary); max-width: 38ch; text-shadow: 0 1px 12px rgba(0, 0, 0, 0.8); }
 
 /* --- Formularios --------------------------------------------------------- */
 .rc-form { display: grid; gap: var(--rc-space-4); }
@@ -66,7 +71,7 @@
 }
 .rc-select { min-height: 36px; padding: 0 var(--rc-space-3); font-size: var(--rc-fs-sm); }
 .rc-select option { background: var(--rc-bg-elevated); }
-.rc-input:focus, .rc-select:focus { outline: none; border-color: rgba(200, 245, 96, 0.6); background: rgba(255, 255, 255, 0.07); }
+.rc-input:focus, .rc-select:focus { outline: none; border-color: rgba(184, 240, 204, 0.6); background: rgba(255, 255, 255, 0.07); }
 .rc-input:user-invalid { border-color: rgba(248, 113, 113, 0.6); }
 .rc-form__error {
   padding: var(--rc-space-3);

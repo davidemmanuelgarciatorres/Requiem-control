@@ -1,6 +1,6 @@
 import { FileText } from 'lucide-react';
 import { usePreferences } from '../../app/preferences';
-import { AMBIENT_CYCLE_SECONDS, AMBIENT_SEQUENCE } from '../../config/ambient';
+import { AMBIENT_CYCLE_SECONDS } from '../../config/ambient';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -33,7 +33,8 @@ export function DesignSystemPage() {
         </Card>
         <Card title={ds.ambient} subtitle={interpolate(ds.ambientBody, { s: AMBIENT_CYCLE_SECONDS })}>
           <div className="rc-ambient-strip" aria-hidden="true">
-            {AMBIENT_SEQUENCE.map((s, i) => <span key={`${s.id}-${i}`} style={{ background: s.hex }}><small>{Math.round(s.at * AMBIENT_CYCLE_SECONDS)} s</small></span>)}
+            <span className="rc-ambient-strip__day"><small>{t.designSystem.day}</small></span>
+            <span className="rc-ambient-strip__night"><small>{t.designSystem.night}</small></span>
           </div>
         </Card>
         <Card title={ds.typography}>

@@ -68,6 +68,14 @@ No se introdujeron Java, C++, Go ni Rust.
 
 No se incrustó ninguna captura en la aplicación; todo el diseño es original y se construyó con tokens propios.
 
+### Cambio de dirección visual (solicitado por el propietario)
+Nuevas referencias: fotografía de la Tierra con el sol en el limbo, portada editorial “Imagining beyond reality”
+(tipografía ligera, acento cálido) y panel “NOVA” de misiones espaciales (titulares en mayúsculas ligeras, botón
+blanco, acento verde pálido, estado “NOMINAL”, columna de indicadores, vidrio oscuro). Se adoptó: fondo con la
+Tierra girando al centro y luces de ciudad en el lado nocturno; acento menta en lugar de lima; acción principal
+blanca; tono cálido solar para acentos editoriales; paneles flotantes. Las texturas son imágenes de la NASA (ver
+`frontend/public/earth/CREDITS.md`).
+
 ## 5. Riesgos identificados
 
 1. **Costo de IA en producción**: la suscripción de Claude Code **no** cubre el uso de la API desde la aplicación.

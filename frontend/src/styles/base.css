@@ -32,7 +32,7 @@ table { border-collapse: collapse; }
   border-radius: var(--rc-radius-sm);
 }
 
-::selection { background: rgba(200, 245, 96, 0.3); color: var(--rc-text); }
+::selection { background: rgba(184, 240, 204, 0.3); color: var(--rc-text); }
 
 .sr-only {
   position: absolute !important;
@@ -48,8 +48,8 @@ table { border-collapse: collapse; }
   z-index: 100;
   padding: 10px 16px;
   border-radius: var(--rc-radius-md);
-  background: var(--rc-accent);
-  color: var(--rc-on-accent);
+  background: var(--rc-cta);
+  color: var(--rc-on-cta);
   font-weight: 600;
   transform: translateY(-200%);
   transition: transform var(--rc-duration) var(--rc-ease);

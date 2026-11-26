@@ -64,7 +64,9 @@ describe('navigation & shell', () => {
   it('greets the signed-in user and shows them in the profile panel', async () => {
     const user = userEvent.setup();
     renderApp('/');
-    expect(await screen.findByRole('heading', { level: 1, name: /, Ana$/ })).toBeInTheDocument();
+    expect(await screen.findByText(/^Hola, Ana\./)).toBeInTheDocument();
+    // Indicador real de la portada: el usuario simulado pertenece a 2 organizaciones.
+    expect(screen.getByText('Organizaciones').previousSibling).toHaveTextContent('2');
     await user.click(screen.getByRole('button', { name: 'Perfil' }));
     const panel = screen.getByRole('dialog', { name: 'Perfil' });
     expect(panel).toHaveTextContent('ana@example.com');

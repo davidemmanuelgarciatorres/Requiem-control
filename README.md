@@ -19,6 +19,11 @@ Plataforma SaaS de inteligencia de negocio y automatización de operaciones con 
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Estructura, modelo de datos y flujo de peticiones |
 | [SECURITY.md](SECURITY.md) | Autenticación, autorización, datos, secretos y salvaguardas |
 
+## Diseño
+
+Estilo espacial/editorial: la Tierra gira al centro del fondo (WebGL2, una vuelta cada 120 s) y muestra las luces
+de las ciudades solo en su lado nocturno. Respeta “reducir movimiento”. Texturas de la NASA: `frontend/public/earth/CREDITS.md`.
+
 ## Stack
 
 - **Frontend:** React 19 + TypeScript + Vite (`frontend/`)

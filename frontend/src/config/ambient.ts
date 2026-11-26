@@ -1,36 +1,27 @@
 /**
- * Configuración del fondo ambiental animado.
+ * Fondo ambiental: la Tierra girando.
  *
- * REQUISITO DE PRODUCTO: un ciclo completo de color dura EXACTAMENTE 120 segundos
- * y regresa a su estado original al terminar:
+ * Una rotación completa dura EXACTAMENTE `AMBIENT_CYCLE_SECONDS` (120 s): el globo
+ * vuelve a su estado original al terminar cada ciclo. El sol está fijo (arriba a la
+ * derecha), así que cada continente pasa por el día —sin luces— y por la noche —con
+ * las luces de sus ciudades encendidas—.
  *
- *   azul espacial profundo → turquesa → verde azulado (teal) → violeta profundo → azul espacial profundo
- *
- * Esta constante es la única fuente de verdad. `AmbientBackground` la inyecta
- * como la variable CSS `--ambient-cycle`, que consumen todas las animaciones de
- * `styles/ambient.css`. Para ajustar la duración en el futuro, cambia solo este valor.
+ * Esta constante es la única fuente de verdad para la duración.
  */
 export const AMBIENT_CYCLE_SECONDS = 120;
-
-/** Duración en milisegundos (útil para pruebas con la Web Animations API). */
 export const AMBIENT_CYCLE_MS = AMBIENT_CYCLE_SECONDS * 1000;
 
-export type AmbientStop = {
-  id: 'space' | 'turquoise' | 'teal' | 'violet';
-  /** Momento del ciclo (0–1) en que este color domina por completo. */
-  at: number;
-  /** Color de acento del estrato (debe coincidir con tokens.css). */
-  hex: string;
-};
+/** Inclinación del eje terrestre (23.44°) y del polo norte hacia el observador. */
+export const EARTH_AXIAL_TILT_RAD = (23.44 * Math.PI) / 180;
+export const EARTH_VIEW_PITCH_RAD = (18 * Math.PI) / 180;
 
-/**
- * Secuencia documentada. El último paso (at = 1) vuelve al azul espacial,
- * por lo que la animación se repite sin saltos.
- */
-export const AMBIENT_SEQUENCE: readonly AmbientStop[] = [
-  { id: 'space', at: 0, hex: '#1d3f8f' },
-  { id: 'turquoise', at: 0.25, hex: '#1aa6b3' },
-  { id: 'teal', at: 0.5, hex: '#138f7f' },
-  { id: 'violet', at: 0.75, hex: '#5b2fa6' },
-  { id: 'space', at: 1, hex: '#1d3f8f' },
-] as const;
+/** Dirección hacia el sol en el espacio de la vista (x → derecha, y → arriba, z → observador). */
+export const SUN_DIRECTION: readonly [number, number, number] = normalize([0.9, 0.34, 0.16]);
+
+/** Fotogramas por segundo máximos: la rotación es lenta (3°/s), 30 fps es suficiente. */
+export const EARTH_MAX_FPS = 30;
+
+function normalize(v: [number, number, number]): [number, number, number] {
+  const l = Math.hypot(...v);
+  return [v[0] / l, v[1] / l, v[2] / l];
+}

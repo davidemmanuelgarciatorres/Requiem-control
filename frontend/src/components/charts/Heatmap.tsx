@@ -11,7 +11,7 @@ type HeatmapProps = {
 };
 
 /** Escala secuencial de un solo tono (lima), de tenue a intenso. */
-const LEVELS = ['rgba(255,255,255,0.05)', 'rgba(200,245,96,0.22)', 'rgba(200,245,96,0.45)', 'rgba(200,245,96,0.7)', 'rgba(200,245,96,0.95)'];
+const LEVELS = ['rgba(255,255,255,0.05)', 'rgba(184,240,204,0.22)', 'rgba(184,240,204,0.45)', 'rgba(184,240,204,0.7)', 'rgba(184,240,204,0.95)'];
 
 export function Heatmap({ weeks, rowLabels, ariaLabel, weekLabel, lessLabel, moreLabel }: HeatmapProps) {
   const [hover, setHover] = useState<string | null>(null);

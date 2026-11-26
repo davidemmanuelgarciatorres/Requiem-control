@@ -8,8 +8,12 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
   return (
     <>
       <AmbientBackground />
-      <div className="rc-auth">
-        <p className="rc-auth__wordmark" aria-hidden="true"><span>REQUIEM</span><span className="rc-hero__wordmark-glass">CONTROL</span></p>
+      <div className="rc-auth rc-auth--split">
+        <section className="rc-auth__intro" aria-hidden="true">
+          <p className="rc-auth__title">{t.auth.heroTitle}<br /><em>{t.auth.heroAccent}</em></p>
+          <span className="rc-auth__rule" />
+          <p className="rc-auth__body">{t.auth.heroBody}</p>
+        </section>
         <main className="rc-auth__card rc-glass rc-glass--strong" id="main">
           <div className="rc-auth__head">
             <Brand />

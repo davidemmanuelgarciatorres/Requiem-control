@@ -25,7 +25,7 @@ test.describe('authentication & organizations (real API + PostgreSQL)', () => {
     await page.getByLabel('Contraseña').fill(PASSWORD);
     await page.getByLabel('Nombre de tu negocio u organización').fill('Ferretería Ana');
     await page.getByRole('button', { name: 'Crear cuenta' }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/, Ana$/);
+    await expect(page.getByText(/^Hola, Ana\./)).toBeVisible();
     await expect(page.getByText('Operativo').first()).toBeVisible();
 
     const cookies = await page.context().cookies();
@@ -44,7 +44,7 @@ test.describe('authentication & organizations (real API + PostgreSQL)', () => {
 
     await page.getByLabel('Contraseña').fill(PASSWORD);
     await page.getByRole('button', { name: 'Iniciar sesión' }).click();
-    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/, Ana$/);
+    await expect(page.getByText(/^Hola, Ana\./)).toBeVisible();
   });
 
   test('settings: rename organization and see it in the switcher', async ({ page, isMobile }) => {

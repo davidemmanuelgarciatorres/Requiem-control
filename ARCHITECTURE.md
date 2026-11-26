@@ -90,15 +90,23 @@ Módulos previstos en `backend/app/` para fases siguientes (se crearán al imple
   `--strong`, `--subtle`) con respaldo opaco si no hay `backdrop-filter`.
 - **Responsivo**: móvil primero; puntos de corte 640 / 768 / 1024 / 1200 px.
 
-## 4. Fondo ambiental (120 s)
+## 4. Fondo ambiental: la Tierra girando (120 s por vuelta)
 
-`config/ambient.ts` → `AmbientBackground` inyecta `--ambient-cycle: 120s` → `styles/ambient.css`.
-Cuatro estratos de pantalla completa (azul base siempre opaco + turquesa, teal y violeta encima) animan solo
-`opacity`; dos orbes animan solo `transform`. Ambas propiedades se componen en GPU: no hay repintado por cuadro ni
-bucles de JavaScript. Cada estrato superior aparece sobre el anterior ya opaco (fundido real A→B) y los estratos
-ocultos se apagan solo mientras están totalmente cubiertos; al 100 % todos valen 0, idéntico al 0 % ⇒ bucle sin saltos.
-Una viñeta constante mantiene el contraste durante todo el ciclo. Para cambiar la duración: editar solo
-`AMBIENT_CYCLE_SECONDS`.
+`config/ambient.ts` (`AMBIENT_CYCLE_SECONDS = 120`, inclinación axial, dirección del sol, fps máximos) →
+`components/earth/EarthGlobe.tsx` (WebGL2) + `earthShader.ts` + `earthMath.ts`.
+
+- **Sin dependencias**: un único triángulo a pantalla completa; el fragment shader calcula por píxel la intersección
+  con la esfera, deshace la inclinación (23.44°) y la rotación diaria, muestrea texturas equirectangulares sin
+  costura (`textureGrad`), ilumina con un sol fijo (arriba a la derecha), y compone nubes, brillo especular del
+  océano, atmósfera (Fresnel + halo) y **luces de ciudad solo en el lado nocturno** (`nightFactor`, con crepúsculo
+  gradual). Evitamos three.js (~170 kB) porque no se necesita una escena 3D completa.
+- **Rotación**: fase = `(Date.now() mod 120 000) / 120 000`. Hacia el este (los continentes entran por la izquierda,
+  de noche, y amanecen al cruzar el terminador). Todas las longitudes pasan por el centro en cada ciclo.
+- **Rendimiento**: máximo 30 fps, `devicePixelRatio` limitado a 1.5, pausa con la pestaña oculta, texturas WebP
+  (~380 kB en total, en `public/earth/`, cargadas después del primer render).
+- **Movimiento reducido** (SO o Configuración): un único fotograma fijo, sin bucle.
+- **Respaldo**: sin WebGL2 o si fallan las texturas, un disco estático en CSS; la app sigue funcionando.
+- Capas CSS estáticas: estrellas, destello solar alineado con `SUN_DIRECTION`, viñeta para la legibilidad.
 
 ## 5. Backend (Fase 2)
 

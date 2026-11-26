@@ -19,7 +19,8 @@ describe('dashboard', () => {
     expect(await screen.findByRole('heading', { name: 'Pon tu negocio bajo control' })).toBeInTheDocument();
     expect(screen.queryByTestId('demo-banner')).not.toBeInTheDocument();
     expect(document.querySelectorAll('[data-demo-badge]')).toHaveLength(0);
-    expect(screen.getByText('Estado del sistema')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Estado del sistema' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Controla.Analiza.Decide.');
   });
 
   it('demo view shows a loading state, then data that is clearly labelled as demo', async () => {
