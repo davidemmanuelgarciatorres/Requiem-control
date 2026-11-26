@@ -25,6 +25,9 @@ class Settings(BaseSettings):
     session_ttl_hours: int = Field(default=24 * 7, ge=1, le=24 * 30)
     # En producción las cookies deben ser Secure (solo HTTPS).
     cookie_secure: bool = False
+    # Solo detrás de un proxy de confianza que fija X-Forwarded-Host (GitHub Codespaces). Nunca en producción directa.
+    trust_forwarded_host: bool = False
+    trusted_proxy_suffix: str = ".app.github.dev"
 
     login_rate_limit: int = Field(default=5, ge=1)
     login_rate_window_seconds: int = Field(default=60, ge=1)

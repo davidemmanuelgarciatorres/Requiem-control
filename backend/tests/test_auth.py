@@ -130,3 +130,28 @@ def test_failed_logins_are_audited_even_though_request_fails(client, make_client
             text("SELECT action, organization_id FROM audit_logs WHERE action = 'auth.login_failed'")
         ).all()
     assert rows == [("auth.login_failed", None)]
+
+
+def test_forwarded_host_origin_only_when_trusted(client, monkeypatch):
+    from app.config import get_settings
+
+    body = {"email": "fh@example.com", "password": "correct-horse-battery", "full_name": "F", "organization_name": "O"}
+    headers = {
+        "Origin": "https://mi-codespace-5173.app.github.dev",
+        "X-Forwarded-Host": "mi-codespace-5173.app.github.dev",
+    }
+    r = client.http.post("/api/auth/register", json=body, headers=headers)
+    assert r.status_code == 403  # por defecto no se confía en X-Forwarded-Host
+    monkeypatch.setenv("TRUST_FORWARDED_HOST", "true")
+    get_settings.cache_clear()
+    try:
+        from fastapi.testclient import TestClient
+
+        from app.main import create_app
+
+        c = TestClient(create_app(), base_url="http://testserver")
+        assert c.post("/api/auth/register", json=body, headers=headers).status_code == 201
+        bad = {"Origin": "https://malo.example", "X-Forwarded-Host": "mi-codespace-5173.app.github.dev"}
+        assert c.post("/api/auth/login", json={"email": "x@x.mx", "password": "y"}, headers=bad).status_code == 403
+    finally:
+        get_settings.cache_clear()

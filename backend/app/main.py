@@ -38,12 +38,27 @@ def create_app() -> FastAPI:
         openapi_url=None if settings.environment == "production" else "/api/openapi.json",
     )
 
+    def _same_origin(request: Request, origin: str) -> bool:
+        """Detrás de un proxy de confianza (p. ej. GitHub Codespaces), acepta el Origin que coincide con el
+        dominio público que el proxy declara. Desactivado por defecto: solo con TRUST_FORWARDED_HOST=true."""
+        if not settings.trust_forwarded_host:
+            return False
+        raw = f"{request.headers.get('x-forwarded-host') or ''},{request.headers.get('host') or ''}"
+        hosts = {h.strip() for h in raw.split(",") if h.strip() and h.strip().endswith(settings.trusted_proxy_suffix)}
+        return any(origin == f"https://{h}" for h in hosts)
+
     @app.middleware("http")
     async def guard(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
         if request.method in UNSAFE and request.url.path.startswith("/api/"):
             # 1) Origen: si el navegador envía Origin, debe ser uno permitido (defensa CSRF adicional).
             origin = request.headers.get("origin")
-            if origin and origin not in settings.allowed_origins:
+            if origin and origin not in settings.allowed_origins and not _same_origin(request, origin):
+                logging.getLogger("requiem.security").warning(
+                    "Origen rechazado: origin=%s host=%s forwarded_host=%s",
+                    origin,
+                    request.headers.get("host"),
+                    request.headers.get("x-forwarded-host"),
+                )
                 return _error(403, "request.origin_forbidden", "Origen no permitido.")
             # 2) Solo JSON: los formularios HTML de otros sitios no pueden enviar application/json sin CORS.
             length = int(request.headers.get("content-length") or 0)

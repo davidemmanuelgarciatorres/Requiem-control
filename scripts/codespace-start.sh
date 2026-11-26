@@ -39,7 +39,9 @@ export NVM_DIR="${NVM_DIR:-/usr/local/share/nvm}"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" >/dev/null 2>&1 && nvm use 22 >/dev/null 2>&1 || true
 
 export ENVIRONMENT=development
-export ALLOWED_ORIGINS="[\"${URL}\"]"
+export ALLOWED_ORIGINS="[\"${URL}\", \"http://localhost:5173\", \"http://127.0.0.1:5173\"]"
+# En Codespaces el túnel de GitHub declara el dominio público; se acepta solo si termina en .app.github.dev.
+if [ -n "${CODESPACE_NAME:-}" ]; then export TRUST_FORWARDED_HOST=true; fi
 export COOKIE_SECURE="${SECURE}"
 export GOOGLE_OAUTH_REDIRECT_URI="${URL}/api/integrations/google/callback"
 export ALLOW_INTEGRATIONS_ON_FREE=true   # solo para probar; en producción se usa el plan
@@ -80,5 +82,6 @@ cat <<MSG
  GOOGLE_OAUTH_CLIENT_SECRET:  $(state GOOGLE_OAUTH_CLIENT_SECRET)
  Proveedor de IA:             ${AI_PROVIDER}
  Registros: ${LOGS}/requiem-api.log y ${LOGS}/requiem-web.log
+ Si algo se rechaza: grep -i rechaz ${LOGS}/requiem-api.log
 ==================================================================
 MSG
