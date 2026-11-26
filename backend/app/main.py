@@ -10,7 +10,7 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __doc__ as _doc
-from app.api import agents, auth, datasets, organizations
+from app.api import agents, auth, datasets, me, organizations
 from app.config import get_settings
 from app.db import get_engine
 from app.errors import ApiError
@@ -49,7 +49,7 @@ def create_app() -> FastAPI:
             length = int(request.headers.get("content-length") or 0)
             ctype = request.headers.get("content-type", "")
             # Solo la subida de archivos acepta multipart; todo lo demás, solo JSON.
-            is_upload = request.method == "POST" and request.url.path == "/api/datasets/uploads"
+            is_upload = request.method == "POST" and request.url.path in ("/api/datasets/uploads", "/api/me/floaters")
             if is_upload:
                 if not ctype.startswith("multipart/form-data"):
                     return _error(415, "request.unsupported_media_type", "Se requiere multipart/form-data.")
@@ -64,7 +64,7 @@ def create_app() -> FastAPI:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "same-origin"
-        if request.url.path.startswith("/api/"):
+        if request.url.path.startswith("/api/") and "cache-control" not in response.headers:
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -103,6 +103,7 @@ def create_app() -> FastAPI:
     app.include_router(datasets.router)
     app.include_router(agents.router)
     app.include_router(agents.approvals_router)
+    app.include_router(me.router)
     return app
 
 

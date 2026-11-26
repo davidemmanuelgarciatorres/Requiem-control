@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { usePreferences } from '../../app/preferences';
+import { FloatersProvider } from '../../features/floaters/FloatersContext';
+import { FloatersLayer } from '../../features/floaters/FloatersLayer';
 import { AmbientBackground } from './AmbientBackground';
 import { DemoBanner } from './DemoBanner';
 import { MobileDrawer } from './MobileDrawer';
@@ -19,7 +21,7 @@ export function AppShell() {
   }, [location.pathname]);
 
   return (
-    <>
+    <FloatersProvider>
       <a className="rc-skip-link" href="#main">{t.common.skipToContent}</a>
       <AmbientBackground />
       <div className="rc-shell">
@@ -33,6 +35,7 @@ export function AppShell() {
         </div>
       </div>
       <MobileDrawer open={menuOpen} onClose={closeMenu} />
-    </>
+      <FloatersLayer />
+    </FloatersProvider>
   );
 }
