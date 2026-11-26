@@ -237,6 +237,22 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case `DELETE /reports/${DEMO_REPORT_ID}`:
         requirePerm(s, 'data.write');
         return fail(403, 'demo.read_only', 'El reporte de ejemplo no se puede eliminar en la demostración.');
+      case 'GET /agents': {
+        requirePerm(s, 'org.read');
+        const base = { status: 'available', read_only: false, requires_approval: true, required_permissions: [], timeout_seconds: 120, phase: 7, version: '1.0.0', active: false, allowed_tools: ['read_dataset', 'summarize', 'propose_action'] };
+        return { agents: ['data-analyst', 'financial-analyst', 'inventory-analyst', 'customer-ops', 'email-ops'].map((id) => ({ ...base, id })),
+          active_count: 0, active_limit: 2, monthly_executions: 0, monthly_limit: 100 };
+      }
+      case 'GET /agents/executions':
+      case 'GET /automations':
+        requirePerm(s, 'data.read');
+        return [];
+      case 'PUT /agents/inventory-analyst/activation':
+      case 'PUT /agents/customer-ops/activation':
+      case 'PUT /agents/email-ops/activation':
+      case 'POST /automations':
+        requireAuth(s);
+        return fail(403, 'demo.read_only', 'En la demostración sin servidor no se ejecutan agentes. Úsala con el servidor (Codespaces) para probarlos.');
       case 'GET /integrations':
         requirePerm(s, 'org.read');
         return { google: { configured: false, missing: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET', 'INTEGRATIONS_ENCRYPTION_KEY'],

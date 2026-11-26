@@ -54,6 +54,7 @@ echo "==> Migraciones"
 
 echo "==> Arrancando API y página"
 pkill -f "uvicorn app.main:app" 2>/dev/null || true
+pkill -f "python -m app.worker" 2>/dev/null || true
 pkill -f "node_modules/.bin/vite" 2>/dev/null || true
 LOGS="${TMPDIR:-/tmp}"
 # Desligados por completo de esta terminal (stdin/stdout/stderr redirigidos) para que el script termine.
@@ -61,6 +62,8 @@ nohup bash -c 'cd backend && exec .venv/bin/uvicorn app.main:app --host 127.0.0.
   > "$LOGS/requiem-api.log" 2>&1 < /dev/null &
 nohup bash -c 'cd frontend && exec npm run dev -- --host 0.0.0.0 --port 5173' \
   > "$LOGS/requiem-web.log" 2>&1 < /dev/null &
+# Proceso de trabajo: dispara las automatizaciones programadas y recupera ejecuciones interrumpidas.
+nohup bash -c 'cd backend && exec .venv/bin/python -m app.worker' > "$LOGS/requiem-worker.log" 2>&1 < /dev/null &
 
 for _ in $(seq 1 60); do
   curl -fsS http://127.0.0.1:8000/api/health >/dev/null 2>&1 && curl -fsS -o /dev/null http://127.0.0.1:5173/ 2>/dev/null && break

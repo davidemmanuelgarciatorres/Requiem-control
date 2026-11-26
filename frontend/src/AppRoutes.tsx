@@ -18,6 +18,8 @@ import { ReportPage } from './features/reports/ReportPage';
 import { ReportsPage } from './features/reports/ReportsPage';
 import { AssistantPage } from './features/assistant/AssistantPage';
 import { FinancePage } from './features/finance/FinancePage';
+import { AutomationsPage } from './features/ops/AutomationsPage';
+import { CustomersPage, EmailPage, InventoryPage } from './features/ops/OpsPages';
 import { SettingsPage } from './features/settings/SettingsPage';
 
 export function AppRoutes() {
@@ -34,6 +36,10 @@ export function AppRoutes() {
         <Route path="data/:datasetId" element={<DatasetPage />} />
         <Route path="assistant" element={<AssistantPage />} />
         <Route path="finance" element={<FinancePage />} />
+        <Route path="inventory" element={<InventoryPage />} />
+        <Route path="customers" element={<CustomersPage />} />
+        <Route path="email" element={<EmailPage />} />
+        <Route path="automations" element={<AutomationsPage />} />
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/:reportId" element={<ReportPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />

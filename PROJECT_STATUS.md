@@ -1,8 +1,18 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **6 (integraciones) — completa, pendiente de credenciales de Google y revisión**
+Última actualización: 2026-11-26 · Fase actual: **7 (agentes avanzados) — completa, pendiente de revisión**
 
 ## ✅ Implementado y probado
+
+### Fase 7 — Agentes avanzados y automatizaciones
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Inventario: hallazgos con filas de evidencia, valor, lento movimiento; lista de compra guardada SOLO al aprobar | pytest (cifras exactas) + e2e (nada en Reportes hasta aprobar). |
+| Clientes: segmentos RFM con reglas explicables y fecha de referencia del archivo; lista de seguimiento aprobable | pytest. |
+| Correo: clasificación; nunca a remitentes automáticos; borrador en Gmail solo tras aprobar, en el mismo hilo; jamás se envía | pytest con Gmail simulado (sin llamadas reales). |
+| Automatizaciones: zona horaria, frecuencias, disparo único (SKIP LOCKED + idempotencia), errores registrados, RLS | pytest + e2e (crear, próxima ejecución, pausar). |
+| Proceso de trabajo con cola en PostgreSQL; recuperación de ejecuciones interrumpidas | pytest (exclusión entre dos workers; el rol de la app sigue sin saltarse RLS). |
+| Avisos técnicos solo para propietario/administrador (Configuración → Estado del sistema) | pytest (403 para miembros) + unitarias + e2e. |
 
 ### Fase 6 — Integraciones con Google
 | Funcionalidad | Cómo se verificó |
@@ -138,12 +148,9 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 
 ## Resultados de la última ejecución
 ```
-backend:  ruff check .          → sin problemas
-          mypy app (strict)     → sin errores (46 archivos)
-          pytest                → 124 aprobadas (PostgreSQL 16 real; Google y proveedores de IA simulados)
-frontend: npm run lint          → 0 problemas
-          npm run typecheck     → 0 errores
-          npm run test          → 87 aprobadas
-          npm run build         → OK
-          npm run e2e           → 73 aprobadas, 1 omitida a propósito (escritorio 1440×900 y Pixel 7)
+backend:  ruff + mypy (strict)  → sin problemas
+          pytest                → 137 aprobadas (PostgreSQL 16 real; Google y proveedores de IA simulados)
+frontend: lint + typecheck      → 0 problemas
+          npm run test          → 88 aprobadas
+          npm run e2e           → 79 aprobadas, 1 omitida a propósito (escritorio y Pixel 7)
 ```

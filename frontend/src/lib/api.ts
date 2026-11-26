@@ -90,12 +90,13 @@ export type Recommendation = {
   evidence: { rows?: number[]; periods?: string[]; examples?: string[] }; approval_id?: string;
 };
 export type AgentOutput = {
-  dataset: { id: string; name: string; row_count: number };
+  dataset: { id: string | null; name: string; row_count: number };
   period: { from: string; to: string } | null;
-  columns_used?: { amount: string; date: string; group: string | null };
+  columns_used?: { amount?: string; date?: string; group?: string | null };
   metrics: { key: string; value: number; format: 'number' | 'percent' | 'currency' }[];
   series?: { period: string; total: number; count: number }[];
   breakdown?: { dimension: string; role: string; items: { label: string; total: number; share: number }[] } | null;
+  tables?: { key: string; columns: string[]; rows: Record<string, string | number | null>[] }[];
   unusual?: { row_number: number; date: string; amount: number; label: string | null }[];
   recommendations: Recommendation[];
   limitations: { code: string; params: Record<string, string | number> }[];
@@ -249,7 +250,7 @@ export type AssistantMessage = {
 };
 export type AssistantConversation = { id: string; title: string; updated_at: string; messages: number };
 
-export type GoogleService = 'sheets' | 'drive' | 'gmail';
+export type GoogleService = 'sheets' | 'drive' | 'gmail' | 'gmail_drafts';
 export type IntegrationsInfo = {
   google: {
     configured: boolean; missing: string[]; plan_allows: boolean; can_manage: boolean;

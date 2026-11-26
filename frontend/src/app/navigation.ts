@@ -33,7 +33,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { id: 'overview', path: '/', icon: LayoutDashboard, status: 'live' },
       { id: 'assistant', path: '/assistant', icon: Sparkles, status: 'live', phase: 4 },
       { id: 'agents', path: '/agents', icon: Bot, status: 'live', phase: 4 },
-      { id: 'automations', path: '/automations', icon: Workflow, status: 'planned', phase: 7, module: 'automations' },
+      { id: 'automations', path: '/automations', icon: Workflow, status: 'live', phase: 7 },
     ],
   },
   {
@@ -41,9 +41,9 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { id: 'finance', path: '/finance', icon: Wallet, status: 'live', phase: 4 },
       { id: 'data', path: '/data', icon: Table2, status: 'live', phase: 3 },
-      { id: 'inventory', path: '/inventory', icon: Boxes, status: 'planned', phase: 7, module: 'inventory' },
-      { id: 'customers', path: '/customers', icon: Users, status: 'planned', phase: 7, module: 'customers' },
-      { id: 'email', path: '/email', icon: Mail, status: 'planned', phase: 7, module: 'email' },
+      { id: 'inventory', path: '/inventory', icon: Boxes, status: 'live', phase: 7 },
+      { id: 'customers', path: '/customers', icon: Users, status: 'live', phase: 7 },
+      { id: 'email', path: '/email', icon: Mail, status: 'live', phase: 7 },
       { id: 'reports', path: '/reports', icon: FileText, status: 'live', phase: 5 },
     ],
   },

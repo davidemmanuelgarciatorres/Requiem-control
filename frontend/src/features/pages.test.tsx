@@ -26,11 +26,13 @@ describe('secondary pages are honest about their state', () => {
     expect(screen.getByRole('button', { name: 'Connect with Google' })).toBeDisabled();
   });
 
-  it('planned modules declare they are not operational', async () => {
-    mockSignedIn();
+  it('every navigation section is live (no planned placeholders left)', async () => {
+    const { NAV_ITEMS } = await import('../app/navigation');
+    expect(NAV_ITEMS.filter((i) => i.status !== 'live').map((i) => i.id)).toEqual([]);
+    mockSignedIn({ 'GET /api/agents': json(200, { agents: [], active_count: 0, active_limit: 2, monthly_executions: 0, monthly_limit: 100 }) });
     renderApp('/inventory', 'en');
-    expect(await screen.findByText(/not operational yet/)).toBeInTheDocument();
-    expect(screen.getByText('Planned for Phase 7')).toBeInTheDocument();
+    expect(await screen.findByText('How to prepare your inventory file')).toBeInTheDocument();
+    expect(screen.queryByText(/not operational yet/)).not.toBeInTheDocument();
   });
 
   it('settings: reduced-motion preference sets data-motion on <html>', async () => {

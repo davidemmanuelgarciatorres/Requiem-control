@@ -10,9 +10,9 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | 3 | Ingesta de datos (CSV/XLSX) | ✅ Completa |
 | 4 | Primeros agentes de IA | ✅ Completa |
 | 5 | Reportes e inteligencia | ✅ Completa |
-| 6 | Integraciones (Gmail, Sheets, Drive) | ✅ Completa (pendiente de credenciales de Google y revisión) |
-| 7 | Agentes avanzados | ⏸ Siguiente — esperando autorización |
-| 8 | Facturación y preparación para producción | Pendiente |
+| 6 | Integraciones (Gmail, Sheets, Drive) | ✅ Completa (pendiente de prueba real con Google) |
+| 7 | Agentes avanzados | ✅ Completa (pendiente de revisión) |
+| 8 | Facturación y preparación para producción | ⏸ Siguiente — esperando autorización |
 
 ## Fase 0 — Auditoría ✅
 Repositorio inspeccionado (vacío), stack decidido, documentación base creada. Ver PROJECT_AUDIT.md.
@@ -96,8 +96,19 @@ de los recientes (no se guardan). Requiere el plan con integraciones (o `ALLOW_I
 Pendiente del área: credenciales de Google del propietario (proyecto gratuito en Google Cloud); verificación de la app por
 Google para usar Gmail con usuarios externos (Gmail de solo lectura es un permiso "restringido"); sincronización programada.
 
-## Fase 7 — Agentes avanzados
-Inventario, clientes, correo, automatizaciones — todos con aprobación para acciones externas.
+## Fase 4 — proceso de trabajo ✅
+`EXECUTION_MODE=worker`: la API solo encola y `python -m app.worker` toma las ejecuciones con `FOR UPDATE SKIP LOCKED`
+(función `claim_next_execution`, solo identificadores), recupera las interrumpidas y dispara automatizaciones.
+
+## Fase 7 — Agentes avanzados ✅
+- **Inventario**: agotados, existencia baja (contra mínimo o 20 % inferior), stock negativo, duplicados, valor del
+  inventario, lento movimiento. Propone una lista de compra (se guarda como reporte solo al aprobarla).
+- **Clientes**: segmentos RFM explicables (campeones, leales, nuevos, en riesgo, perdidos), concentración; propone lista
+  de seguimiento.
+- **Correo**: clasifica correos recientes (pedido, cotización, factura, queja, automático) con metadatos + fragmento;
+  propone borradores. El borrador se crea en Gmail solo tras aprobación (permiso aparte `gmail.compose`) y nunca se envía.
+- **Automatizaciones**: diaria/semanal/mensual a una hora local; el worker las dispara con idempotencia; errores visibles.
+- Avisos técnicos movidos a Configuración → Estado del sistema (solo propietario/administrador).
 
 ## Fase 8 — Facturación y producción
 Proveedor de pagos autorizado (sin almacenar tarjetas), planes por mercado/moneda (Premium objetivo MXN $400/mes),

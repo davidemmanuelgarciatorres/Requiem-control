@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { CircleAlert, CircleCheck, FileSpreadsheet, HardDrive, Mail, Plug } from 'lucide-react';
+import { CircleAlert, CircleCheck, FileSpreadsheet, HardDrive, Mail, PenLine, Plug } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
@@ -12,7 +12,7 @@ import { formatDate, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { PageHeader } from '../modules/PageHeader';
 
-const ICONS = { sheets: FileSpreadsheet, drive: HardDrive, gmail: Mail } as const;
+const ICONS = { sheets: FileSpreadsheet, drive: HardDrive, gmail: Mail, gmail_drafts: PenLine } as const;
 
 function useErrorText() {
   const { t } = usePreferences();

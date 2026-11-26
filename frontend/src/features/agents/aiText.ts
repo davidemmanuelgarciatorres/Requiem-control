@@ -12,10 +12,11 @@ function fmtParams(t: Dictionary, lang: Language, params: Params): Record<string
     if (Array.isArray(v)) out[k] = v.map((x) => (k === 'missing' ? (t.data.roles as Record<string, string>)[String(x)] ?? String(x) : String(x))).join(', ');
     else if (typeof v === 'number') {
       if (k === 'pct' || k === 'share') out[k] = formatPercent(v, lang, 1, k === 'pct');
-      else if (['current', 'previous', 'total'].includes(k)) out[k] = formatCurrency(v, lang);
+      else if (['current', 'previous', 'total', 'value'].includes(k)) out[k] = formatCurrency(v, lang);
       else out[k] = formatNumber(v, lang);
     } else if (k === 'expected') out[k] = ((t.data.types as Record<string, string>)[String(v)] ?? String(v)).toLowerCase();
     else if (k === 'label' && v === '__other__') out[k] = t.ai.other;
+    else if (k === 'category') out[k] = ((t.ai.emailCats as Record<string, string>)[String(v)] ?? String(v)).toLowerCase();
     else out[k] = String(v ?? '');
   }
   return out;

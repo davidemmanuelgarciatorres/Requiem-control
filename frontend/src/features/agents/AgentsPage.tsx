@@ -24,6 +24,9 @@ export const STATUS_TONE: Record<ExecutionStatus, Tone> = {
   created: 'outline', queued: 'outline', running: 'info', awaiting_approval: 'warning', completed: 'success', failed: 'danger', cancelled: 'neutral',
 };
 
+/** Agentes que analizan un conjunto de datos importado (el de correo lee Gmail). */
+export const DATASET_AGENTS = new Set(['data-analyst', 'financial-analyst', 'inventory-analyst', 'customer-ops']);
+
 export function agentName(t: ReturnType<typeof usePreferences>['t'], id: string): string {
   const key = CATALOG_KEY[id];
   return key ? t.agents.catalog[key].name : id;
@@ -91,7 +94,7 @@ function AgentsLive() {
   );
 }
 
-function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets: DatasetSummary[]; onChanged: () => void }) {
+export function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets: DatasetSummary[]; onChanged: () => void }) {
   const { t, lang } = usePreferences();
   const { can } = useAuth();
   const navigate = useNavigate();
@@ -100,6 +103,7 @@ function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets:
   const [busy, setBusy] = useState<'toggle' | 'run' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const available = agent.status === 'available';
+  const needsDataset = DATASET_AGENTS.has(agent.id);
   const selectedDataset = datasetId || datasets[0]?.id || '';
 
   const toggle = async () => {
@@ -120,7 +124,7 @@ function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets:
     setError(null);
     try {
       const idempotency_key = `ui-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-      const ex = await api<Execution>(`/agents/${agent.id}/executions`, { method: 'POST', body: { dataset_id: selectedDataset, idempotency_key } });
+      const ex = await api<Execution>(`/agents/${agent.id}/executions`, { method: 'POST', body: needsDataset ? { dataset_id: selectedDataset, idempotency_key } : { idempotency_key } });
       navigate(`/agents/runs/${ex.id}`);
     } catch (e) {
       setError(aiErrorMessage(t, lang, e));
@@ -153,7 +157,7 @@ function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets:
               ))}
             </ul>
           </div>
-          {agent.active && (
+          {agent.active && needsDataset && (
             datasets.length === 0 ? <p className="rc-list__meta">{t.ai.noDatasets} <Link className="rc-link" to="/data">{t.data.title}</Link></p> : (
               <div className="rc-field">
                 <label className="rc-field__label" htmlFor={`ds-${agent.id}`}>{t.ai.chooseDataset}</label>
@@ -172,7 +176,7 @@ function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; datasets:
                 </Button>
               )}
               {agent.active && can('agents.run') && (
-                <Button size="sm" variant="primary" icon={<Play size={13} />} loading={busy === 'run'} disabled={!selectedDataset} onClick={() => void run()}>
+                <Button size="sm" variant="primary" icon={<Play size={13} />} loading={busy === 'run'} disabled={needsDataset && !selectedDataset} onClick={() => void run()}>
                   {t.ai.run}
                 </Button>
               )}

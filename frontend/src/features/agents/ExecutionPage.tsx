@@ -174,7 +174,7 @@ export function Results({ out, approvals, onChanged }: { out: Omit<AgentOutput, 
         actions={out.summary && <Badge tone={out.summary.simulated ? 'outline' : 'accent'}>{out.summary.simulated ? t.ai.simulatedBadge : t.ai.aiSummary}</Badge>}>
         {out.summary ? <p className="rc-summary">{out.summary.text}</p> : <p className="rc-list__meta">{interpolate(t.ai.summaryUnavailable, { code: out.summary_error ?? '—' })}</p>}
         {out.period && <p className="rc-list__meta">{interpolate(t.ai.periodLabel, { from: out.period.from, to: out.period.to })}</p>}
-        {out.columns_used && <p className="rc-list__meta">{interpolate(t.ai.columnsUsed, { amount: out.columns_used.amount, date: out.columns_used.date })}</p>}
+        {out.columns_used?.amount && out.columns_used.date && <p className="rc-list__meta">{interpolate(t.ai.columnsUsed, { amount: out.columns_used.amount, date: out.columns_used.date })}</p>}
       </Card>
 
       <Card title={t.ai.metricsTitle} className="rc-span-2">
@@ -199,13 +199,13 @@ export function Results({ out, approvals, onChanged }: { out: Omit<AgentOutput, 
       )}
 
       {out.breakdown && (
-        <Card title={interpolate(t.ai.breakdownTitle, { dimension: out.breakdown.dimension })}>
+        <Card title={out.breakdown.role === 'segment' ? t.ai.cols.segment : out.breakdown.role === 'email_category' ? t.ai.cols.category : interpolate(t.ai.breakdownTitle, { dimension: out.breakdown.dimension })}>
           <ul className="rc-bars">
             {out.breakdown.items.map((it) => (
               <li key={it.label}>
-                <span className="rc-bars__label">{it.label === '__other__' ? t.ai.other : it.label}</span>
+                <span className="rc-bars__label">{breakdownLabel(t, it.label)}</span>
                 <span className="rc-bars__track" aria-hidden="true"><span style={{ width: `${Math.max(0, Math.min(1, it.share)) * 100}%` }} /></span>
-                <span className="rc-tabular rc-bars__value">{formatPercent(it.share, lang, 1)} · {formatCurrency(it.total, lang)}</span>
+                <span className="rc-tabular rc-bars__value">{formatPercent(it.share, lang, 1)} · {out.breakdown?.role === 'segment' || out.breakdown?.role === 'email_category' ? formatNumber(it.total, lang) : formatCurrency(it.total, lang)}</span>
               </li>
             ))}
           </ul>
@@ -226,6 +226,12 @@ export function Results({ out, approvals, onChanged }: { out: Omit<AgentOutput, 
           </div>
         </Card>
       )}
+
+      {(out.tables ?? []).map((tb) => (
+        <Card key={tb.key} title={(t.ai.tables as Record<string, string>)[tb.key] ?? tb.key} className="rc-span-2">
+          <DataTable table={tb} />
+        </Card>
+      ))}
 
       <Card title={t.ai.recommendationsTitle} className="rc-span-2">
         {out.recommendations.length === 0 && <p className="rc-list__meta">{t.ai.noRecommendations}</p>}
@@ -286,6 +292,12 @@ function ApprovalBox({ approval, onChanged }: { approval: ApprovalInfo; onChange
         <strong>{approvalText(t, lang, approval.action_type, approval.payload)}</strong>
         <Badge tone={tone} dot>{t.ai.approvalStatus[approval.status]}</Badge>
       </div>
+      {approval.action_type === 'email.create_draft' && typeof approval.payload.body === 'string' && (
+        <details className="rc-draft">
+          <summary>{t.ai.draftPreview}</summary>
+          <pre className="rc-draft__body">{approval.payload.body}</pre>
+        </details>
+      )}
       {approval.status === 'pending' && (
         can('approvals.decide') ? (
           <>
@@ -298,9 +310,48 @@ function ApprovalBox({ approval, onChanged }: { approval: ApprovalInfo; onChange
         ) : <p className="rc-list__meta">{t.ai.cannotDecide}</p>
       )}
       {approval.status === 'executed' && approval.result && (
-        <p className="rc-list__meta">{interpolate(t.ai.approvalResult, Object.fromEntries(Object.entries(approval.result).map(([k, v]) => [k, typeof v === 'number' ? formatNumber(v, lang) : v])))}</p>
+        <p className="rc-list__meta">
+          {interpolate((t.ai.approvalResults as Record<string, string>)[approval.action_type] ?? t.ai.approvalResult,
+            Object.fromEntries(Object.entries(approval.result).map(([k, v]) => [k, typeof v === 'number' ? formatNumber(v, lang) : String(v)])))}
+          {typeof approval.result.report_id === 'string' && <> <Link className="rc-link" to={`/reports/${approval.result.report_id}`}>{t.ai.openReport}</Link></>}
+        </p>
       )}
       {error && <p className="rc-form__error" role="alert">{error}</p>}
+    </div>
+  );
+}
+
+const NUMERIC_COLS = new Set(['row_number', 'stock', 'minimum', 'suggested', 'orders', 'days_since', 'avg_days_between']);
+const MONEY_COLS = new Set(['total']);
+
+function breakdownLabel(t: ReturnType<typeof usePreferences>['t'], label: string): string {
+  if (label === '__other__') return t.ai.other;
+  if (label.startsWith('segment:')) return (t.ai.segments as Record<string, string>)[label.slice(8)] ?? label.slice(8);
+  if (label.startsWith('email:')) return (t.ai.emailCats as Record<string, string>)[label.slice(6)] ?? label.slice(6);
+  return label;
+}
+
+/** Tabla genérica de resultados de agentes (lista de compra, clientes, correos…). */
+export function DataTable({ table }: { table: { key: string; columns: string[]; rows: Record<string, string | number | null>[] } }) {
+  const { t, lang } = usePreferences();
+  const cell = (col: string, v: string | number | null) => {
+    if (v === null || v === undefined || v === '') return <span className="rc-null">—</span>;
+    if (MONEY_COLS.has(col) && typeof v === 'number') return formatCurrency(v, lang);
+    if (NUMERIC_COLS.has(col) && typeof v === 'number') return formatNumber(v, lang);
+    if (col === 'segment') return (t.ai.segments as Record<string, string>)[String(v)] ?? String(v);
+    if (col === 'category' && table.key === 'emails') return (t.ai.emailCats as Record<string, string>)[String(v)] ?? String(v);
+    return String(v);
+  };
+  return (
+    <div className="rc-table-wrap">
+      <table className="rc-table">
+        <thead><tr>{table.columns.map((c) => <th key={c} scope="col">{(t.ai.cols as Record<string, string>)[c] ?? c}</th>)}</tr></thead>
+        <tbody>
+          {table.rows.map((r, i) => (
+            <tr key={i}>{table.columns.map((c) => <td key={c} className={NUMERIC_COLS.has(c) || MONEY_COLS.has(c) ? 'rc-tabular' : ''}>{cell(c, r[c] ?? null)}</td>)}</tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
