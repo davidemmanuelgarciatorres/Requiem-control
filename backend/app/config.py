@@ -76,6 +76,14 @@ class Settings(BaseSettings):
     # Solo para desarrollo/pruebas: permite integraciones en el plan gratuito (en producción: false).
     allow_integrations_on_free: bool = False
 
+    # --- Fase 8 — Cobros (Stripe). Sin estas variables no se cobra nada y la app lo indica. -----------
+    # Usa primero las claves de PRUEBA (sk_test_…, whsec_…): no mueven dinero real.
+    billing_provider: Literal["none", "stripe"] = "none"
+    stripe_secret_key: SecretStr | None = None
+    stripe_webhook_secret: SecretStr | None = None
+    stripe_price_premium: str | None = None  # ID del precio mensual de Premium (MXN $400) en Stripe
+    public_app_url: str = "http://localhost:5173"  # dirección pública de la app (para volver tras pagar)
+
 
 @lru_cache
 def get_settings() -> Settings:

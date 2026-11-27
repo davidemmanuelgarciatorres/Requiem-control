@@ -128,6 +128,8 @@ class Subscription(Base):
     provider: Mapped[str | None] = mapped_column(String(32))
     provider_ref: Mapped[str | None] = mapped_column(String(128))
     current_period_end: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    provider_customer_id: Mapped[str | None] = mapped_column(String(128))
+    cancel_at_period_end: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     created_at: Mapped[datetime] = _created_at()
     plan: Mapped[Plan] = relationship(lazy="joined")
 

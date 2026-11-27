@@ -1,36 +1,43 @@
-"""Limitador de intentos en memoria (ventana deslizante).
+"""Límite de intentos compartido entre réplicas de la API (guardado en PostgreSQL).
 
-Limitación conocida: vale por proceso. Con varias réplicas de la API habrá que
-moverlo a PostgreSQL o Redis (documentado en SECURITY.md).
+Las claves se guardan como hash SHA-256 (no se almacenan correos ni IPs en claro).
 """
 
-import time
-from collections import defaultdict, deque
-from threading import Lock
+import hashlib
+
+from sqlalchemy import text
+
+from app.db import _session_factory
 
 
 class RateLimiter:
     def __init__(self, limit: int, window_seconds: int) -> None:
         self.limit = limit
         self.window = window_seconds
-        self._hits: dict[str, deque[float]] = defaultdict(deque)
-        self._lock = Lock()
+
+    @staticmethod
+    def _bucket(key: str) -> str:
+        return hashlib.sha256(key.encode()).hexdigest()
 
     def hit(self, key: str) -> bool:
         """Registra un intento. Devuelve False si se superó el límite."""
-        now = time.monotonic()
-        with self._lock:
-            q = self._hits[key]
-            while q and now - q[0] > self.window:
-                q.popleft()
-            if len(q) >= self.limit:
-                return False
-            q.append(now)
-            return True
+        db = _session_factory()()
+        try:
+            ok = bool(
+                db.execute(
+                    text("SELECT rate_limit_hit(:b, :w, :m)"),
+                    {"b": self._bucket(key), "w": self.window, "m": self.limit},
+                ).scalar()
+            )
+            db.commit()
+            return ok
+        finally:
+            db.close()
 
     def reset(self, key: str | None = None) -> None:
-        with self._lock:
-            if key is None:
-                self._hits.clear()
-            else:
-                self._hits.pop(key, None)
+        db = _session_factory()()
+        try:
+            db.execute(text("SELECT rate_limit_reset(:b)"), {"b": self._bucket(key) if key else None})
+            db.commit()
+        finally:
+            db.close()

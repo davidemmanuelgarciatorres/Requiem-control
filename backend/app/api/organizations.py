@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import audit, entitlements
+from app import audit, billing, entitlements
 from app.agents.runner import active_agent_ids, monthly_executions
 from app.api.auth import build_session_out
 from app.api.deps import AuthContext, client_ip, get_auth, require_permission
@@ -273,7 +273,7 @@ def subscription(
             "storage_mb": round(used / (1024 * 1024), 2),
             "datasets": count_datasets(db, org.id),
         },
-        billing_enabled=False,  # Sin proveedor de pagos hasta la Fase 8.
+        billing_enabled=not billing.missing_configuration(),
     )
 
 

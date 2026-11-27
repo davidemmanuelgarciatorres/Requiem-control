@@ -4,7 +4,13 @@ import re
 
 import pytest
 
-PUBLIC = {("GET", "/api/health"), ("GET", "/api/plans"), ("POST", "/api/auth/register"), ("POST", "/api/auth/login")}
+PUBLIC = {
+    ("GET", "/api/health"),
+    ("GET", "/api/plans"),
+    ("POST", "/api/auth/register"),
+    ("POST", "/api/auth/login"),
+    ("POST", "/api/billing/webhook/stripe"),  # sin sesión: lo autentica la firma de Stripe
+}
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
 JUNK_IDS = [
     "not-a-uuid",
@@ -67,7 +73,9 @@ def test_junk_input_never_causes_a_server_error(app, client, junk):
                 if method in UNSAFE
                 else client.get(url, params={"q": junk, "limit": junk})
             )
-            assert r.status_code < 500, (method, url, body, r.status_code, r.text[:300])
+            # 503 solo es válido como respuesta controlada de «no configurado» (nunca un fallo interno).
+            controlled = r.status_code == 503 and r.json()["error"]["code"].endswith("not_configured")
+            assert r.status_code < 500 or controlled, (method, url, body, r.status_code, r.text[:300])
             if r.status_code >= 400:
                 assert "error" in r.json() or r.status_code == 405, (method, url, r.text[:200])
             assert "Traceback" not in r.text and "sqlalchemy" not in r.text.lower()

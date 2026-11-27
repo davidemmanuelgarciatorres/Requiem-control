@@ -16,6 +16,7 @@ from app.api import (
     assistant,
     auth,
     automations,
+    billing,
     datasets,
     finance,
     integrations,
@@ -147,6 +148,7 @@ def create_app() -> FastAPI:
     app.include_router(integrations.router)
     app.include_router(system.router)
     app.include_router(automations.router)
+    app.include_router(billing.router)
     return app
 
 
