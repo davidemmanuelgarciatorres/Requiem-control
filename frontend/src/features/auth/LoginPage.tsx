@@ -58,6 +58,7 @@ export function LoginPage() {
       <form className="rc-form" onSubmit={onSubmit} noValidate={false}>
         <Field label={t.auth.email} name="email" type="email" autoComplete="email" required maxLength={254} />
         <Field label={t.auth.password} name="password" type="password" autoComplete="current-password" required maxLength={128} />
+        {!IS_DEMO && <Link className="rc-link rc-auth__forgot" to="/forgot-password">{t.recovery.forgotLink}</Link>}
         {error && <p className="rc-form__error" role="alert">{error}</p>}
         <Button type="submit" variant="primary" size="lg" loading={busy}>{t.auth.submitLogin}</Button>
       </form>

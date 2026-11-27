@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __doc__ as _doc
 from app.api import (
+    account,
     agents,
     assistant,
     auth,
@@ -151,6 +152,7 @@ def create_app() -> FastAPI:
     app.include_router(system.router)
     app.include_router(automations.router)
     app.include_router(billing.router)
+    app.include_router(account.router)
     return app
 
 

@@ -9,7 +9,12 @@ PUBLIC = {
     ("GET", "/api/plans"),
     ("POST", "/api/auth/register"),
     ("POST", "/api/auth/login"),
-    ("POST", "/api/billing/webhook/stripe"),  # sin sesión: lo autentica la firma de Stripe
+    ("POST", "/api/billing/webhook/stripe"),
+    # Autenticadas por un token de un solo uso enviado por correo (no por la sesión):
+    ("POST", "/api/auth/password/forgot"),
+    ("POST", "/api/auth/password/reset"),
+    ("POST", "/api/auth/email/verify"),
+    ("GET", "/api/invitations/preview"),  # sin sesión: lo autentica la firma de Stripe
 }
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
 JUNK_IDS = [

@@ -247,3 +247,6 @@ textarea.rc-input { font: inherit; line-height: 1.4; }
 .rc-draft summary { cursor: pointer; font-size: 0.9rem; }
 .rc-draft__body { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.9rem; background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 10px; margin: 8px 0 0; }
 .rc-billing { display: grid; gap: 10px; margin-top: 12px; }
+.rc-auth__forgot { justify-self: end; font-size: var(--rc-fs-sm); margin-top: calc(var(--rc-space-2) * -1); }
+.rc-verify-banner { margin-bottom: var(--rc-space-4); align-items: center; flex-wrap: wrap; }
+.rc-verify-banner > span:first-of-type { flex: 1 1 220px; }

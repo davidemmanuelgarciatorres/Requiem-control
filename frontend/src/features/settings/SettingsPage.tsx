@@ -3,7 +3,7 @@ import { Card } from '../../components/ui/Card';
 import { SystemStatus } from './SystemStatus';
 import { FloatersSettings } from '../floaters/FloatersSettings';
 import { PageHeader } from '../modules/PageHeader';
-import { AccountSection, AuditSection, DataSection, MembersSection, OrganizationSection, PlanSection } from './AccountSections';
+import { AccountSection, AuditSection, PasswordSection, DataSection, MembersSection, OrganizationSection, PlanSection } from './AccountSections';
 
 export function SettingsPage() {
   const { t, lang, setLang, motion, setMotion } = usePreferences();
@@ -16,6 +16,7 @@ export function SettingsPage() {
       <PageHeader eyebrow={t.nav.sectionPlatform} title={t.settings.title} lead={t.settings.description} />
       <div className="rc-grid rc-grid--2">
         <AccountSection />
+        <PasswordSection />
         <OrganizationSection />
         <MembersSection />
         <PlanSection />

@@ -16,6 +16,10 @@ export function errorMessage(t: Dictionary, e: unknown): string {
     case 'request.invalid': return t.auth.errors.invalid;
     case 'network.unreachable': return t.auth.apiUnreachableTitle;
     case 'auth.forbidden': return t.account.noPermission;
+    case 'auth.token_invalid': return t.recovery.errors.tokenInvalid;
+    case 'auth.wrong_password': return t.recovery.errors.wrongPassword;
+    case 'invitation.invalid': return t.recovery.errors.invitationInvalid;
+    case 'email.not_configured': return t.recovery.errors.emailNotConfigured;
     default: return e.message || t.auth.errors.generic;
   }
 }

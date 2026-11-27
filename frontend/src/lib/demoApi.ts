@@ -175,7 +175,7 @@ function sessionOut(s: DemoState): SessionInfo {
   }
   const org = (id: string) => s.orgs.find((o) => o.id === id)!;
   return {
-    user: { id: user.id, email: user.email, full_name: user.full_name, preferred_language: user.preferred_language },
+    user: { id: user.id, email: user.email, full_name: user.full_name, preferred_language: user.preferred_language, email_verified: true },
     active_organization: active ? org(active.organization_id) : null,
     role: active?.role ?? null,
     permissions: active ? [...PERMS[active.role]].sort() : [],
@@ -314,6 +314,22 @@ export async function handleDemo(method: string, path: string, body: unknown): P
         audit(s, 'auth.register', org.id, user.id);
         return sessionOut(s);
       }
+      case 'POST /auth/password/change': {
+        const out = requireAuth(s);
+        const user = s.users.find((u) => u.id === out.user.id)!;
+        if (user.password_hash !== (await hash(String(b.current_password ?? '')))) fail(400, 'auth.wrong_password', 'La contraseña actual no es correcta.');
+        if (String(b.new_password ?? '').length < 10) fail(422, 'auth.password_too_short', 'Contraseña demasiado corta.', { min_length: 10 });
+        user.password_hash = await hash(String(b.new_password));
+        audit(s, 'auth.password_changed', s.session!.active_org, user.id);
+        return { ok: true };
+      }
+      case 'GET /organizations/current/invitations':
+        requirePerm(s, 'members.manage');
+        return [];
+      case 'POST /organizations/current/invitations':
+        // La demo no envía correos: se informa en lugar de simularlo.
+        requirePerm(s, 'members.manage');
+        return fail(503, 'email.not_configured', 'El envío de correos no está disponible.');
       case 'POST /auth/logout':
         requireAuth(s);
         s.session = null;

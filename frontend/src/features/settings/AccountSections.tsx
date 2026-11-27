@@ -11,7 +11,7 @@ import { api, ApiError, type AuditEntry, type Member, type Plan, type RoleCode, 
 import { IS_DEMO } from '../../lib/env';
 import { formatCurrency, formatDate, formatNumber, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
-import { errorMessage } from '../auth/errors';
+import { errorMessage, PASSWORD_MIN_LENGTH } from '../auth/errors';
 import { Field } from '../auth/Field';
 
 const ROLES: RoleCode[] = ['owner', 'admin', 'member', 'viewer'];
@@ -88,24 +88,80 @@ export function OrganizationSection() {
   );
 }
 
-export function MembersSection() {
+export function PasswordSection() {
   const { t } = usePreferences();
+  const r = t.recovery;
+  const action = useAction();
+  const [mismatch, setMismatch] = useState(false);
+  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const data = new FormData(form);
+    const next = String(data.get('new_password'));
+    setMismatch(next !== String(data.get('confirm')));
+    if (next !== String(data.get('confirm'))) return;
+    void action.run(async () => {
+      await api('/auth/password/change', { method: 'POST', body: { current_password: data.get('current_password'), new_password: next } });
+      form.reset();
+    });
+  };
+  return (
+    <Card title={r.changeTitle} subtitle={r.changeSubtitle}>
+      <form className="rc-form" onSubmit={onSubmit}>
+        <Field label={r.currentPassword} name="current_password" type="password" autoComplete="current-password" required maxLength={128} />
+        <Field label={r.newPassword} name="new_password" type="password" autoComplete="new-password" required minLength={PASSWORD_MIN_LENGTH} maxLength={128}
+          hint={interpolate(t.auth.passwordHint, { n: PASSWORD_MIN_LENGTH })} />
+        <Field label={r.confirmPassword} name="confirm" type="password" autoComplete="new-password" required maxLength={128} />
+        <Button type="submit" variant="glass" loading={action.busy}>{r.changeSubmit}</Button>
+      </form>
+      {action.ok && <p className="rc-form__ok" role="status">{r.changed}</p>}
+      {mismatch && <p className="rc-form__error" role="alert">{r.mismatch}</p>}
+      {action.error && !mismatch && <p className="rc-form__error" role="alert">{action.error}</p>}
+    </Card>
+  );
+}
+
+type PendingInvite = { id: string; email: string; role: RoleCode; expires_at: string; expired: boolean };
+
+export function MembersSection() {
+  const { t, lang } = usePreferences();
   const { session, can } = useAuth();
   const orgId = session?.active_organization?.id ?? '';
   const members = useApiResource<Member[]>(can('members.read') ? '/organizations/current/members' : null, orgId);
   const action = useAction();
   const manage = can('members.manage');
+  const invites = useApiResource<PendingInvite[]>(manage ? '/organizations/current/invitations' : null, orgId);
+  const [invited, setInvited] = useState<string | null>(null);
 
+  const invite = async (email: string, role: string) => {
+    await api('/organizations/current/invitations', { method: 'POST', body: { email, role } });
+    setInvited(email);
+    invites.reload();
+  };
   const onAdd = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const data = new FormData(form);
+    const email = String(data.get('email')).trim();
+    const role = String(data.get('role'));
+    setInvited(null);
     void action.run(async () => {
-      await api('/organizations/current/members', { method: 'POST', body: { email: data.get('email'), role: data.get('role') } });
+      try {
+        await api('/organizations/current/members', { method: 'POST', body: { email, role } });
+        members.reload();
+      } catch (err) {
+        // Sin cuenta todavía: se le envía una invitación por correo.
+        if (!(err instanceof ApiError && err.code === 'user.not_found')) throw err;
+        await invite(email, role);
+      }
       form.reset();
-      members.reload();
     });
   };
+  const revoke = (id: string) =>
+    void action.run(async () => {
+      await api(`/organizations/current/invitations/${id}`, { method: 'DELETE' });
+      invites.reload();
+    });
   const changeRole = (id: string, role: string) =>
     void action.run(async () => {
       await api(`/organizations/current/members/${id}`, { method: 'PATCH', body: { role } });
@@ -169,7 +225,27 @@ export function MembersSection() {
           </Button>
         </form>
       )}
+      {invited && <p className="rc-form__ok" role="status">{interpolate(t.account.invited, { email: invited })}</p>}
       {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
+      {manage && invites.data && invites.data.length > 0 && (
+        <section aria-label={t.account.pendingInvites}>
+          <h3 className="rc-field__label">{t.account.pendingInvites}</h3>
+          <ul className="rc-list">
+            {invites.data.map((i) => (
+              <li key={i.id} className="rc-list__item">
+                <div className="rc-list__main">
+                  <span className="rc-list__title">{i.email}</span>
+                  <span className="rc-list__meta">{t.org.roles[i.role]} · {i.expired ? t.account.expired : interpolate(t.account.expiresOn, { date: formatDate(new Date(i.expires_at), lang, { dateStyle: 'medium' }) })}</span>
+                </div>
+                <Button size="sm" variant="ghost" disabled={action.busy} onClick={() => void action.run(async () => { setInvited(null); await invite(i.email, i.role); })}>{t.account.resendInvite}</Button>
+                <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} disabled={action.busy} onClick={() => revoke(i.id)} aria-label={`${t.account.revoke}: ${i.email}`}>
+                  {t.account.revoke}
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </Card>
   );
 }

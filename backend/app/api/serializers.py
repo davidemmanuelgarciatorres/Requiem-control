@@ -6,7 +6,11 @@ from app.schemas import Language, MemberOut, OrganizationOut, RoleCode, UserOut
 
 def user_out(u: User) -> UserOut:
     return UserOut(
-        id=u.id, email=u.email, full_name=u.full_name, preferred_language=cast(Language, u.preferred_language)
+        id=u.id,
+        email=u.email,
+        full_name=u.full_name,
+        preferred_language=cast(Language, u.preferred_language),
+        email_verified=u.email_verified_at is not None,
     )
 
 

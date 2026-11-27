@@ -8,7 +8,7 @@
 export type RoleCode = 'owner' | 'admin' | 'member' | 'viewer';
 
 export type Organization = { id: string; name: string; slug: string; country: string; currency: string; created_at: string };
-export type User = { id: string; email: string; full_name: string; preferred_language: 'es' | 'en' };
+export type User = { id: string; email: string; full_name: string; preferred_language: 'es' | 'en'; email_verified?: boolean };
 export type SessionInfo = {
   user: User;
   active_organization: Organization | null;

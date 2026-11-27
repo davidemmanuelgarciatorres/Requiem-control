@@ -28,9 +28,9 @@ export function AuthLayout({ title, subtitle, children, footer }: { title: strin
             </div>
           </div>
           <h1 className="rc-page-title">{title}</h1>
-          <p className="rc-page-lead">{subtitle}</p>
+          {subtitle && <p className="rc-page-lead">{subtitle}</p>}
           {children}
-          <p className="rc-auth__footer">{footer}</p>
+          {footer && <p className="rc-auth__footer">{footer}</p>}
         </main>
       </div>
     </>

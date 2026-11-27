@@ -12,6 +12,7 @@ type SystemStatusInfo = {
   google: { missing: string[]; plan_allows: boolean; dev_override: boolean };
   billing: { missing: string[]; test_mode: boolean };
   worker: 'inline' | 'worker';
+  email?: { provider: 'console' | 'smtp' | 'none'; configured: boolean };
   security: { cookie_secure: boolean };
 };
 
@@ -60,6 +61,17 @@ export function SystemStatus() {
             <dt>{s.worker}</dt>
             <dd><Badge tone="outline">{d.worker === 'worker' ? s.workerSeparate : s.workerInline}</Badge></dd>
           </div>
+          {d.email && (
+            <div className="rc-status-list__row">
+              <dt>{s.email}</dt>
+              <dd>
+                <Badge tone={d.email.provider === 'smtp' && d.email.configured ? 'success' : 'warning'}>
+                  {d.email.provider === 'smtp' ? (d.email.configured ? s.emailSmtp : s.emailMissing) : d.email.provider === 'console' && d.email.configured ? s.emailConsole : s.emailOff}
+                </Badge>
+                {!(d.email.provider === 'smtp' && d.email.configured) && <p className="rc-list__meta">{s.emailHint}</p>}
+              </dd>
+            </div>
+          )}
           <div className="rc-status-list__row">
             <dt>{s.environment}</dt>
             <dd>

@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app import billing
+from app import billing, mailer
 from app.agents.providers import provider_status
 from app.api.deps import AuthContext, require_permission
 from app.config import get_settings
@@ -50,5 +50,6 @@ def system_status(
         },
         "billing": {"missing": billing.missing_configuration(), "test_mode": billing.test_mode()},
         "worker": s.execution_mode,
+        "email": {"provider": s.email_provider, "configured": mailer.configured()},
         "security": {"cookie_secure": s.cookie_secure},
     }

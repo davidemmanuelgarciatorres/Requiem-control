@@ -25,6 +25,7 @@ from alembic.config import Config  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import create_engine, text  # noqa: E402
 
+from app import mailer  # noqa: E402
 from app.api import auth as auth_api  # noqa: E402
 from app.main import create_app  # noqa: E402
 
@@ -47,6 +48,9 @@ def clean_db(owner_engine) -> Iterator[None]:
     with owner_engine.begin() as conn:
         # DELETE (no TRUNCATE CASCADE) para conservar los roles del sistema y los planes sembrados.
         for table in (
+            "rate_limit_hits",
+            "invitations",
+            "auth_tokens",
             "audit_logs",
             "usage_records",
             "user_sessions",
@@ -58,6 +62,7 @@ def clean_db(owner_engine) -> Iterator[None]:
             conn.execute(text(f"DELETE FROM {table}"))
     auth_api.login_limiter.reset()
     auth_api.register_limiter.reset()
+    mailer.outbox.clear()
     yield
 
 

@@ -18,8 +18,10 @@ class RegisterIn(Strict):
     email: EmailStr = Field(max_length=254)
     password: str = Field(min_length=1, max_length=128)
     full_name: str = Field(min_length=1, max_length=120)
-    organization_name: str = Field(min_length=1, max_length=120)
+    # Obligatorio salvo al aceptar una invitación (entonces la persona se une a esa organización).
+    organization_name: str | None = Field(default=None, min_length=1, max_length=120)
     preferred_language: Language = "es"
+    invite_token: str | None = Field(default=None, min_length=10, max_length=200)
 
 
 class LoginIn(Strict):
@@ -74,6 +76,7 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     preferred_language: Language
+    email_verified: bool = False
 
 
 class OrganizationOut(BaseModel):

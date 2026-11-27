@@ -1,6 +1,7 @@
 import { Route, Routes } from 'react-router-dom';
 import { NAV_ITEMS } from './app/navigation';
 import { AppShell } from './components/layout/AppShell';
+import { ForgotPasswordPage, InvitePage, ResetPasswordPage, VerifyEmailPage } from './features/auth/AccountFlows';
 import { LoginPage } from './features/auth/LoginPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RequireAuth';
@@ -27,6 +28,10 @@ export function AppRoutes() {
     <Routes>
       <Route path="login" element={<RedirectIfAuthenticated><LoginPage /></RedirectIfAuthenticated>} />
       <Route path="register" element={<RedirectIfAuthenticated><RegisterPage /></RedirectIfAuthenticated>} />
+      <Route path="forgot-password" element={<RedirectIfAuthenticated><ForgotPasswordPage /></RedirectIfAuthenticated>} />
+      <Route path="reset-password" element={<ResetPasswordPage />} />
+      <Route path="verify-email" element={<VerifyEmailPage />} />
+      <Route path="invite" element={<InvitePage />} />
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
         <Route path="agents" element={<AgentsPage />} />

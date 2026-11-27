@@ -84,6 +84,17 @@ class Settings(BaseSettings):
     stripe_price_premium: str | None = None  # ID del precio mensual de Premium (MXN $400) en Stripe
     public_app_url: str = "http://localhost:5173"  # dirección pública de la app (para volver tras pagar)
 
+    # --- Correo (recuperar contraseña, verificar correo, invitaciones) --------------------------
+    # console: solo desarrollo (el enlace se escribe en el registro del servidor); en producción se ignora.
+    # smtp: cualquier proveedor (Resend, Brevo, SES, Gmail Workspace…) con usuario y contraseña SMTP.
+    email_provider: Literal["console", "smtp", "none"] = "console"
+    smtp_host: str | None = None
+    smtp_port: int = 587
+    smtp_username: str | None = None
+    smtp_password: SecretStr | None = None
+    smtp_starttls: bool = True
+    email_from: str = "REQUIEM CONTROL <no-reply@localhost>"
+
 
 def production_problems(s: "Settings") -> list[str]:
     """Configuraciones inseguras que impiden arrancar en producción (la app falla rápido y lo dice)."""

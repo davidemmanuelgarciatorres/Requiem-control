@@ -101,6 +101,6 @@ describe('navigation & shell', () => {
 
   it('unknown routes show a not-found state', async () => {
     renderApp('/does-not-exist');
-    expect(await screen.findByText('Página no encontrada')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Página no encontrada' })).toBeInTheDocument();
   });
 });

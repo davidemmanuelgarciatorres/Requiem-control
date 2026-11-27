@@ -2,17 +2,17 @@
 
 from typing import cast
 
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Depends, Request, Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app import audit
+from app import accounts, audit
 from app.api.deps import AuthContext, client_ip, get_auth
 from app.api.serializers import org_out, user_out
 from app.config import get_settings
 from app.db import get_db, set_tenant_context
 from app.errors import ApiError, conflict, forbidden
-from app.models import OrganizationMember, User
+from app.models import Organization, OrganizationMember, User
 from app.schemas import (
     LoginIn,
     MembershipOut,
@@ -24,7 +24,7 @@ from app.schemas import (
 )
 from app.security.passwords import hash_password, needs_rehash, verify_password
 from app.security.rate_limit import RateLimiter
-from app.services import create_organization, create_session, memberships_of, organizations_by_id
+from app.services import create_organization, create_session, memberships_of, now, organizations_by_id
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -76,8 +76,16 @@ def build_session_out(db: Session, ctx: AuthContext) -> SessionOut:
     )
 
 
+def send_verification(db: Session, user: User, background: BackgroundTasks) -> None:
+    from app.api.account import send_verification as _send
+
+    _send(db, user, background)
+
+
 @router.post("/register", response_model=SessionOut, status_code=201)
-def register(body: RegisterIn, request: Request, response: Response, db: Session = Depends(get_db)) -> SessionOut:
+def register(
+    body: RegisterIn, request: Request, response: Response, background: BackgroundTasks, db: Session = Depends(get_db)
+) -> SessionOut:
     ip = client_ip(request)
     if not register_limiter.hit(f"register:{ip}"):
         raise ApiError(429, "auth.rate_limited", "Demasiados intentos. Espera un momento.")
@@ -91,9 +99,22 @@ def register(body: RegisterIn, request: Request, response: Response, db: Session
         password_hash=hash_password(body.password),
         preferred_language=body.preferred_language,
     )
+    if not body.invite_token and not body.organization_name:
+        raise ApiError(422, "request.invalid", "Escribe el nombre de tu negocio.")
     db.add(user)
     db.flush()
-    org = create_organization(db, user, body.organization_name, ip=ip)
+    org_id = accounts.accept_invitation(db, body.invite_token, user.id) if body.invite_token else None
+    if body.invite_token and org_id is None:
+        raise ApiError(400, "invitation.invalid", "La invitación no es válida, ya caducó o es para otro correo.")
+    if org_id is not None:
+        user.email_verified_at = now()  # la invitación llegó a este correo: ya está verificado
+        set_tenant_context(db, user_id=user.id, org_id=org_id)
+        org = db.get(Organization, org_id)
+        assert org is not None
+    else:
+        org = create_organization(db, user, body.organization_name or "", ip=ip)
+        send_verification(db, user, background)
+    set_tenant_context(db, user_id=user.id, org_id=org.id)
     audit.record(db, "auth.register", organization_id=org.id, user_id=user.id, ip=ip)
     token, session = create_session(db, user, org.id, ip, request.headers.get("user-agent"))
     _set_session_cookie(response, token)

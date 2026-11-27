@@ -8,6 +8,7 @@ export function NotFoundPage() {
   const { t } = usePreferences();
   return (
     <Card>
+      <h1 className="sr-only">{t.notFound.title}</h1>
       <EmptyState
         icon={<CircleAlert size={20} />}
         title={t.notFound.title}
