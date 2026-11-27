@@ -165,7 +165,7 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 ## Resultados de la última ejecución
 ```
 backend:  ruff + mypy (strict)  → sin problemas
-          pytest                → 166 aprobadas (PostgreSQL 16 real; correo, Google, Stripe e IA simulados)
+          pytest                → 165 aprobadas (PostgreSQL 16 real; correo, Google, Stripe e IA simulados)
 frontend: lint + typecheck      → 0 problemas
           npm run test          → 104 aprobadas
           npm run e2e           → 101 aprobadas, 1 omitida a propósito (escritorio y Pixel 7, incluye auditoría axe)
