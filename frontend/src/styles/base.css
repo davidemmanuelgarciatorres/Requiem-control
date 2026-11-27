@@ -26,6 +26,13 @@ button:disabled { cursor: not-allowed; }
 svg { display: block; flex-shrink: 0; }
 table { border-collapse: collapse; }
 
+/* Sin el rectángulo azul que Chrome/Android pinta al tocar cualquier elemento: la respuesta al toque la dan
+   los propios estilos (:active), y el anillo de enfoque solo aparece al navegar con teclado (:focus-visible). */
+html { -webkit-tap-highlight-color: transparent; }
+* { -webkit-tap-highlight-color: transparent; }
+:focus:not(:focus-visible) { outline: none; }
+button:focus:not(:focus-visible), a:focus:not(:focus-visible), [role='button']:focus:not(:focus-visible) { box-shadow: none; }
+
 :focus-visible {
   outline: none;
   box-shadow: var(--rc-focus-ring);

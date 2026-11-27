@@ -257,3 +257,10 @@ def test_next_run_respects_timezone_and_frequency():
     a.frequency, a.day_of_month = "monthly", 1
     assert automations.next_run(a, after) == datetime(2026, 12, 1, 14, 0, tzinfo=UTC)
     assert get_settings().execution_mode == "inline"
+
+
+def test_draft_headers_from_external_email_are_sanitized():
+    from app.agents.tools import _clean_header
+
+    assert _clean_header("<id@mail>\r\nBcc: victim@x.mx", 300) == "<id@mail>Bcc: victim@x.mx"
+    assert "\n" not in (_clean_header("a\nb", 300) or "") and _clean_header("", 10) is None

@@ -4,9 +4,18 @@ const LOCALE: Record<Language, string> = { es: 'es-MX', en: 'en-US' };
 
 export const localeFor = (lang: Language): string => LOCALE[lang];
 
-/** Sustituye marcadores `{clave}` en una cadena traducida. */
+/**
+ * Sustituye marcadores `{clave}` en una cadena traducida.
+ * Plural: `{clave|singular|plural}` elige según el valor numérico de `clave` (1 → singular).
+ */
 export function interpolate(template: string, vars: Record<string, string | number>): string {
-  return template.replace(/\{(\w+)\}/g, (match, key: string) => (key in vars ? String(vars[key]) : match));
+  return template
+    .replace(/\{(\w+)\|([^|}]*)\|([^}]*)\}/g, (match, key: string, one: string, many: string) => {
+      if (!(key in vars)) return match;
+      const n = typeof vars[key] === 'number' ? vars[key] : Number(String(vars[key]).replace(/[^\d.-]/g, ''));
+      return n === 1 ? one : many;
+    })
+    .replace(/\{(\w+)\}/g, (match, key: string) => (key in vars ? String(vars[key]) : match));
 }
 
 export function formatCurrency(value: number, lang: Language, currency = 'MXN', compact = false): string {

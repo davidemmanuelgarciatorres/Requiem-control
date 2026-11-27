@@ -75,7 +75,7 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--rc-text-faint);
+  color: var(--rc-text-muted);
 }
 .rc-nav__link {
   display: flex;

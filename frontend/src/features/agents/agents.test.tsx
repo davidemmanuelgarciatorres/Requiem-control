@@ -89,11 +89,11 @@ describe('AI agents', () => {
     }, session({ permissions: PERMS }));
     renderApp('/agents/runs/ex-1');
     expect(await screen.findByText('Resumen automático')).toBeInTheDocument();
-    expect(screen.getByText('Hay 1 filas duplicadas exactas.')).toBeInTheDocument();
+    expect(screen.getByText('Hay 1 fila duplicada exacta.')).toBeInTheDocument();
     expect(screen.getByText('Filas: 18')).toBeInTheDocument();
-    expect(screen.getByText('Eliminar 1 filas duplicadas de «Ventas»')).toBeInTheDocument();
+    expect(screen.getByText('Eliminar 1 fila duplicada de «Ventas»')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Aprobar' }));
-    expect(await screen.findByText('Se eliminaron 1 filas; quedan 16.')).toBeInTheDocument();
+    expect(await screen.findByText('Se eliminó 1 fila; quedan 16.')).toBeInTheDocument();
     const call = fetchMock.mock.calls.find(([u]) => u === '/api/approvals/ap-1/decision')!;
     expect(JSON.parse(String(call[1]?.body))).toEqual({ decision: 'approve' });
     expect((call[1]?.headers as Record<string, string>)['X-CSRF-Token']).toBe('csrf-123');
@@ -122,6 +122,6 @@ describe('AI agents', () => {
     renderApp('/agents');
     const button = await screen.findByRole('button', { name: 'Aprobaciones pendientes: 1' });
     await user.click(button);
-    expect(within(screen.getByRole('dialog', { name: 'Aprobaciones pendientes' })).getByRole('link', { name: /Eliminar 1 filas duplicadas/ })).toHaveAttribute('href', '/agents/runs/ex-1');
+    expect(within(screen.getByRole('dialog', { name: 'Aprobaciones pendientes' })).getByRole('link', { name: /Eliminar 1 fila duplicada/ })).toHaveAttribute('href', '/agents/runs/ex-1');
   });
 });

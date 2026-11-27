@@ -45,7 +45,7 @@ test.describe('AI agents (real API + PostgreSQL, simulated AI provider)', () => 
     await expect(page.getByText('Esperando aprobación').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('button', { name: /^Aprobaciones pendientes: 1$/ })).toBeVisible();
     await page.getByRole('button', { name: 'Aprobar' }).click();
-    await expect(page.getByText('Se eliminaron 1 filas; quedan 16.')).toBeVisible();
+    await expect(page.getByText('Se eliminó 1 fila; quedan 16.')).toBeVisible();
     await expect(page.getByText('Completada').first()).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: /^Aprobaciones pendientes: 0$/ })).toBeVisible();

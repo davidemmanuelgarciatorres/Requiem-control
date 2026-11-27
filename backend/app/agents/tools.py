@@ -124,9 +124,17 @@ def _validate_draft(ctx: ToolContext, payload: dict[str, Any]) -> dict[str, Any]
         "subject": str(payload.get("subject", ""))[:200].replace("\r", " ").replace("\n", " "),
         "body": str(payload.get("body", ""))[:5000],
         "category": str(payload.get("category", "other")),
-        "thread_id": payload.get("thread_id"),
-        "in_reply_to": payload.get("in_reply_to"),
+        # Vienen de un correo externo: sin saltos de línea (evita inyección de encabezados) y acotados.
+        "thread_id": _clean_header(payload.get("thread_id"), 64),
+        "in_reply_to": _clean_header(payload.get("in_reply_to"), 300),
     }
+
+
+def _clean_header(value: Any, limit: int) -> str | None:
+    if not value:
+        return None
+    clean = "".join(ch for ch in str(value) if ch.isprintable() and ch not in "\r\n")[:limit].strip()
+    return clean or None
 
 
 def read_gmail(ctx: ToolContext) -> list[dict[str, Any]] | None:

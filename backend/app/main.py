@@ -7,6 +7,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
+from sqlalchemy.exc import DataError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app import __doc__ as _doc
@@ -61,6 +62,9 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def guard(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
+        # Caracteres de control nulos en la dirección: nunca son legítimos (PostgreSQL tampoco los acepta).
+        if "\x00" in request.url.path or "%00" in request.url.query.lower() or "%00" in str(request.url.path).lower():
+            return _error(400, "request.invalid", "Datos inválidos.")
         if request.method in UNSAFE and request.url.path.startswith("/api/"):
             # 1) Origen: si el navegador envía Origin, debe ser uno permitido (defensa CSRF adicional).
             origin = request.headers.get("origin")
@@ -107,6 +111,12 @@ def create_app() -> FastAPI:
     @app.exception_handler(StarletteHTTPException)
     async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         return _error(exc.status_code, "http.error", str(exc.detail))
+
+    @app.exception_handler(DataError)
+    async def data_error(request: Request, exc: DataError) -> JSONResponse:
+        # Datos que PostgreSQL no acepta (p. ej. caracteres nulos): es una entrada inválida, no un fallo del servidor.
+        logging.getLogger("requiem.api").info("Dato inválido rechazado por la base de datos en %s", request.url.path)
+        return _error(422, "request.invalid", "Datos inválidos.")
 
     @app.exception_handler(Exception)
     async def unhandled(request: Request, exc: Exception) -> JSONResponse:

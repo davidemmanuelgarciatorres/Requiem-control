@@ -26,7 +26,7 @@ test.describe('Phase 7 (real API + PostgreSQL)', () => {
     await card.getByRole('button', { name: 'Ejecutar' }).click();
     await expect(page.getByText('Esperando aprobación').first()).toBeVisible({ timeout: 15_000 });
     await expect(page.getByRole('heading', { name: 'Lista de compra sugerida' })).toBeVisible();
-    await expect(page.getByText(/no tienen movimiento en más de 60 días/)).toBeVisible();
+    await expect(page.getByText(/1 producto no tiene movimiento en más de 60 días/)).toBeVisible();
 
     await page.goto('/reports');
     await expect(page.getByText('Todavía no hay reportes')).toBeVisible(); // nada se guardó sin aprobación

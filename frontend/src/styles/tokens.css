@@ -37,7 +37,7 @@
   --rc-text: #f4f7fb;
   --rc-text-secondary: #b3bccb;   /* gris frío */
   --rc-text-muted: #8590a3;
-  --rc-text-faint: #5c6679;
+  --rc-text-faint: #7d879a; /* ≥ 4.5:1 sobre el fondo oscuro (WCAG AA) */
 
   /* --- Semánticos ------------------------------------------------------- */
   --rc-success: #34d399;
