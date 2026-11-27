@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from app import billing
 from app.agents.providers import provider_status
 from app.api.deps import AuthContext, require_permission
 from app.config import get_settings
@@ -47,5 +48,7 @@ def system_status(
             "plan_allows": google.plan_allows(db, org.id),
             "dev_override": s.allow_integrations_on_free,
         },
+        "billing": {"missing": billing.missing_configuration(), "test_mode": billing.test_mode()},
+        "worker": s.execution_mode,
         "security": {"cookie_secure": s.cookie_secure},
     }

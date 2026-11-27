@@ -85,6 +85,24 @@ class Settings(BaseSettings):
     public_app_url: str = "http://localhost:5173"  # dirección pública de la app (para volver tras pagar)
 
 
+def production_problems(s: "Settings") -> list[str]:
+    """Configuraciones inseguras que impiden arrancar en producción (la app falla rápido y lo dice)."""
+    problems = []
+    if not s.cookie_secure:
+        problems.append("COOKIE_SECURE debe ser true (HTTPS)")
+    if "_dev@" in s.database_url or "_dev@" in s.migration_database_url:
+        problems.append("DATABASE_URL usa las contraseñas de desarrollo")
+    if any(o.startswith("http://") for o in s.allowed_origins):
+        problems.append("ALLOWED_ORIGINS debe usar solo https://")
+    if s.allow_integrations_on_free:
+        problems.append("ALLOW_INTEGRATIONS_ON_FREE debe ser false")
+    if s.trust_forwarded_host:
+        problems.append("TRUST_FORWARDED_HOST solo es para GitHub Codespaces")
+    if not s.public_app_url.startswith("https://"):
+        problems.append("PUBLIC_APP_URL debe usar https://")
+    return problems
+
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

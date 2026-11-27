@@ -5,7 +5,7 @@ const ROUTES = ['/', '/assistant', '/agents', '/automations', '/finance', '/data
   '/integrations', '/settings', '/design-system'];
 
 test.describe('design audit: every screen', () => {
-  test('no console errors, no horizontal overflow and no serious accessibility violations', async ({ page }, info) => {
+  test('no console errors, no horizontal overflow and no serious accessibility violations', async ({ page }) => {
     test.setTimeout(180_000);
     const errors: string[] = [];
     page.on('console', (m) => { if (m.type() === 'error') errors.push(`${page.url()}: ${m.text()}`); });
@@ -29,7 +29,6 @@ test.describe('design audit: every screen', () => {
         problems.push(`${route}: [${v.impact}] ${v.id} — ${v.nodes.slice(0, 3).map((n) => n.target.join(' ')).join(' | ')}`);
       }
     }
-    console.log(`\n== ${info.project.name} ==\n` + (problems.join('\n') || 'sin problemas'));
     expect(errors, errors.join('\n')).toEqual([]);
     expect(problems, problems.join('\n')).toEqual([]);
   });

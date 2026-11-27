@@ -155,3 +155,28 @@ def test_forwarded_host_origin_only_when_trusted(client, monkeypatch):
         assert c.post("/api/auth/login", json={"email": "x@x.mx", "password": "y"}, headers=bad).status_code == 403
     finally:
         get_settings.cache_clear()
+
+
+def test_production_refuses_insecure_configuration(monkeypatch):
+    import pytest as _pytest
+
+    from app.config import get_settings
+    from app.main import create_app
+
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    get_settings.cache_clear()
+    try:
+        with _pytest.raises(RuntimeError) as e:
+            create_app()
+        msg = str(e.value)
+        assert "COOKIE_SECURE" in msg and "contraseñas de desarrollo" in msg and "https://" in msg
+        monkeypatch.setenv("COOKIE_SECURE", "true")
+        monkeypatch.setenv("DATABASE_URL", "postgresql+psycopg://app:s3cret@db:5432/requiem")
+        monkeypatch.setenv("MIGRATION_DATABASE_URL", "postgresql+psycopg://owner:s3cret2@db:5432/requiem")
+        monkeypatch.setenv("ALLOWED_ORIGINS", '["https://app.requiem.mx"]')
+        monkeypatch.setenv("PUBLIC_APP_URL", "https://app.requiem.mx")
+        get_settings.cache_clear()
+        app = create_app()  # configuración segura: arranca
+        assert app.openapi_url is None  # sin documentación interactiva en producción
+    finally:
+        get_settings.cache_clear()

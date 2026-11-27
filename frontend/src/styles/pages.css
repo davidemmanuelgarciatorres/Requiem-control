@@ -246,3 +246,4 @@ textarea.rc-input { font: inherit; line-height: 1.4; }
 .rc-draft { margin-top: 8px; }
 .rc-draft summary { cursor: pointer; font-size: 0.9rem; }
 .rc-draft__body { white-space: pre-wrap; overflow-wrap: anywhere; font: inherit; font-size: 0.9rem; background: rgba(255,255,255,0.04); padding: 10px 12px; border-radius: 10px; margin: 8px 0 0; }
+.rc-billing { display: grid; gap: 10px; margin-top: 12px; }

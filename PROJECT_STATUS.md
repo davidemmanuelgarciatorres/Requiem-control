@@ -1,8 +1,24 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **7 (agentes avanzados) — completa, pendiente de revisión**
+Última actualización: 2026-11-26 · Fase actual: **8 (facturación y producción) — lista en código; falta contratar hosting y Stripe**
 
 ## ✅ Implementado y probado
+
+### Fase 8 — Facturación y producción
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Stripe Checkout (MXN), portal, webhooks con firma v1 (rechaza firma falsa, ausente o antigua), idempotencia, upgrade/past_due/cancelación | pytest con Stripe simulado. **Sin claves reales: no se probó contra Stripe.** |
+| Solo la persona propietaria administra pagos; Premium no puede volver a pagar; sin configuración → mensaje claro | pytest + unitarias. |
+| Limitador de intentos compartido (claves en hash) | pytest. |
+| La app no arranca en producción con configuración insegura | pytest. |
+| Contenedores de producción completos | **Probado con Docker**: compilación, migraciones, página+API por el mismo dominio, CSP/HSTS, CSP sin bloqueos en Chromium real, cookie Secure, origen ajeno 403, roles sin superusuario, API sin root, worker activo. |
+| Respaldo y restauración | **Probado**: mismo conteo de filas, versión de migración y RLS en 18 tablas tras restaurar. |
+
+### Revisión general (auditoría)
+- Barrido de las 69 rutas: sesión requerida, CSRF requerido, entradas basura nunca dan 500 (**encontró y corrigió** un 500 con caracteres nulos).
+- Barrido de aislamiento entre empresas en las 22 rutas con identificador: sin fugas.
+- axe-core en todas las pantallas (escritorio y Pixel 7): **corrigió** contraste bajo; sin errores de consola ni desbordes.
+- Quitado el rectángulo azul al tocar; gramática singular/plural; encabezados de borradores saneados.
 
 ### Fase 7 — Agentes avanzados y automatizaciones
 | Funcionalidad | Cómo se verificó |
@@ -149,8 +165,9 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 ## Resultados de la última ejecución
 ```
 backend:  ruff + mypy (strict)  → sin problemas
-          pytest                → 137 aprobadas (PostgreSQL 16 real; Google y proveedores de IA simulados)
+          pytest                → 155 aprobadas (PostgreSQL 16 real; Google, Stripe e IA simulados)
 frontend: lint + typecheck      → 0 problemas
-          npm run test          → 88 aprobadas
-          npm run e2e           → 79 aprobadas, 1 omitida a propósito (escritorio y Pixel 7)
+          npm run test          → 92 aprobadas
+          npm run e2e           → 83 aprobadas, 1 omitida a propósito (escritorio y Pixel 7, incluye auditoría axe)
+docker:   docker-compose.prod.yml probado de punta a punta; respaldo y restauración probados
 ```

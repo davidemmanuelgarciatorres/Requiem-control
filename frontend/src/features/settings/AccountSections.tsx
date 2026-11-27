@@ -1,13 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Download, Trash2, UserPlus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
 import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
-import { api, ApiError, type AuditEntry, type Member, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
+import { api, ApiError, type AuditEntry, type Member, type Plan, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
 import { IS_DEMO } from '../../lib/env';
 import { formatCurrency, formatDate, formatNumber, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
@@ -194,10 +194,91 @@ export function PlanSection() {
             <div><dt>{t.account.limitExecutions}</dt><dd className="rc-tabular">{formatNumber(p.max_monthly_executions, lang)}</dd></div>
             <div><dt>{t.account.limitStorage}</dt><dd className="rc-tabular">{formatNumber(p.max_storage_mb, lang)} MB</dd></div>
           </dl>
-          {!sub.data.billing_enabled && <p className="rc-list__meta">{t.account.billingDisabled}</p>}
+          <BillingActions />
         </>
       )}
     </Card>
+  );
+}
+
+type BillingStatus = {
+  configured: boolean; test_mode: boolean; can_manage: boolean; plan: string;
+  status: 'active' | 'trialing' | 'past_due' | 'canceled'; current_period_end: string | null;
+  cancel_at_period_end: boolean; has_customer: boolean;
+};
+
+/** Suscribirse a Premium o administrar la suscripción. El pago ocurre en la página segura de Stripe. */
+function BillingActions() {
+  const { t, lang } = usePreferences();
+  const b = t.billing;
+  const { session } = useAuth();
+  const [params] = useSearchParams();
+  const returned = params.get('billing');
+  const st = useApiResource<BillingStatus>('/billing/status', session?.active_organization?.id);
+  const plans = useApiResource<Plan[]>('/plans');
+  const [busy, setBusy] = useState<'checkout' | 'portal' | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const { reload } = st;
+  // Tras pagar, el cambio de plan llega por el webhook de Stripe: se consulta unas veces.
+  useEffect(() => {
+    if (returned !== 'success') return;
+    const id = window.setInterval(reload, 3000);
+    const stop = window.setTimeout(() => window.clearInterval(id), 30000);
+    return () => { window.clearInterval(id); window.clearTimeout(stop); };
+  }, [returned, reload]);
+  const d = st.data;
+  if (!d) return null;
+  const premium = plans.data?.find((p) => p.code === 'premium');
+  const go = async (kind: 'checkout' | 'portal') => {
+    setBusy(kind);
+    setError(null);
+    try {
+      const r = await api<{ url: string }>(`/billing/${kind}`, { method: 'POST' });
+      window.location.assign(r.url);
+    } catch (e) {
+      setError(errorMessage(t, e));
+      setBusy(null);
+    }
+  };
+  return (
+    <div className="rc-billing">
+      {returned === 'success' && d.plan !== 'premium' && <p className="rc-notice" role="status">{b.confirming}</p>}
+      {returned === 'success' && d.plan === 'premium' && <p className="rc-notice" role="status">{b.thanks}</p>}
+      {returned === 'cancel' && <p className="rc-list__meta" role="status">{b.cancelled}</p>}
+      {d.plan === 'premium' && (
+        <div className="rc-row rc-wrap">
+          <Badge tone={d.status === 'past_due' ? 'warning' : 'success'} dot>{b.status[d.status]}</Badge>
+          {d.current_period_end && (
+            <span className="rc-list__meta">
+              {interpolate(d.cancel_at_period_end ? b.endsOn : b.renewsOn, { date: formatDate(new Date(d.current_period_end), lang, { dateStyle: 'long' }) })}
+            </span>
+          )}
+        </div>
+      )}
+      {d.status === 'past_due' && <p className="rc-notice rc-notice--warning" role="alert">{b.pastDue}</p>}
+      {!d.configured && <p className="rc-list__meta">{t.account.billingDisabled}</p>}
+      {d.configured && d.can_manage && (
+        <div className="rc-row rc-wrap">
+          {d.plan !== 'premium' && premium && (
+            <Button variant="primary" loading={busy === 'checkout'} disabled={busy !== null} onClick={() => void go('checkout')}>
+              {interpolate(b.upgrade, { price: formatCurrency(premium.price_cents / 100, lang, premium.currency) })}
+            </Button>
+          )}
+          {d.has_customer && (
+            <Button variant="glass" loading={busy === 'portal'} disabled={busy !== null} onClick={() => void go('portal')}>{b.manage}</Button>
+          )}
+          {d.test_mode && <Badge tone="warning">{b.testMode}</Badge>}
+        </div>
+      )}
+      {d.configured && !d.can_manage && d.plan !== 'premium' && <p className="rc-list__meta">{b.askOwner}</p>}
+      {d.plan !== 'premium' && premium && (
+        <p className="rc-list__meta">
+          {interpolate(b.premiumIncludes, { members: premium.max_members, agents: premium.max_active_agents, runs: formatNumber(premium.max_monthly_executions, lang), storage: formatNumber(premium.max_storage_mb, lang) })}
+        </p>
+      )}
+      {d.configured && <p className="rc-list__meta">{b.secureNote}</p>}
+      {error && <p className="rc-form__error" role="alert">{error}</p>}
+    </div>
   );
 }
 

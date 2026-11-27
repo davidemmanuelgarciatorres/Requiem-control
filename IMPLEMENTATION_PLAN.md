@@ -11,8 +11,8 @@ Desarrollo incremental. **Cada fase requiere revisión y autorización del propi
 | 4 | Primeros agentes de IA | ✅ Completa |
 | 5 | Reportes e inteligencia | ✅ Completa |
 | 6 | Integraciones (Gmail, Sheets, Drive) | ✅ Completa (pendiente de prueba real con Google) |
-| 7 | Agentes avanzados | ✅ Completa (pendiente de revisión) |
-| 8 | Facturación y preparación para producción | ⏸ Siguiente — esperando autorización |
+| 7 | Agentes avanzados | ✅ Completa |
+| 8 | Facturación y preparación para producción | ✅ Lista en código (pendiente: contratar hosting/Stripe con tu autorización) |
 
 ## Fase 0 — Auditoría ✅
 Repositorio inspeccionado (vacío), stack decidido, documentación base creada. Ver PROJECT_AUDIT.md.
@@ -110,7 +110,17 @@ Google para usar Gmail con usuarios externos (Gmail de solo lectura es un permis
 - **Automatizaciones**: diaria/semanal/mensual a una hora local; el worker las dispara con idempotencia; errores visibles.
 - Avisos técnicos movidos a Configuración → Estado del sistema (solo propietario/administrador).
 
-## Fase 8 — Facturación y producción
+## Fase 8 — Facturación y producción ✅ (código)
+- Stripe Checkout + portal + webhooks firmados e idempotentes; el plan solo cambia por webhook verificado.
+- Limitador de intentos compartido en PostgreSQL (varias réplicas).
+- Validación de configuración: la app no arranca en producción con ajustes inseguros.
+- Contenedores (`docker-compose.prod.yml`): web nginx con CSP/HSTS, API, worker, migraciones, PostgreSQL con roles.
+- Respaldos y restauración probados (`deploy/backup.sh`, `deploy/restore.sh`); guía en DEPLOYMENT.md.
+- Revisión general: barridos de 69 rutas y de aislamiento, auditoría de accesibilidad en todas las pantallas.
+
+Pendiente (requiere tu autorización y costo): contratar hosting y dominio, cuenta de Stripe, monitor externo.
+
+### Notas previas de la Fase 8
 Proveedor de pagos autorizado (sin almacenar tarjetas), planes por mercado/moneda (Premium objetivo MXN $400/mes),
 monitoreo, respaldos, revisión de seguridad, pruebas de rendimiento, documentación de despliegue.
 

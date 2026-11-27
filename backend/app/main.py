@@ -25,7 +25,7 @@ from app.api import (
     reports,
     system,
 )
-from app.config import get_settings
+from app.config import get_settings, production_problems
 from app.db import get_engine
 from app.errors import ApiError
 from app.schemas import HealthOut
@@ -42,6 +42,8 @@ def _error(status: int, code: str, message: str, extra: dict[str, object] | None
 
 def create_app() -> FastAPI:
     settings = get_settings()
+    if settings.environment == "production" and (problems := production_problems(settings)):
+        raise RuntimeError("Configuración insegura para producción: " + "; ".join(problems))
     app = FastAPI(
         title="REQUIEM CONTROL API",
         version=VERSION,

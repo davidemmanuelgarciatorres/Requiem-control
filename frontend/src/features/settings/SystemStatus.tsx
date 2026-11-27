@@ -10,6 +10,8 @@ type SystemStatusInfo = {
   database: 'ok' | 'unavailable';
   ai: { provider: string; model: string; simulated: boolean; configured: boolean; requested: string; note: string | null };
   google: { missing: string[]; plan_allows: boolean; dev_override: boolean };
+  billing: { missing: string[]; test_mode: boolean };
+  worker: 'inline' | 'worker';
   security: { cookie_secure: boolean };
 };
 
@@ -44,6 +46,19 @@ export function SystemStatus() {
               {d.google.dev_override && <p className="rc-list__meta">{s.devOverride}</p>}
               {!d.google.plan_allows && <p className="rc-list__meta">{s.planNo}</p>}
             </dd>
+          </div>
+          <div className="rc-status-list__row">
+            <dt>{s.billing}</dt>
+            <dd>
+              <Badge tone={d.billing.missing.length ? 'warning' : d.billing.test_mode ? 'warning' : 'success'}>
+                {d.billing.missing.length ? s.billingMissing : d.billing.test_mode ? s.billingTest : s.billingLive}
+              </Badge>
+              {d.billing.missing.length > 0 && <p className="rc-list__meta">{s.missingVars}: <code>{d.billing.missing.join(', ')}</code></p>}
+            </dd>
+          </div>
+          <div className="rc-status-list__row">
+            <dt>{s.worker}</dt>
+            <dd><Badge tone="outline">{d.worker === 'worker' ? s.workerSeparate : s.workerInline}</Badge></dd>
           </div>
           <div className="rc-status-list__row">
             <dt>{s.environment}</dt>

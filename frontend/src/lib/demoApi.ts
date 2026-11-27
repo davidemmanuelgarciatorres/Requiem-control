@@ -253,6 +253,9 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case 'POST /automations':
         requireAuth(s);
         return fail(403, 'demo.read_only', 'En la demostración sin servidor no se ejecutan agentes. Úsala con el servidor (Codespaces) para probarlos.');
+      case 'GET /billing/status':
+        requirePerm(s, 'billing.read');
+        return { configured: false, test_mode: false, can_manage: true, plan: 'free', status: 'active', current_period_end: null, cancel_at_period_end: false, has_customer: false };
       case 'GET /integrations':
         requirePerm(s, 'org.read');
         return { google: { configured: false, missing: ['GOOGLE_OAUTH_CLIENT_ID', 'GOOGLE_OAUTH_CLIENT_SECRET', 'INTEGRATIONS_ENCRYPTION_KEY'],

@@ -64,7 +64,8 @@ describe('authentication', () => {
       'GET /api/auth/me': json(200, session()),
       'GET /api/system/status': json(200, { environment: 'development', database: 'unavailable',
         ai: { provider: 'mock', model: 'template-v1', simulated: true, configured: false, requested: 'mock', note: null },
-        google: { missing: ['GOOGLE_OAUTH_CLIENT_ID'], plan_allows: false, dev_override: false }, security: { cookie_secure: false } }),
+        google: { missing: ['GOOGLE_OAUTH_CLIENT_ID'], plan_allows: false, dev_override: false },
+        billing: { missing: ['BILLING_PROVIDER=stripe'], test_mode: false }, worker: 'inline', security: { cookie_secure: false } }),
       'GET /api/organizations/current/members': json(200, []),
       'GET /api/organizations/current/subscription': json(404, {}),
     });

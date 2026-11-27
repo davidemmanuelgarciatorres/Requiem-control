@@ -28,8 +28,12 @@
 | Secretos | Ninguno en el repositorio. `.env` ignorado por Git. Contraseñas de `init_dev_db.sh` son solo para desarrollo local y se pueden sobrescribir por variables. |
 | Frontend | React escapa todo; sin `dangerouslySetInnerHTML` ni `eval`; sin CDNs de terceros; `localStorage` solo para preferencias de interfaz; redirección tras login solo a rutas internas (sin redirección abierta). |
 
+| Cobros (Fase 8) | Sin datos de tarjeta (Stripe Checkout). Webhook: firma HMAC-SHA256 v1 verificada antes de leer, tolerancia 5 min (anti-repetición), idempotencia por evento, plan cambiado solo vía funciones SECURITY DEFINER acotadas; solo `billing.manage` (propietario) inicia pagos. |
+| Producción | La app no arranca con configuración insegura; contenedor sin root; nginx con CSP estricta, HSTS, nosniff, DENY, Permissions-Policy; docs de API ocultas; respaldos cifrables y con permisos 600. |
+| Caracteres nulos | Rechazados en URL; errores de datos de PostgreSQL → 422 (nunca 500). |
+
 ### Riesgos conocidos / pendientes
-- Limitador de intentos en memoria → moverlo a PostgreSQL/Redis antes de ejecutar varias réplicas.
+- (Resuelto) El limitador de intentos ahora es compartido en PostgreSQL.
 - Detrás de un proxy, configurar `uvicorn --proxy-headers --forwarded-allow-ips=…` para registrar la IP real.
 - Sin verificación de correo, recuperación de contraseña ni 2FA (requieren proveedor de email).
 - Producción debe servir frontend y `/api` desde el mismo dominio con HTTPS y `COOKIE_SECURE=true`.

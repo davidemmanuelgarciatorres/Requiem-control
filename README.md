@@ -2,7 +2,7 @@
 
 Plataforma SaaS de inteligencia de negocio y automatización de operaciones con agentes de IA.
 
-> **Estado actual: Fase 7 completa — agentes de inventario, clientes y correo (con aprobación humana) y automatizaciones programadas**, sobre integraciones con Google (Fase 6), reportes (Fase 5), agentes y Asistente IA (Fase 4),
+> **Estado actual: Fases 1–8 listas en código** — incluye cobros con Stripe (modo de prueba), contenedores de producción y respaldos; ver [DEPLOYMENT.md](DEPLOYMENT.md). Falta contratar hosting y Stripe (con tu autorización). Agentes de inventario, clientes y correo, automatizaciones,
 > Funcionan de verdad: registro e inicio de sesión, organizaciones, miembros con roles y permisos,
 > límites del plan aplicados en el servidor, auditoría, exportación y eliminación de datos,
 > con aislamiento entre organizaciones en la API **y** en PostgreSQL (Row-Level Security).
@@ -12,7 +12,7 @@ Plataforma SaaS de inteligencia de negocio y automatización de operaciones con 
 > También: hasta 3 imágenes flotantes personalizables por usuario.
 > Proveedores de IA: simulado (predeterminado), Claude (incl. Haiku) o Gemini. Google necesita tus credenciales (ver `.env.example`).
 > Probarla desde el teléfono sin computadora: ver [CODESPACES.md](CODESPACES.md).
-> Aún **no** hay pagos (Fase 8). Proceso de trabajo: `EXECUTION_MODE=worker` + `python -m app.worker`.
+> Proceso de trabajo: `EXECUTION_MODE=worker` + `python -m app.worker`.
 > Las cifras de la “vista de demostración” son ficticias y están etiquetadas como tales.
 
 ## Documentación
