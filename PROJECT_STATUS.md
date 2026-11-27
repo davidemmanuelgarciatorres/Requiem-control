@@ -1,8 +1,17 @@
 # PROJECT_STATUS — REQUIEM CONTROL
 
-Última actualización: 2026-11-26 · Fase actual: **8 (facturación y producción) — lista en código; falta contratar hosting y Stripe**
+Última actualización: 2026-11-27 · Estado: **código listo para lanzamiento; falta contratar hosting, correo SMTP, Stripe y revisión legal**
 
 ## ✅ Implementado y probado
+
+### Cuentas y lanzamiento público
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Recuperar contraseña por correo: enlace de un solo uso (1 h), solo el hash en la BD, misma respuesta exista o no la cuenta, cierra todas las sesiones | pytest + unitarias + **e2e de punta a punta** (escritorio y Pixel 7). |
+| Cambiar contraseña (pide la actual, cierra las demás sesiones) y confirmar correo con reenvío | pytest + unitarias. |
+| Invitaciones por correo (7 días) ligadas al correo invitado, cuentan para el límite del plan, se pueden cancelar/reenviar; registro desde la invitación sin crear otra organización | pytest + unitarias + **e2e**. |
+| Envío de correo por SMTP; en desarrollo se imprime en consola; sin configurar → «no disponible» (nunca finge que envió) | pytest. **SMTP real no probado (sin proveedor contratado).** |
+| Página pública de inicio con precios reales del servidor; aviso de privacidad y términos con datos `LEGAL_*` y marcadores visibles mientras falten | unitarias + e2e con axe (sin violaciones graves) en escritorio y móvil. **Plantillas legales sin revisión de abogado.** |
 
 ### Fase 8 — Facturación y producción
 | Funcionalidad | Cómo se verificó |
@@ -139,35 +148,26 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 ## 🟡 Implementado pero no probado automáticamente
 - Navegadores distintos de Chromium (Safari/iOS, Firefox).
 - Respaldo de vidrio sin `backdrop-filter`.
-- Rendimiento del globo en GPUs móviles reales (solo se probó con el renderizador por software de Chromium).
-- Auditoría automática de contraste/accesibilidad (axe/Lighthouse) no ejecutada.
-- Despliegue real con HTTPS (`COOKIE_SECURE=true`) y detrás de un proxy (IP real del cliente).
+- Rendimiento del globo en GPUs móviles reales.
+- Envío real por SMTP, Stripe con claves reales, Google con credenciales del propietario y proveedores de IA reales (todos probados con simuladores).
+- Despliegue real con HTTPS y dominio propio.
 
 ## 🟠 Simulado (etiquetado en la interfaz)
-- **Resúmenes de los agentes**: plantilla del proveedor simulado (los cálculos sí son reales). Etiquetados “Simulado · sin IA real”.
-- **Demostración sin servidor** (`npm run build:demo`, publicada para el teléfono): API simulada en el navegador con aviso permanente; no hay importación de archivos en esa versión.
-- Cifras de `/?view=demo` (ficticias, `demoData.ts`).
-- Botones de agentes, aprobaciones e integraciones: deshabilitados con la fase en que llegan.
-- Uso en el plan (`active_agents`, `monthly_executions`, `storage_mb`) se reporta como 0 porque esas funciones aún no existen.
+- **Resúmenes de IA** cuando `AI_PROVIDER=mock`: etiquetados “Simulado · sin IA real” (los cálculos sí son reales).
+- **Demostración sin servidor** (`npm run build:demo`): API simulada en el navegador con aviso permanente; no envía correos (lo dice) ni importa archivos.
 
-## ⏳ Pendiente
-- Invitaciones por correo (requiere un proveedor de email; hoy solo se agregan usuarios ya registrados).
-- Recuperación de contraseña y verificación de correo (requieren envío de email).
-- 2FA y gestión de sesiones activas.
-- Limitador de intentos compartido entre réplicas (hoy en memoria por proceso).
-- Ingesta: worker en segundo plano para archivos grandes, selector de hoja en la UI, importación en la demo sin servidor.
-- Agentes: worker separado; proveedor de IA real (Claude/Haiku o Gemini) listo, requiere tu clave.
-- Fases 7–8: agentes avanzados (inventario, clientes, correo con borradores aprobables, automatizaciones), facturación.
-- Credenciales de Google del propietario y verificación de la app por Google (Gmail con usuarios externos).
-- Reportes programados/por correo y PDF de servidor; sincronización programada de integraciones.
-- CI (GitHub Actions) — propuesto, no activado sin autorización.
+## ⏳ Pendiente (requiere decisiones o contrataciones del propietario)
+- Contratar hosting + dominio, proveedor SMTP con dominio verificado y activar Stripe (primero en modo de prueba).
+- Completar `LEGAL_*` y revisar con un abogado el aviso de privacidad y los términos.
+- Verificación de la app por Google para ofrecer Gmail a usuarios externos.
+- Mejoras posteriores: 2FA, gestión de sesiones activas, selector de hoja de Excel, reportes por correo, CI (no activado sin autorización).
 
 ## Resultados de la última ejecución
 ```
 backend:  ruff + mypy (strict)  → sin problemas
-          pytest                → 155 aprobadas (PostgreSQL 16 real; Google, Stripe e IA simulados)
+          pytest                → 163 aprobadas (PostgreSQL 16 real; correo, Google, Stripe e IA simulados)
 frontend: lint + typecheck      → 0 problemas
-          npm run test          → 92 aprobadas
-          npm run e2e           → 83 aprobadas, 1 omitida a propósito (escritorio y Pixel 7, incluye auditoría axe)
+          npm run test          → 104 aprobadas
+          npm run e2e           → 101 aprobadas, 1 omitida a propósito (escritorio y Pixel 7, incluye auditoría axe)
 docker:   docker-compose.prod.yml probado de punta a punta; respaldo y restauración probados
 ```

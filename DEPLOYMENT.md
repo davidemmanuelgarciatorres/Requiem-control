@@ -55,6 +55,19 @@ Agrega en tu cliente OAuth el origen `https://tu-dominio` y la redirección
 `https://tu-dominio/api/integrations/google/callback`. Para ofrecer Gmail a clientes externos, Google exige verificar la
 app (permisos “restringidos”); mientras tanto funciona con los usuarios de prueba que registres.
 
+## 5.1 Correo saliente
+Sin correo no funcionan la recuperación de contraseña, la confirmación de correo ni las invitaciones
+(la app lo indica en Estado del sistema y responde «no disponible» en lugar de fingir que envió).
+1. Crea una cuenta en un proveedor SMTP (Brevo, Resend, Amazon SES o Mailgun tienen planes gratuitos con límites).
+2. Verifica tu dominio (registros SPF/DKIM que te indique el proveedor) para que los correos no lleguen a spam.
+3. Completa `EMAIL_PROVIDER=smtp`, `SMTP_*` y `EMAIL_FROM` en `.env.production` y reinicia `api`.
+4. Prueba «¿Olvidaste tu contraseña?» con tu propio correo.
+
+## 5.2 Aviso de privacidad y términos
+La app publica `/privacy` y `/terms` con plantillas. Completa `LEGAL_ENTITY_NAME`, `LEGAL_ADDRESS`,
+`LEGAL_CONTACT_EMAIL` y `LEGAL_UPDATED_ON`; mientras falten, las páginas muestran marcadores como `[RAZÓN SOCIAL]`.
+**Las plantillas no son asesoría legal: haz que un abogado las revise antes de lanzar.**
+
 ## 6. Respaldos
 - `deploy/backup.sh /ruta/respaldos 30` — respaldo comprimido, verificado y con retención de 30 días.
 - Prográmalo cada noche (cron) y copia los archivos **fuera del servidor** (contienen datos de clientes).
@@ -71,5 +84,6 @@ app (permisos “restringidos”); mientras tanto funciona con los usuarios de p
 - [ ] Stripe en modo real solo después de probar el flujo completo en modo de prueba.
 - [ ] Respaldos nocturnos funcionando y una restauración ensayada.
 - [ ] Monitor de `/api/health` y correo de alerta.
-- [ ] Revisión de Estado del sistema (IA, Google, cobros, worker).
-- [ ] Aviso de privacidad y términos de servicio publicados (requisito legal; no incluidos en este repositorio).
+- [ ] Revisión de Estado del sistema (IA, Google, cobros, worker, correo, textos legales).
+- [ ] Correo SMTP con dominio verificado; recuperación de contraseña probada.
+- [ ] Datos `LEGAL_*` completos y plantillas de aviso de privacidad y términos revisadas por un abogado.

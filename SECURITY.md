@@ -30,18 +30,22 @@
 
 | Cobros (Fase 8) | Sin datos de tarjeta (Stripe Checkout). Webhook: firma HMAC-SHA256 v1 verificada antes de leer, tolerancia 5 min (anti-repetición), idempotencia por evento, plan cambiado solo vía funciones SECURITY DEFINER acotadas; solo `billing.manage` (propietario) inicia pagos. |
 | Producción | La app no arranca con configuración insegura; contenedor sin root; nginx con CSP estricta, HSTS, nosniff, DENY, Permissions-Policy; docs de API ocultas; respaldos cifrables y con permisos 600. |
+| Recuperación y verificación | Tokens aleatorios de 256 bits enviados por correo; en la BD solo su SHA-256; un solo uso (bloqueo de fila), caducidad 1 h (contraseña) / 48 h (correo); pedir uno nuevo invalida el anterior. «Olvidé mi contraseña» responde igual exista o no la cuenta y tiene límite por IP y por correo. Restablecer cierra todas las sesiones; cambiar la contraseña exige la actual y cierra las demás. Aviso por correo de cada cambio. |
+| Invitaciones | Token hasheado, 7 días, ligado al correo invitado (otra cuenta no puede usarlo), aceptación en una función SECURITY DEFINER acotada, cuentan para el límite de miembros del plan; tabla con RLS. Los encabezados de correo se limpian de saltos de línea. |
 | Caracteres nulos | Rechazados en URL; errores de datos de PostgreSQL → 422 (nunca 500). |
 
 ### Riesgos conocidos / pendientes
 - (Resuelto) El limitador de intentos ahora es compartido en PostgreSQL.
 - Detrás de un proxy, configurar `uvicorn --proxy-headers --forwarded-allow-ips=…` para registrar la IP real.
-- Sin verificación de correo, recuperación de contraseña ni 2FA (requieren proveedor de email).
+- Sin 2FA ni lista de sesiones activas todavía.
+- El registro informa «correo ya usado» (compromiso habitual de usabilidad).
 - Producción debe servir frontend y `/api` desde el mismo dominio con HTTPS y `COOKIE_SECURE=true`.
 
 ## 2. Controles planificados por fase
 
-### Cuentas (cuando haya proveedor de email)
-- Verificación de correo y recuperación de contraseña con tokens de un solo uso y caducidad corta; 2FA (TOTP).
+### Cuentas
+- (Hecho) Verificación de correo y recuperación de contraseña con tokens de un solo uso y caducidad corta.
+- Próximo: 2FA (TOTP) y gestión de sesiones activas.
 
 ### Toda tabla nueva de datos de negocio (Fases 3+)
 - `organization_id NOT NULL` + RLS con la misma política que las tablas actuales + prueba de aislamiento.

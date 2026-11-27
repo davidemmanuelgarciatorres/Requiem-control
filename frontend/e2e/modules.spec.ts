@@ -32,7 +32,7 @@ test.describe('Financial intelligence and AI assistant (real API + PostgreSQL)',
     await expect(page.getByText(/Tu mayor gasto es «Renta»/)).toBeVisible();
     await expect(page.getByText('Verificado').first()).toBeVisible();
     await page.getByLabel('Escribe tu pregunta…').fill('¿Qué pueden hacer los agentes?');
-    await page.getByRole('button', { name: 'Enviar' }).click();
+    await page.getByRole('button', { name: 'Enviar', exact: true }).click();
     await expect(page.getByText(/Agentes disponibles hoy/)).toBeVisible();
     await page.reload();
     await expect(page.getByRole('button', { name: /¿Cuál es mi mayor gasto\?/ }).first()).toBeVisible();
