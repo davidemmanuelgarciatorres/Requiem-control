@@ -2,7 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from './fixtures';
 
 const ROUTES = ['/', '/assistant', '/agents', '/automations', '/finance', '/data', '/inventory', '/customers', '/email', '/reports',
-  '/integrations', '/settings', '/design-system'];
+  '/integrations', '/settings'];
 
 test.describe('design audit: every screen', () => {
   test('no console errors, no horizontal overflow and no serious accessibility violations', async ({ page }) => {
@@ -42,4 +42,16 @@ test.describe('design audit: every screen', () => {
     const ring = await btn.evaluate((el) => `${getComputedStyle(el).outlineStyle} ${getComputedStyle(el).boxShadow}`);
     expect(ring).toBe('none none');
   });
+});
+
+test('the internal design system is not published and no build-process text is visible', async ({ page }) => {
+  await page.goto('/design-system');
+  await expect(page.getByRole('heading', { name: 'Página no encontrada' })).toBeVisible();
+  for (const route of ['/', '/agents', '/settings', '/integrations', '/inventory']) {
+    await page.goto(route);
+    await page.waitForLoadState('networkidle');
+    const text = await page.locator('body').innerText();
+    expect(text, route).not.toMatch(/\bFase \d|\bMVP\b|previst|Versión 0|Codespaces|sin servidor/);
+  }
+  await expect(page.getByRole('link', { name: 'Sistema de diseño' })).toHaveCount(0);
 });

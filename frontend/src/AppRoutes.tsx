@@ -44,7 +44,8 @@ export function AppRoutes() {
         <Route path="reports/:reportId" element={<ReportPage />} />
         <Route path="integrations" element={<IntegrationsPage />} />
         <Route path="settings" element={<SettingsPage />} />
-        <Route path="design-system" element={<DesignSystemPage />} />
+        {/* Catálogo interno de componentes: solo en desarrollo, nunca en la versión publicada. */}
+        {import.meta.env.DEV && <Route path="design-system" element={<DesignSystemPage />} />}
         {NAV_ITEMS.filter((i) => i.module).map((i) => (
           <Route key={i.id} path={i.path.slice(1)} element={<ModulePage navId={i.id} moduleId={i.module!} />} />
         ))}

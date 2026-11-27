@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { NAV_SECTIONS } from '../../app/navigation';
 import { usePreferences } from '../../app/preferences';
-import { interpolate } from '../../lib/format';
 
 /** Lista de navegación compartida por la barra lateral y el cajón móvil. */
 export function NavList({ onNavigate, idPrefix }: { onNavigate?: () => void; idPrefix: string }) {
@@ -15,13 +14,11 @@ export function NavList({ onNavigate, idPrefix }: { onNavigate?: () => void; idP
             {section.items.map((item) => {
               const Icon = item.icon;
               const label = t.nav[item.id];
-              const phaseTag = item.status === 'planned' && item.phase ? interpolate(t.common.phase, { n: item.phase }) : null;
               return (
                 <li key={item.id}>
                   <NavLink to={item.path} end={item.path === '/'} className="rc-nav__link" title={label} onClick={onNavigate}>
                     <Icon size={18} aria-hidden="true" />
                     <span className="rc-nav__label">{label}</span>
-                    {phaseTag && <span className="rc-nav__tag" aria-label={phaseTag}>F{item.phase}</span>}
                   </NavLink>
                 </li>
               );

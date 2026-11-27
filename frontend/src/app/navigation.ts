@@ -1,6 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
-  Bot, Boxes, FileText, LayoutDashboard, Mail, Palette, Plug, Settings, Sparkles, Table2, Users, Wallet, Workflow,
+  Bot, Boxes, FileText, LayoutDashboard, Mail, Plug, Settings, Sparkles, Table2, Users, Wallet, Workflow,
 } from 'lucide-react';
 import type { Dictionary } from '../i18n/es';
 
@@ -52,7 +52,6 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { id: 'integrations', path: '/integrations', icon: Plug, status: 'live', phase: 6 },
       { id: 'settings', path: '/settings', icon: Settings, status: 'live' },
-      { id: 'designSystem', path: '/design-system', icon: Palette, status: 'live' },
     ],
   },
 ];

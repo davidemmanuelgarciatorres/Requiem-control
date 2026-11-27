@@ -49,7 +49,7 @@ describe('AI agents', () => {
     expect(screen.getByText('Agentes activos: 0 de 2')).toBeInTheDocument();
     expect(screen.getByText('Ejecuciones este mes: 3 de 100')).toBeInTheDocument();
     const email = screen.getByRole('article', { name: /Operaciones de correo/ });
-    expect(within(email).getByText('Disponible en la Fase 7')).toBeInTheDocument();
+    expect(within(email).getByText('Disponible próximamente')).toBeInTheDocument();
     expect(within(email).queryByRole('button')).not.toBeInTheDocument();
   });
 

@@ -1,6 +1,6 @@
 import { expect, test } from './fixtures';
 
-const ROUTES = ['/', '/?view=demo', '/data', '/agents', '/integrations', '/settings', '/design-system', '/finance'];
+const ROUTES = ['/', '/?view=demo', '/data', '/agents', '/integrations', '/settings', '/finance', '/inventory', '/customers', '/email', '/automations', '/assistant', '/reports'];
 
 test.describe('responsive layout', () => {
   for (const route of ROUTES) {

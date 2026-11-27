@@ -8,11 +8,9 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { EmptyState, ErrorState, Skeleton } from '../../components/ui/States';
 import { api, type AgentInfo, type AgentsInfo, type DatasetSummary, type Execution, type ExecutionStatus, type ProviderInfo } from '../../lib/api';
-import { IS_DEMO } from '../../lib/env';
 import { formatDate, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { PageHeader } from '../modules/PageHeader';
-import { AgentsCatalogStatic } from './AgentsCatalogStatic';
 import { aiErrorMessage } from './aiText';
 
 const CATALOG_KEY: Record<string, 'dataAnalyst' | 'financialAnalyst' | 'inventoryAnalyst' | 'customerOps' | 'emailOps' | 'automation'> = {
@@ -34,7 +32,6 @@ export function agentName(t: ReturnType<typeof usePreferences>['t'], id: string)
 
 export function AgentsPage() {
   // La demostración sin servidor no ejecuta agentes: muestra el catálogo informativo.
-  if (IS_DEMO) return <AgentsCatalogStatic />;
   return <AgentsLive />;
 }
 
@@ -168,7 +165,7 @@ export function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; da
             )
           )}
           <div className="rc-agent-card__foot">
-            <span className="rc-list__meta">{t.agents.version} {agent.version} · {interpolate(t.ai.timeout, { s: agent.timeout_seconds })}</span>
+            <span />
             <div className="rc-row">
               {can('agents.manage') && (
                 <Button size="sm" variant="glass" loading={busy === 'toggle'} onClick={() => void toggle()}>
@@ -184,7 +181,7 @@ export function AgentCard({ agent, datasets, onChanged }: { agent: AgentInfo; da
           </div>
         </>
       ) : (
-        <p className="rc-list__meta">{interpolate(t.ai.planned, { n: agent.phase })}</p>
+        <p className="rc-list__meta">{t.ai.planned}</p>
       )}
       {error && <p className="rc-form__error" role="alert">{error}</p>}
     </Card>

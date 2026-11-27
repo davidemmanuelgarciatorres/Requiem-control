@@ -1,4 +1,4 @@
-import { Bot, Building2, Check, CircleCheck, Database, Upload } from 'lucide-react';
+import { Bot, Building2, CircleCheck, Database, Upload } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import type { DatasetSummary } from '../../lib/api';
@@ -63,7 +63,6 @@ export function EmptyDashboard() {
                 <span className="rc-list__title">{t.agents.catalog[a.key].name}</span>
                 <span className="rc-list__meta">{t.agents.catalog[a.key].purpose}</span>
               </div>
-              <Badge tone="accent"><Check size={12} aria-hidden="true" />{t.agents.priority}</Badge>
             </li>
           ))}
         </ul>
