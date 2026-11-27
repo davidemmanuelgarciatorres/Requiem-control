@@ -51,3 +51,8 @@ export function greetingKey(date: Date): 'greetingMorning' | 'greetingAfternoon'
   if (h < 19) return 'greetingAfternoon';
   return 'greetingEvening';
 }
+
+/** Precio aproximado en dólares, p. ej. «≈ US$22». */
+export function formatUsdApprox(cents: number, lang: Language): string {
+  return '≈ US$' + new Intl.NumberFormat(localeFor(lang), { maximumFractionDigits: 0 }).format(cents / 100);
+}

@@ -634,6 +634,7 @@ export const es = {
     freeName: 'Gratis',
     premiumName: 'Premium',
     freePrice: '$0',
+    usdNote: '{usd} USD al mes · referencia aproximada, el cobro es en pesos mexicanos',
     perMonth: '/ mes',
     planMembers: 'Hasta {n} miembros',
     planAgents: '{n} {n|agente activo|agentes activos}',

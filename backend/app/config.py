@@ -95,6 +95,10 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True
     email_from: str = "REQUIEM CONTROL <no-reply@localhost>"
 
+    # Tipo de cambio de referencia (pesos por dólar) para mostrar el precio aproximado en USD.
+    # Actualízalo periódicamente; vacío o 0 = no mostrar dólares.
+    usd_mxn_rate: float | None = 18.0
+
     # Datos del responsable que aparecen en el aviso de privacidad y los términos (públicos).
     legal_entity_name: str | None = None
     legal_address: str | None = None

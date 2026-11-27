@@ -1,6 +1,6 @@
 """Asistente IA: conversaciones privadas por usuario dentro de la organización activa."""
 
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Response
@@ -21,6 +21,8 @@ class AskIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
     question: str = Field(min_length=1, max_length=1000)
     conversation_id: UUID | None = None
+    # Idioma de la pantalla en el momento de preguntar (tiene prioridad sobre el del perfil).
+    language: Literal["es", "en"] | None = None
 
 
 def _out(m: AssistantMessage) -> dict[str, Any]:
@@ -49,7 +51,7 @@ def ask(
         user_id=ctx.user.id,
         conversation_id=body.conversation_id,
         question=question,
-        language=ctx.user.preferred_language,
+        language=body.language or ctx.user.preferred_language,
     )
     audit.record(
         db,

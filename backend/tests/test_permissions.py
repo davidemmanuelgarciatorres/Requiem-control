@@ -121,3 +121,16 @@ def test_legal_info_is_public_and_reports_missing_fields(client, make_client, mo
     info = anon.get("/api/legal").json()
     assert info["complete"] is True and info["entity_name"] == "Mi Empresa S.A. de C.V."
     assert client.get("/api/system/status").json()["legal"]["missing"] == []
+
+
+def test_plans_include_an_approximate_usd_price(make_client, monkeypatch):
+    from app.config import get_settings
+
+    anon = make_client()
+    plans = {p["code"]: p for p in anon.get("/api/plans").json()}
+    premium = plans["premium"]
+    assert premium["price_cents"] == 40000 and premium["currency"] == "MXN"
+    assert premium["usd_approx_cents"] == 2200  # 400 / 18 ≈ 22 USD
+    assert plans["free"]["usd_approx_cents"] is None
+    monkeypatch.setattr(get_settings(), "usd_mxn_rate", None)
+    assert anon.get("/api/plans").json()[-1]["usd_approx_cents"] is None

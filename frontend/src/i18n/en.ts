@@ -633,6 +633,7 @@ export const en: Dictionary = {
     freeName: 'Free',
     premiumName: 'Premium',
     freePrice: '$0',
+    usdNote: '{usd} USD per month · approximate reference, billed in Mexican pesos',
     perMonth: '/ month',
     planMembers: 'Up to {n} members',
     planAgents: '{n} {n|active agent|active agents}',

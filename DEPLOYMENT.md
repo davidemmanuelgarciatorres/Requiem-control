@@ -50,6 +50,10 @@ contraseñas de desarrollo. En un VPS pon delante Caddy o Cloudflare (certificad
 Stripe cobra una comisión por transacción (consulta su tarifa vigente para México). REQUIEM nunca ve ni guarda datos de
 tarjetas: el pago ocurre en la página de Stripe y el plan solo cambia con un webhook firmado y verificado.
 
+El precio Premium se muestra también como **referencia aproximada en dólares** (`USD_MXN_RATE`, pesos por dólar;
+vacío = no mostrar). Es solo informativo: el cobro se hace en MXN. Si quieres cobrar en dólares a clientes de fuera,
+Stripe permite agregar a tu precio una opción en USD (`currency_options`).
+
 ## 5. Google en producción
 Agrega en tu cliente OAuth el origen `https://tu-dominio` y la redirección
 `https://tu-dominio/api/integrations/google/callback`. Para ofrecer Gmail a clientes externos, Google exige verificar la

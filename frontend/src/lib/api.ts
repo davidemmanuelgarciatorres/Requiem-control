@@ -21,6 +21,8 @@ export type Member = { id: string; user_id: string; email: string; full_name: st
 export type Plan = {
   code: string; name: string; price_cents: number; currency: string; interval: string;
   max_active_agents: number; max_monthly_executions: number; max_storage_mb: number; max_members: number;
+  /** Equivalente aproximado en dólares (informativo; el cobro es en la moneda del plan). */
+  usd_approx_cents?: number | null;
 };
 export type SubscriptionInfo = { status: string; plan: Plan; usage: Record<string, number>; billing_enabled: boolean };
 export type AuditEntry = { id: number; action: string; user_id: string | null; created_at: string; details: Record<string, unknown> };

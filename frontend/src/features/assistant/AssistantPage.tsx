@@ -77,7 +77,7 @@ export function AssistantPage() {
     setQuestion('');
     try {
       const r = await api<{ question: AssistantMessage; answer: AssistantMessage }>('/assistant/messages', {
-        method: 'POST', body: conv ? { question: q, conversation_id: conv } : { question: q },
+        method: 'POST', body: conv ? { question: q, conversation_id: conv, language: lang } : { question: q, language: lang },
       });
       setMessages((ms) => [...ms, r.question, r.answer]);
       if (!conv) { setConv(r.question.conversation_id); list.reload(); }

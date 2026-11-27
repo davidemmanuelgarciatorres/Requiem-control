@@ -123,3 +123,11 @@ def test_conversations_are_private_per_user_and_org(client, make_client):
 def test_parse_tagged_handles_spanish_tags():
     parts = assistant.parse_tagged("[VERIFICADO] A\n[SUGERENCIA] B\n\n[Estimación] C")
     assert [p["kind"] for p in parts] == ["verified", "suggestion", "estimate"]
+
+
+def test_assistant_answers_in_the_language_of_the_screen(client):
+    client.register("ana@example.com")  # perfil en español
+    r = client.send("POST", "/api/assistant/messages", json={"question": "How are my sales?", "language": "en"})
+    assert r.status_code == 201 or r.status_code == 200, r.text
+    text = r.json()["answer"]["content"]
+    assert "import" in text.lower() and "importa" not in text.lower()

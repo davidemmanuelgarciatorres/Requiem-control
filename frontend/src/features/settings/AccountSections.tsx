@@ -9,7 +9,7 @@ import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
 import { api, ApiError, type AuditEntry, type Member, type Plan, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
 import { IS_DEMO } from '../../lib/env';
-import { formatCurrency, formatDate, formatNumber, interpolate } from '../../lib/format';
+import { formatCurrency, formatDate, formatNumber, formatUsdApprox, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { errorMessage, PASSWORD_MIN_LENGTH } from '../auth/errors';
 import { Field } from '../auth/Field';
@@ -349,6 +349,7 @@ function BillingActions() {
       {d.configured && !d.can_manage && d.plan !== 'premium' && <p className="rc-list__meta">{b.askOwner}</p>}
       {d.plan !== 'premium' && premium && (
         <p className="rc-list__meta">
+          {premium.usd_approx_cents ? <>{interpolate(t.landing.usdNote, { usd: formatUsdApprox(premium.usd_approx_cents, lang) })}. </> : null}
           {interpolate(b.premiumIncludes, { members: premium.max_members, agents: premium.max_active_agents, runs: formatNumber(premium.max_monthly_executions, lang), storage: formatNumber(premium.max_storage_mb, lang) })}
         </p>
       )}

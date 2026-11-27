@@ -5,6 +5,7 @@ import { FloatersProvider } from '../../features/floaters/FloatersContext';
 import { FloatersLayer } from '../../features/floaters/FloatersLayer';
 import { AmbientBackground } from './AmbientBackground';
 import { DemoBanner } from './DemoBanner';
+import { LanguageSync } from './LanguageSync';
 import { VerifyEmailBanner } from './VerifyEmailBanner';
 import { MobileDrawer } from './MobileDrawer';
 import { Sidebar } from './Sidebar';
@@ -31,6 +32,7 @@ export function AppShell() {
           <DemoBanner />
           <TopBar onOpenMenu={() => setMenuOpen(true)} menuOpen={menuOpen} />
           <main id="main" className="rc-main" tabIndex={-1}>
+            <LanguageSync />
             <VerifyEmailBanner />
             <Outlet />
           </main>

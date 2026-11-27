@@ -7,6 +7,7 @@ import { OrgSwitcher } from './OrgSwitcher';
 import { LANGUAGES, usePreferences } from '../../app/preferences';
 import { Popover } from '../ui/Popover';
 import { GlobalSearch } from './GlobalSearch';
+import { LogoMark } from './LogoMark';
 
 export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuOpen: boolean }) {
   const { t, lang, setLang } = usePreferences();
@@ -25,7 +26,7 @@ export function TopBar({ onOpenMenu, menuOpen }: { onOpenMenu: () => void; menuO
         <Menu size={18} aria-hidden="true" />
       </button>
       <span className="rc-topbar__brand">
-        <span className="rc-brand__mark" aria-hidden="true">R</span>
+        <LogoMark size={30} />
         <span>REQUIEM</span>
       </span>
 

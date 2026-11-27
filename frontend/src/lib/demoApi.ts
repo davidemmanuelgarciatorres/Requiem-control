@@ -273,11 +273,18 @@ export async function handleDemo(method: string, path: string, body: unknown): P
         const at = now();
         const q = String(b.question ?? '').slice(0, 1000);
         const r = demoReport(org.name);
-        const parts = [
-          { kind: 'verified', text: `Demostración sin servidor: no hay datos importados en este dispositivo. El reporte de ejemplo «${r.title}» marca ingresos de $721,800.00 MXN entre ${r.period_from} y ${r.period_to}.` },
-          { kind: 'estimate', text: 'En noviembre las ventas del ejemplo bajaron 13.4 % frente a octubre; el mes podría estar incompleto.' },
-          { kind: 'suggestion', text: 'En la versión con servidor, importa tus archivos y te responderé con tus propias cifras.' },
-        ];
+        const en = b.language === 'en';
+        const parts = en
+          ? [
+              { kind: 'verified', text: `Serverless demo: no data has been imported on this device. The sample report “Financial analysis · Sales (demo sample)” shows revenue of MX$721,800.00 between ${r.period_from} and ${r.period_to}.` },
+              { kind: 'estimate', text: 'In November, sample sales fell 13.4% compared with October; the month may be incomplete.' },
+              { kind: 'suggestion', text: 'In the full version, import your files and I will answer with your own numbers.' },
+            ]
+          : [
+              { kind: 'verified', text: `Demostración sin servidor: no hay datos importados en este dispositivo. El reporte de ejemplo «${r.title}» marca ingresos de $721,800.00 MXN entre ${r.period_from} y ${r.period_to}.` },
+              { kind: 'estimate', text: 'En noviembre las ventas del ejemplo bajaron 13.4 % frente a octubre; el mes podría estar incompleto.' },
+              { kind: 'suggestion', text: 'En la versión con servidor, importa tus archivos y te responderé con tus propias cifras.' },
+            ];
         const meta = { provider: 'mock', model: 'rules', simulated: true };
         return {
           question: { id: uid(), conversation_id: conv, role: 'user', content: q, parts: null, meta: {}, created_at: at, user: out.user.id },
@@ -290,7 +297,7 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case 'GET /legal':
         return { entity_name: null, address: null, contact_email: null, updated_on: null, complete: false };
       case 'GET /plans':
-        return [FREE_PLAN];
+        return [FREE_PLAN, { ...FREE_PLAN, code: 'premium', name: 'Premium', price_cents: 40000, max_active_agents: 10, max_monthly_executions: 2000, max_storage_mb: 1024, max_members: 10, usd_approx_cents: 2200 }];
       case 'GET /auth/me':
         return requireAuth(s);
       case 'POST /auth/login': {
@@ -340,6 +347,7 @@ export async function handleDemo(method: string, path: string, body: unknown): P
         const out = requireAuth(s);
         const user = s.users.find((u) => u.id === out.user.id)!;
         if (b.full_name) user.full_name = String(b.full_name).trim();
+        if (b.preferred_language === 'es' || b.preferred_language === 'en') user.preferred_language = b.preferred_language;
         return sessionOut(s);
       }
       case 'POST /auth/switch-organization': {

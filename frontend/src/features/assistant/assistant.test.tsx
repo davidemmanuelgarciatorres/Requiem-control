@@ -32,7 +32,7 @@ describe('AI assistant', () => {
     expect(within(part).getByText('Verificado')).toBeInTheDocument();
     expect(screen.getByText('Sugerencia')).toBeInTheDocument();
     const post = fetchMock.mock.calls.find(([u, i]) => u === '/api/assistant/messages' && i?.method === 'POST');
-    expect(JSON.parse(String(post?.[1]?.body))).toEqual({ question: '¿Cómo van mis ventas?' });
+    expect(JSON.parse(String(post?.[1]?.body))).toEqual({ question: '¿Cómo van mis ventas?', language: 'es' });
   });
 
   it('shows the hourly limit error and keeps the question', async () => {

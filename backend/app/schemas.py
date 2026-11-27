@@ -122,6 +122,8 @@ class PlanOut(BaseModel):
     max_storage_mb: int
     max_members: int
     features: dict[str, Any]
+    # Equivalente aproximado en dólares (solo informativo; el cobro es en la moneda del plan).
+    usd_approx_cents: int | None = None
 
 
 class SubscriptionOut(BaseModel):

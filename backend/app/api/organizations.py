@@ -17,6 +17,7 @@ from app.agents.runner import active_agent_ids, monthly_executions
 from app.api.auth import build_session_out
 from app.api.deps import AuthContext, client_ip, get_auth, require_permission
 from app.api.serializers import member_out, org_out
+from app.config import get_settings
 from app.db import get_db
 from app.errors import ApiError, conflict, forbidden, not_found
 from app.ingestion.service import storage_used_bytes
@@ -322,4 +323,11 @@ plans_router = APIRouter(prefix="/api/plans", tags=["plans"])
 @plans_router.get("", response_model=list[PlanOut])
 def list_plans(db: Session = Depends(get_db)) -> list[PlanOut]:
     rows = db.execute(select(Plan).where(Plan.is_public.is_(True)).order_by(Plan.price_cents)).scalars()
-    return [PlanOut.model_validate(p, from_attributes=True) for p in rows]
+    rate = get_settings().usd_mxn_rate
+    out = []
+    for p in rows:
+        plan = PlanOut.model_validate(p, from_attributes=True)
+        if rate and rate > 0 and p.currency == "MXN" and p.price_cents:
+            plan.usd_approx_cents = round(p.price_cents / rate / 100) * 100  # dólares enteros
+        out.append(plan)
+    return out

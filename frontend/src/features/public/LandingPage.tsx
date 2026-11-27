@@ -2,7 +2,7 @@ import { BarChart3, Boxes, CalendarClock, Check, Landmark, Mail, ShieldCheck, Sp
 import { Link } from 'react-router-dom';
 import { usePreferences } from '../../app/preferences';
 import type { Plan } from '../../lib/api';
-import { formatCurrency, formatNumber, interpolate } from '../../lib/format';
+import { formatCurrency, formatNumber, formatUsdApprox, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { PublicLayout } from './PublicLayout';
 
@@ -26,6 +26,7 @@ function PlanCard({ plan, featured }: { plan: Plan; featured: boolean }) {
         <span className="rc-tabular">{plan.price_cents ? formatCurrency(plan.price_cents / 100, lang, plan.currency) : l.freePrice}</span>
         {plan.price_cents > 0 && <span className="rc-plan__per">{l.perMonth}</span>}
       </p>
+      {plan.usd_approx_cents ? <p className="rc-plan__usd">{interpolate(l.usdNote, { usd: formatUsdApprox(plan.usd_approx_cents, lang) })}</p> : null}
       <ul className="rc-plan__list">
         <li><Check size={14} aria-hidden="true" />{interpolate(l.planMembers, { n: plan.max_members })}</li>
         <li><Check size={14} aria-hidden="true" />{interpolate(l.planAgents, { n: plan.max_active_agents })}</li>
