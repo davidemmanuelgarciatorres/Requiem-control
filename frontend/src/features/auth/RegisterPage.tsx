@@ -7,6 +7,7 @@ import { interpolate } from '../../lib/format';
 import { AuthLayout } from './AuthLayout';
 import { errorMessage, PASSWORD_MIN_LENGTH } from './errors';
 import { Field } from './Field';
+import { AcceptTerms } from './AcceptTerms';
 
 export function RegisterPage() {
   const { t, lang } = usePreferences();
@@ -54,6 +55,7 @@ export function RegisterPage() {
         <Field label={t.auth.organizationName} name="organization_name" autoComplete="organization" required maxLength={120} />
         {error && <p className="rc-form__error" role="alert">{error}</p>}
         <Button type="submit" variant="primary" size="lg" loading={busy}>{t.auth.submitRegister}</Button>
+        <AcceptTerms />
       </form>
     </AuthLayout>
   );

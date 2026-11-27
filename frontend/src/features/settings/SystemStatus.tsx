@@ -14,6 +14,7 @@ type SystemStatusInfo = {
   worker: 'inline' | 'worker';
   email?: { provider: 'console' | 'smtp' | 'none'; configured: boolean };
   security: { cookie_secure: boolean };
+  legal?: { missing: string[] };
 };
 
 /** Avisos técnicos para quien administra la cuenta (propietario/administrador). El usuario final no los ve. */
@@ -69,6 +70,15 @@ export function SystemStatus() {
                   {d.email.provider === 'smtp' ? (d.email.configured ? s.emailSmtp : s.emailMissing) : d.email.provider === 'console' && d.email.configured ? s.emailConsole : s.emailOff}
                 </Badge>
                 {!(d.email.provider === 'smtp' && d.email.configured) && <p className="rc-list__meta">{s.emailHint}</p>}
+              </dd>
+            </div>
+          )}
+          {d.legal && (
+            <div className="rc-status-list__row">
+              <dt>{s.legal}</dt>
+              <dd>
+                <Badge tone={d.legal.missing.length ? 'warning' : 'success'}>{d.legal.missing.length ? s.legalMissing : s.legalOk}</Badge>
+                {d.legal.missing.length > 0 && <p className="rc-list__meta">{s.legalHint} {s.missingVars}: <code>{d.legal.missing.join(', ')}</code></p>}
               </dd>
             </div>
           )}

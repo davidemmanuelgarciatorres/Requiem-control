@@ -10,6 +10,7 @@ import { interpolate } from '../../lib/format';
 import { AuthLayout } from './AuthLayout';
 import { errorMessage, PASSWORD_MIN_LENGTH } from './errors';
 import { Field } from './Field';
+import { AcceptTerms } from './AcceptTerms';
 
 function BackToLogin() {
   const { t } = usePreferences();
@@ -220,6 +221,7 @@ export function InvitePage() {
             hint={interpolate(t.auth.passwordHint, { n: PASSWORD_MIN_LENGTH })} />
           {error && <p className="rc-form__error" role="alert">{error}</p>}
           <Button type="submit" variant="primary" size="lg" loading={busy}>{r.inviteRegisterSubmit}</Button>
+          <AcceptTerms />
         </form>
       )}
     </AuthLayout>

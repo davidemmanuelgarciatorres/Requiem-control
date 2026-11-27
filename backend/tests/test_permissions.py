@@ -100,3 +100,24 @@ def test_system_status_is_only_for_admins(client, make_client):
     target = next(o for o in member.get("/api/organizations").json() if o["name"] == "Ferretería")
     member.send("POST", "/api/auth/switch-organization", json={"organization_id": target["id"]})
     assert member.get("/api/system/status").status_code == 403
+
+
+def test_legal_info_is_public_and_reports_missing_fields(client, make_client, monkeypatch):
+    from app.config import get_settings
+
+    anon = make_client()
+    info = anon.get("/api/legal").json()
+    assert info["complete"] is False and info["entity_name"] is None
+    client.register("owner@example.com")
+    assert "LEGAL_ENTITY_NAME" in client.get("/api/system/status").json()["legal"]["missing"]
+    s = get_settings()
+    for field, value in {
+        "legal_entity_name": "Mi Empresa S.A. de C.V.",
+        "legal_address": "Calle 1, CDMX",
+        "legal_contact_email": "privacidad@example.com",
+        "legal_updated_on": "2026-11-27",
+    }.items():
+        monkeypatch.setattr(s, field, value)
+    info = anon.get("/api/legal").json()
+    assert info["complete"] is True and info["entity_name"] == "Mi Empresa S.A. de C.V."
+    assert client.get("/api/system/status").json()["legal"]["missing"] == []

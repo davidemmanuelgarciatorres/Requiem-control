@@ -287,6 +287,8 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case 'GET /dashboard/summary':
         requirePerm(s, 'data.read');
         return { generated_at: now(), datasets: 0, storage_bytes: 0, active_agents: 0, pending_approvals: 0, financial: null, recent_executions: [], recommendations: [], reports: [] };
+      case 'GET /legal':
+        return { entity_name: null, address: null, contact_email: null, updated_on: null, complete: false };
       case 'GET /plans':
         return [FREE_PLAN];
       case 'GET /auth/me':

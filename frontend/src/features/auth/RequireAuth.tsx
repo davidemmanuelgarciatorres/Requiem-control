@@ -5,6 +5,7 @@ import { usePreferences } from '../../app/preferences';
 import { AmbientBackground } from '../../components/layout/AmbientBackground';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
+import { LandingPage } from '../public/LandingPage';
 
 /** Protege las rutas de la aplicación. La autorización real ocurre siempre en el servidor. */
 export function RequireAuth({ children }: { children: ReactNode }) {
@@ -34,6 +35,8 @@ export function RequireAuth({ children }: { children: ReactNode }) {
     );
   }
   if (state.status === 'anonymous') {
+    // Visitantes sin sesión en la raíz ven la página pública; el resto va a iniciar sesión.
+    if (location.pathname === '/') return <LandingPage />;
     return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
   }
   return <>{children}</>;

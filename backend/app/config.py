@@ -95,6 +95,12 @@ class Settings(BaseSettings):
     smtp_starttls: bool = True
     email_from: str = "REQUIEM CONTROL <no-reply@localhost>"
 
+    # Datos del responsable que aparecen en el aviso de privacidad y los términos (públicos).
+    legal_entity_name: str | None = None
+    legal_address: str | None = None
+    legal_contact_email: str | None = None
+    legal_updated_on: str | None = None  # AAAA-MM-DD de la última revisión de los textos
+
 
 def production_problems(s: "Settings") -> list[str]:
     """Configuraciones inseguras que impiden arrancar en producción (la app falla rápido y lo dice)."""

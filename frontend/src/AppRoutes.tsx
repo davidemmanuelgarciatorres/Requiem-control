@@ -3,6 +3,7 @@ import { NAV_ITEMS } from './app/navigation';
 import { AppShell } from './components/layout/AppShell';
 import { ForgotPasswordPage, InvitePage, ResetPasswordPage, VerifyEmailPage } from './features/auth/AccountFlows';
 import { LoginPage } from './features/auth/LoginPage';
+import { LegalPage } from './features/public/LegalPage';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { RedirectIfAuthenticated, RequireAuth } from './features/auth/RequireAuth';
 import { AgentsPage } from './features/agents/AgentsPage';
@@ -32,6 +33,8 @@ export function AppRoutes() {
       <Route path="reset-password" element={<ResetPasswordPage />} />
       <Route path="verify-email" element={<VerifyEmailPage />} />
       <Route path="invite" element={<InvitePage />} />
+      <Route path="privacy" element={<LegalPage kind="privacy" />} />
+      <Route path="terms" element={<LegalPage kind="terms" />} />
       <Route element={<RequireAuth><AppShell /></RequireAuth>}>
         <Route index element={<DashboardPage />} />
         <Route path="agents" element={<AgentsPage />} />

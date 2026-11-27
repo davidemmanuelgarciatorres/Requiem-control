@@ -7,6 +7,7 @@ import pytest
 PUBLIC = {
     ("GET", "/api/health"),
     ("GET", "/api/plans"),
+    ("GET", "/api/legal"),
     ("POST", "/api/auth/register"),
     ("POST", "/api/auth/login"),
     ("POST", "/api/billing/webhook/stripe"),
