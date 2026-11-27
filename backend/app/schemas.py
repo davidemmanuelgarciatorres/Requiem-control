@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 Language = Literal["es", "en"]
-RoleCode = Literal["owner", "admin", "member", "viewer"]
+RoleCode = Literal["owner", "admin", "manager", "member", "viewer"]
 
 
 class Strict(BaseModel):
@@ -131,6 +131,8 @@ class SubscriptionOut(BaseModel):
     plan: PlanOut
     usage: dict[str, float]
     billing_enabled: bool
+    # Uso mensual por herramienta: {"assistant": {"used": 3, "limit": 50}, ...}
+    tools: dict[str, dict[str, int]] = {}
 
 
 class AuditLogOut(BaseModel):

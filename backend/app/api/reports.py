@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import audit, reports
+from app import audit, entitlements, reports
 from app.agents.runner import active_agent_ids
 from app.api.deps import AuthContext, require_permission
 from app.db import get_db
@@ -92,6 +92,8 @@ def export_report(
     report_id: UUID, ctx: AuthContext = Depends(require_permission("data.read")), db: Session = Depends(get_db)
 ) -> Response:
     r = reports.get(db, ctx.require_org().id, report_id)
+    entitlements.ensure_tool_available(db, r.organization_id, "exports")
+    entitlements.record_use(db, r.organization_id, "exports")
     audit.record(
         db,
         "report.export",

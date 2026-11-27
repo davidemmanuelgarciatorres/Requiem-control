@@ -12,6 +12,7 @@ import { DemoDashboardView } from './DemoDashboardView';
 import { EmptyDashboard } from './EmptyDashboard';
 import { useDashboardData, type DashboardLoader } from './useDashboardData';
 
+import { PlanCard } from '../settings/PlanWidgets';
 export function DashboardPage({ loader }: { loader?: DashboardLoader }) {
   const { t, lang } = usePreferences();
   const [params, setParams] = useSearchParams();
@@ -27,6 +28,7 @@ export function DashboardPage({ loader }: { loader?: DashboardLoader }) {
   return (
     <>
       <DashboardHero demo={demo} onToggleDemo={toggleDemo} hasData={hasLive} />
+      <PlanCard />
 
       {state.status === 'empty' && (hasLive ? <LiveDashboard data={live.data!} /> : <EmptyDashboard />)}
       {state.status === 'loading' && <DashboardSkeleton />}

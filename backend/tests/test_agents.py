@@ -229,7 +229,7 @@ def test_provider_failure_still_delivers_analysis(owner, monkeypatch):
         def summarize(self, **_):
             raise providers.ProviderError("ai.unreachable", "down")
 
-    monkeypatch.setattr("app.agents.tools.get_provider", lambda: Broken())
+    monkeypatch.setattr("app.agents.tools.get_provider", lambda *_a, **_k: Broken())
     ds = import_dataset(owner)
     activate(owner, "financial-analyst")
     e = owner.get(f"/api/agents/executions/{run(owner, 'financial-analyst', ds['id']).json()['id']}").json()

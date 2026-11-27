@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
-from app import assistant, audit
+from app import assistant, audit, entitlements
 from app.api.deps import AuthContext, require_permission
 from app.db import get_db
 from app.errors import ApiError
@@ -45,6 +45,7 @@ def ask(
     if not question:
         raise ApiError(422, "request.invalid", "Escribe una pregunta.")
     org = ctx.require_org()
+    ent = entitlements.ensure_tool_available(db, org.id, "assistant")
     q, a = assistant.ask(
         db,
         org_id=org.id,
@@ -52,7 +53,9 @@ def ask(
         conversation_id=body.conversation_id,
         question=question,
         language=body.language or ctx.user.preferred_language,
+        tier=ent.ai_tier,
     )
+    entitlements.record_use(db, org.id, "assistant")
     audit.record(
         db,
         "assistant.ask",

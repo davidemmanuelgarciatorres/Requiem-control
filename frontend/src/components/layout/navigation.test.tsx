@@ -70,7 +70,7 @@ describe('navigation & shell', () => {
     await user.click(screen.getByRole('button', { name: 'Perfil' }));
     const panel = screen.getByRole('dialog', { name: 'Perfil' });
     expect(panel).toHaveTextContent('ana@example.com');
-    expect(panel).toHaveTextContent('Propietario · Ferretería Ana');
+    expect(panel).toHaveTextContent('Líder · Ferretería Ana');
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog', { name: 'Perfil' })).not.toBeInTheDocument();
   });

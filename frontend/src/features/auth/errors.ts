@@ -20,6 +20,11 @@ export function errorMessage(t: Dictionary, e: unknown): string {
     case 'auth.wrong_password': return t.recovery.errors.wrongPassword;
     case 'invitation.invalid': return t.recovery.errors.invitationInvalid;
     case 'email.not_configured': return t.recovery.errors.emailNotConfigured;
+    case 'plan.limit_reached': {
+      const tool = (t.plans.tools as Record<string, string>)[String(e.extra.tool)];
+      return tool ? interpolate(t.plans.limitReached, { tool, limit: Number(e.extra.limit) })
+        : interpolate(t.plans.limitReachedShort, { limit: Number(e.extra.limit) });
+    }
     default: return e.message || t.auth.errors.generic;
   }
 }

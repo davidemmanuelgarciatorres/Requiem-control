@@ -118,3 +118,21 @@ def client(app) -> ApiClient:
 @pytest.fixture
 def make_client(app):
     return lambda: ApiClient(app)
+
+
+@pytest.fixture
+def premium(owner_engine):
+    """Pasa a Premium la organización activa del cliente (sin Stripe: directo en la BD de pruebas)."""
+
+    def upgrade(c: "ApiClient") -> None:
+        org_id = c.get("/api/auth/me").json()["active_organization"]["id"]
+        with owner_engine.begin() as conn:
+            conn.execute(
+                text(
+                    "UPDATE subscriptions SET plan_id = (SELECT id FROM plans WHERE code = 'premium'), "
+                    "status = 'active' WHERE organization_id = :o"
+                ),
+                {"o": org_id},
+            )
+
+    return upgrade

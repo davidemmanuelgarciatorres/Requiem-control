@@ -28,6 +28,7 @@ from app.api import (
 )
 from app.config import get_settings, production_problems
 from app.db import get_engine
+from app.entitlements import EntitlementError
 from app.errors import ApiError
 from app.schemas import HealthOut
 
@@ -115,6 +116,11 @@ def create_app() -> FastAPI:
     @app.exception_handler(StarletteHTTPException)
     async def http_error(_: Request, exc: StarletteHTTPException) -> JSONResponse:
         return _error(exc.status_code, "http.error", str(exc.detail))
+
+    @app.exception_handler(EntitlementError)
+    async def entitlement_error(request: Request, exc: EntitlementError) -> JSONResponse:
+        # Límite del plan alcanzado: 402 con la herramienta y el límite para mostrar «pasa a Premium».
+        return _error(402, exc.code, "Llegaste al límite de tu plan.", {"limit": exc.limit, "tool": exc.tool})
 
     @app.exception_handler(DataError)
     async def data_error(request: Request, exc: DataError) -> JSONResponse:

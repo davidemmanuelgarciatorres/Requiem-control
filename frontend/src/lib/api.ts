@@ -5,7 +5,9 @@
  * - Toda petición que cambia estado envía el token CSRF ligado a la sesión.
  */
 
-export type RoleCode = 'owner' | 'admin' | 'member' | 'viewer';
+export type RoleCode = 'owner' | 'admin' | 'manager' | 'member' | 'viewer';
+/** Jerarquía de rangos (igual que en el servidor). */
+export const ROLE_RANK: Record<RoleCode, number> = { owner: 100, admin: 80, manager: 65, member: 50, viewer: 10 };
 
 export type Organization = { id: string; name: string; slug: string; country: string; currency: string; created_at: string };
 export type User = { id: string; email: string; full_name: string; preferred_language: 'es' | 'en'; email_verified?: boolean };
@@ -23,8 +25,13 @@ export type Plan = {
   max_active_agents: number; max_monthly_executions: number; max_storage_mb: number; max_members: number;
   /** Equivalente aproximado en dólares (informativo; el cobro es en la moneda del plan). */
   usd_approx_cents?: number | null;
+  features?: Record<string, unknown>;
 };
-export type SubscriptionInfo = { status: string; plan: Plan; usage: Record<string, number>; billing_enabled: boolean };
+export type ToolUsage = { used: number; limit: number };
+export type SubscriptionInfo = {
+  status: string; plan: Plan; usage: Record<string, number>; billing_enabled: boolean;
+  tools?: Partial<Record<'assistant' | 'imports' | 'exports', ToolUsage>>;
+};
 export type AuditEntry = { id: number; action: string; user_id: string | null; created_at: string; details: Record<string, unknown> };
 export type ColumnType = 'integer' | 'number' | 'date' | 'boolean' | 'text' | 'empty';
 export type ColumnRole = 'none' | 'date' | 'amount' | 'category' | 'customer' | 'product' | 'quantity' | 'identifier';
@@ -247,7 +254,7 @@ export type FinanceOverview = {
 export type AssistantPart = { kind: 'verified' | 'estimate' | 'suggestion'; text: string };
 export type AssistantMessage = {
   id: string; conversation_id: string; role: 'user' | 'assistant'; content: string; parts: AssistantPart[] | null;
-  meta: { provider?: string; model?: string; simulated?: boolean; provider_error?: string; cost_usd?: number };
+  meta: { provider?: string; model?: string; simulated?: boolean; provider_error?: string; cost_usd?: number; tier?: 'basic' | 'advanced' };
   created_at: string;
 };
 export type AssistantConversation = { id: string; title: string; updated_at: string; messages: number };

@@ -56,6 +56,7 @@ class ProviderStatus:
 class AIProvider(Protocol):
     name: str
     model: str
+    tier: str
     simulated: bool
 
     def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult: ...
@@ -74,6 +75,23 @@ SYSTEM_PROMPT = (
 )
 
 
+# Nivel básico (plan gratuito): resumen más corto y con menos contexto. Se indica en la interfaz.
+BASIC_SYSTEM_PROMPT = SYSTEM_PROMPT.replace("(3 to 5 sentences)", "(2 or 3 short sentences, no recommendations)")
+BASIC_MAX_HIGHLIGHTS = 3
+MAX_TOKENS = {"basic": 1024, "advanced": 16000}
+GEMINI_MAX_TOKENS = {"basic": 512, "advanced": 4096}
+
+
+def basic_facts(facts: dict[str, Any]) -> dict[str, Any]:
+    """Contexto reducido para el nivel básico: métricas y los primeros hallazgos."""
+    out: dict[str, Any] = {}
+    if "metrics" in facts:
+        out["metrics"] = facts["metrics"]
+    if "highlights" in facts:
+        out["highlights"] = list(facts["highlights"])[:BASIC_MAX_HIGHLIGHTS]
+    return out or facts
+
+
 def _summary_prompt(agent: str, language: str, facts: dict[str, Any]) -> str:
     lang = "Spanish (Mexico)" if language != "en" else "English"
     return (
@@ -89,9 +107,13 @@ class MockProvider:
     model = "template-v1"
     simulated = True
 
+    def __init__(self, tier: str = "advanced") -> None:
+        self.tier = tier
+
     def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult:
         es = language != "en"
-        highlights: list[str] = [str(h) for h in facts.get("highlights", [])][:4]
+        n = 2 if self.tier == "basic" else 4
+        highlights: list[str] = [str(h) for h in facts.get("highlights", [])][:n]
         head = "Resumen automático." if es else "Automatic summary."
         body = " ".join(highlights) if highlights else ("Sin hallazgos destacados." if es else "No notable findings.")
         return ProviderResult(text=f"{head} {body}", provider=self.name, model=self.model, simulated=True)
@@ -131,9 +153,10 @@ class ClaudeProvider:
     name = "anthropic"
     simulated = False
 
-    def __init__(self, client: Any = None) -> None:
+    def __init__(self, client: Any = None, tier: str = "advanced") -> None:
         s = get_settings()
-        self.model = s.anthropic_model
+        self.tier = tier
+        self.model = s.anthropic_model_basic if tier == "basic" else s.anthropic_model
         self._effort = s.anthropic_effort
         if client is None:
             import anthropic
@@ -142,23 +165,28 @@ class ClaudeProvider:
         self._client = client
 
     def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult:
+        basic = self.tier == "basic"
         return self.complete(
-            system=SYSTEM_PROMPT, messages=[{"role": "user", "content": _summary_prompt(agent, language, facts)}]
+            system=BASIC_SYSTEM_PROMPT if basic else SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": _summary_prompt(agent, language, basic_facts(facts) if basic else facts)}
+            ],
         )
 
     def complete(self, *, system: str, messages: list[dict[str, str]]) -> ProviderResult:
         import anthropic
 
         extra: dict[str, Any] = {}
+        if self.tier != "basic":
+            extra["output_config"] = {"effort": self._effort}
         if self.model in SERVER_FALLBACK_MODELS:
             # Si el modelo declina por política, la API reintenta con un modelo de respaldo.
-            extra = {"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"}
+            extra.update({"betas": ["server-side-fallback-2026-07-01"], "fallbacks": "default"})
         try:
             response = self._client.beta.messages.create(
                 model=self.model,
-                max_tokens=16000,
+                max_tokens=MAX_TOKENS.get(self.tier, 16000),
                 system=system,
-                output_config={"effort": self._effort},
                 messages=messages,
                 **extra,
             )
@@ -197,9 +225,10 @@ class GeminiProvider:
     name = "gemini"
     simulated = False
 
-    def __init__(self, client: Any = None) -> None:
+    def __init__(self, client: Any = None, tier: str = "advanced") -> None:
         s = get_settings()
-        self.model = s.gemini_model
+        self.tier = tier
+        self.model = s.gemini_model_basic if tier == "basic" else s.gemini_model
         if client is None:
             import httpx2
 
@@ -207,8 +236,12 @@ class GeminiProvider:
         self._client = client
 
     def summarize(self, *, agent: str, language: str, facts: dict[str, Any]) -> ProviderResult:
+        basic = self.tier == "basic"
         return self.complete(
-            system=SYSTEM_PROMPT, messages=[{"role": "user", "content": _summary_prompt(agent, language, facts)}]
+            system=BASIC_SYSTEM_PROMPT if basic else SYSTEM_PROMPT,
+            messages=[
+                {"role": "user", "content": _summary_prompt(agent, language, basic_facts(facts) if basic else facts)}
+            ],
         )
 
     def complete(self, *, system: str, messages: list[dict[str, str]]) -> ProviderResult:
@@ -222,7 +255,7 @@ class GeminiProvider:
                 {"role": "model" if m["role"] == "assistant" else "user", "parts": [{"text": m["content"]}]}
                 for m in messages
             ],
-            "generationConfig": {"maxOutputTokens": 4096, "temperature": 0.3},
+            "generationConfig": {"maxOutputTokens": GEMINI_MAX_TOKENS.get(self.tier, 4096), "temperature": 0.3},
         }
         url = f"{s.gemini_api_base}/models/{self.model}:generateContent"
         data: dict[str, Any] = {}
@@ -313,10 +346,11 @@ def provider_status() -> ProviderStatus:
     return ProviderStatus("mock", MockProvider.model, simulated=True, configured=False)
 
 
-def get_provider() -> AIProvider:
+def get_provider(tier: str = "advanced") -> AIProvider:
+    """`tier` sale del plan de la organización: «basic» (gratuito) o «advanced» (Premium)."""
     status = provider_status()
     if status.provider == "anthropic":
-        return ClaudeProvider()
+        return ClaudeProvider(tier=tier)
     if status.provider == "gemini":
-        return GeminiProvider()
-    return MockProvider()
+        return GeminiProvider(tier=tier)
+    return MockProvider(tier=tier)

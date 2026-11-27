@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { MessageSquarePlus, Send, Trash2 } from 'lucide-react';
 import { useAuth } from '../../app/auth';
@@ -31,6 +32,11 @@ function Answer({ m }: { m: AssistantMessage }) {
         {m.meta.simulated ? a.simulatedNote : a.aiNote}
         {m.meta.provider_error ? ` · ${a.fallbackNote}` : ''}
       </p>
+      {m.meta.tier === 'basic' && (
+        <p className="rc-list__meta rc-tier-note">
+          {t.plans.basicAnswerNote} <Link className="rc-link" to="/settings#plan">{t.plans.seePlans}</Link>
+        </p>
+      )}
     </div>
   );
 }

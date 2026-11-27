@@ -10,7 +10,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import audit, automations
+from app import audit, automations, entitlements
 from app.agents.runner import AGENT_IMPLEMENTATIONS, DATASET_AGENTS
 from app.api.deps import AuthContext, require_permission
 from app.db import get_db
@@ -55,6 +55,13 @@ def _out(a: Automation) -> dict[str, Any]:
             "created_at",
         )
     }
+
+
+def _ensure_active_allowed(db: Session, org_id: UUID, exclude: UUID | None = None) -> None:
+    q = select(func.count()).select_from(Automation).where(Automation.organization_id == org_id, Automation.active)
+    if exclude is not None:
+        q = q.where(Automation.id != exclude)
+    entitlements.ensure_can_add_automation(entitlements.for_organization(db, org_id), int(db.execute(q).scalar_one()))
 
 
 def _validate(db: Session, org_id: UUID, body: AutomationIn) -> None:
@@ -103,6 +110,8 @@ def create(
         raise ApiError(
             409, "automation.limit", "Alcanzaste el máximo de automatizaciones.", {"limit": automations.MAX_PER_ORG}
         )
+    if body.active:
+        _ensure_active_allowed(db, org.id)
     a = Automation(organization_id=org.id, created_by=ctx.user.id, **body.model_dump())
     a.next_run_at = automations.next_run(a, datetime.now(UTC)) if a.active else None
     db.add(a)
@@ -133,6 +142,8 @@ def update(
     if a is None:
         raise not_found("automation")
     _validate(db, org.id, body)
+    if body.active and not a.active:
+        _ensure_active_allowed(db, org.id, exclude=a.id)
     for k, v in body.model_dump().items():
         setattr(a, k, v)
     a.next_run_at = automations.next_run(a, datetime.now(UTC)) if a.active else None

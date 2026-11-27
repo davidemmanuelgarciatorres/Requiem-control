@@ -14,6 +14,7 @@ import pandas as pd
 from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 
+from app import entitlements
 from app.agents.providers import ProviderError, ProviderResult, get_provider
 from app.models import AgentDefinition, AgentExecution, Approval, Dataset, DatasetRow
 
@@ -82,8 +83,12 @@ def dataset_quality(ctx: ToolContext, dataset_id: str) -> dict[str, Any]:
     return _load_dataset(ctx, dataset_id).report
 
 
+def ai_tier(ctx: ToolContext) -> str:
+    return entitlements.for_organization(ctx.db, ctx.organization_id).ai_tier
+
+
 def summarize(ctx: ToolContext, facts: dict[str, Any]) -> ProviderResult:
-    return get_provider().summarize(agent=ctx.definition.id, language=ctx.language, facts=facts)
+    return get_provider(ai_tier(ctx)).summarize(agent=ctx.definition.id, language=ctx.language, facts=facts)
 
 
 def count_duplicate_rows(db: Session, dataset_id: uuid.UUID) -> int:
@@ -178,7 +183,7 @@ DRAFT_SYSTEM = (
 
 def draft_reply(ctx: ToolContext, category: str, sender: str, subject: str, snippet: str) -> str:
     lang = "en" if ctx.language == "en" else "es"
-    provider = get_provider()
+    provider = get_provider(ai_tier(ctx))
     if not provider.simulated:
         try:
             prompt = (

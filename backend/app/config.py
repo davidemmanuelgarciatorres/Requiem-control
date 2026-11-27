@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # AI_PROVIDER=anthropic y una credencial del SDK (ANTHROPIC_API_KEY o `ant auth login`).
     ai_provider: Literal["mock", "anthropic", "gemini"] = "mock"
     anthropic_model: str = "claude-opus-5-5"
+    # Modelo del nivel «IA básica» (plan gratuito): más ligero y económico.
+    anthropic_model_basic: str = "claude-haiku-5-5"
     anthropic_effort: Literal["low", "medium", "high"] = "medium"
     ai_timeout_seconds: float = Field(default=90.0, gt=0)
     ai_max_retries: int = Field(default=2, ge=0, le=5)
@@ -54,6 +56,7 @@ class Settings(BaseSettings):
     # Gemini (Google AI Studio). La clave va SOLO en el servidor: GEMINI_API_KEY (nunca en Git ni en el frontend).
     gemini_api_key: SecretStr | None = None
     gemini_model: str = "gemini-2.5-flash"
+    gemini_model_basic: str = "gemini-2.5-flash-lite"
     gemini_api_base: str = "https://generativelanguage.googleapis.com/v1beta"
     # Capa gratuita: costo 0. Si se usa la capa de pago, configura los precios del modelo elegido.
     gemini_input_usd_per_mtok: float = 0.0

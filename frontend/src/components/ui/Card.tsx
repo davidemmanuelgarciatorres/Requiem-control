@@ -12,6 +12,7 @@ type CardProps = {
   className?: string;
   children?: ReactNode;
   'aria-label'?: string;
+  id?: string;
 };
 
 export function Card({ title, subtitle, actions, demo, variant = 'default', as: Tag = 'section', className = '', children, ...rest }: CardProps) {

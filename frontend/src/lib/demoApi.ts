@@ -29,11 +29,13 @@ export const DEMO_PASSWORD = 'requiem-demo';
 const PERMS: Record<RoleCode, string[]> = {
   owner: ['org.read', 'org.update', 'org.delete', 'org.export', 'members.read', 'members.manage', 'billing.read', 'billing.manage', 'audit.read', 'data.read', 'data.write', 'agents.run', 'agents.manage', 'approvals.decide'],
   admin: ['org.read', 'org.update', 'org.export', 'members.read', 'members.manage', 'billing.read', 'audit.read', 'data.read', 'data.write', 'agents.run', 'agents.manage', 'approvals.decide'],
+  manager: ['org.read', 'members.read', 'billing.read', 'audit.read', 'data.read', 'data.write', 'agents.run', 'agents.manage', 'approvals.decide'],
   member: ['org.read', 'members.read', 'billing.read', 'data.read', 'data.write', 'agents.run'],
   viewer: ['org.read', 'members.read', 'data.read'],
 };
-const RANK: Record<RoleCode, number> = { owner: 100, admin: 80, member: 50, viewer: 10 };
-const FREE_PLAN = { code: 'free', name: 'Gratis', price_cents: 0, currency: 'MXN', interval: 'month', max_active_agents: 2, max_monthly_executions: 100, max_storage_mb: 50, max_members: 3 };
+const RANK: Record<RoleCode, number> = { owner: 100, admin: 80, manager: 65, member: 50, viewer: 10 };
+const FREE_PLAN = { code: 'free', name: 'Gratis', price_cents: 0, currency: 'MXN', interval: 'month', max_active_agents: 2, max_monthly_executions: 100, max_storage_mb: 50, max_members: 3,
+  features: { ai_tier: 'basic', max_assistant_questions: 50, max_imports: 20, max_exports: 30, max_automations: 2 } };
 
 
 /** Reporte de EJEMPLO para la demostración (cifras ficticias, etiquetado como simulado). */
@@ -285,7 +287,7 @@ export async function handleDemo(method: string, path: string, body: unknown): P
               { kind: 'estimate', text: 'En noviembre las ventas del ejemplo bajaron 13.4 % frente a octubre; el mes podría estar incompleto.' },
               { kind: 'suggestion', text: 'En la versión con servidor, importa tus archivos y te responderé con tus propias cifras.' },
             ];
-        const meta = { provider: 'mock', model: 'rules', simulated: true };
+        const meta = { provider: 'mock', model: 'rules', simulated: true, tier: 'basic' as const };
         return {
           question: { id: uid(), conversation_id: conv, role: 'user', content: q, parts: null, meta: {}, created_at: at, user: out.user.id },
           answer: { id: uid(), conversation_id: conv, role: 'assistant', content: parts.map((p) => p.text).join('\n\n'), parts, meta, created_at: at },
@@ -297,7 +299,8 @@ export async function handleDemo(method: string, path: string, body: unknown): P
       case 'GET /legal':
         return { entity_name: null, address: null, contact_email: null, updated_on: null, complete: false };
       case 'GET /plans':
-        return [FREE_PLAN, { ...FREE_PLAN, code: 'premium', name: 'Premium', price_cents: 40000, max_active_agents: 10, max_monthly_executions: 2000, max_storage_mb: 1024, max_members: 10, usd_approx_cents: 2200 }];
+        return [FREE_PLAN, { ...FREE_PLAN, code: 'premium', name: 'Premium', price_cents: 40000, max_active_agents: 10, max_monthly_executions: 2000, max_storage_mb: 1024, max_members: 10, usd_approx_cents: 2200,
+          features: { ai_tier: 'advanced', max_assistant_questions: 1500, max_imports: 500, max_exports: 1000, max_automations: 25 } }];
       case 'GET /auth/me':
         return requireAuth(s);
       case 'POST /auth/login': {
@@ -412,6 +415,7 @@ export async function handleDemo(method: string, path: string, body: unknown): P
           plan: FREE_PLAN,
           usage: { members: s.members.filter((m) => m.organization_id === org.id).length, active_agents: 0, monthly_executions: 0, storage_mb: 0 },
           billing_enabled: false,
+          tools: { assistant: { used: 0, limit: 50 }, imports: { used: 0, limit: 20 }, exports: { used: 0, limit: 30 } },
         };
         return info;
       }

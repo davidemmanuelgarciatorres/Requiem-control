@@ -54,6 +54,12 @@ El precio Premium se muestra también como **referencia aproximada en dólares**
 vacío = no mostrar). Es solo informativo: el cobro se hace en MXN. Si quieres cobrar en dólares a clientes de fuera,
 Stripe permite agregar a tu precio una opción en USD (`currency_options`).
 
+**Niveles de IA y límites.** El plan Gratis usa la «IA básica» (`ANTHROPIC_MODEL_BASIC`, por omisión
+`claude-haiku-5-5`, o `GEMINI_MODEL_BASIC`, por omisión `gemini-2.5-flash-lite`) y Premium la avanzada
+(`ANTHROPIC_MODEL` / `GEMINI_MODEL`). Los límites mensuales por herramienta están en la columna `features` de la
+tabla `plans` (`max_assistant_questions`, `max_imports`, `max_exports`, `max_automations`, `ai_tier`): se cambian
+con un `UPDATE` sin tocar código.
+
 ## 5. Google en producción
 Agrega en tu cliente OAuth el origen `https://tu-dominio` y la redirección
 `https://tu-dominio/api/integrations/google/callback`. Para ofrecer Gmail a clientes externos, Google exige verificar la

@@ -133,9 +133,12 @@ def _member_or_404(db: Session, org_id: UUID, member_id: UUID) -> OrganizationMe
 
 
 def _assert_can_manage(ctx: AuthContext, target_rank: int) -> None:
+    """El Líder gestiona a todos; los demás solo a rangos estrictamente inferiores al suyo
+    (un Colíder no puede ascender, degradar ni quitar a otro Colíder)."""
     assert ctx.membership is not None
-    if target_rank > ctx.membership.role.rank:
-        raise forbidden("members.rank", "No puedes gestionar a alguien con un rol superior al tuyo.")
+    mine = ctx.membership.role
+    if mine.code != "owner" and target_rank >= mine.rank:
+        raise forbidden("members.rank", "Solo puedes gestionar rangos inferiores al tuyo.")
 
 
 @router.get("/current/members", response_model=list[MemberOut])
@@ -275,6 +278,7 @@ def subscription(
             "datasets": count_datasets(db, org.id),
         },
         billing_enabled=not billing.missing_configuration(),
+        tools=entitlements.usage_summary(db, org.id),
     )
 
 

@@ -15,8 +15,9 @@ def ask(client, q, conv=None):
     )
 
 
-def test_without_data_it_says_so_and_suggests_importing(client):
+def test_without_data_it_says_so_and_suggests_importing(client, premium):
     client.register("owner@example.com")
+    premium(client)
     r = ask(client, "¿Cómo van mis ventas?")
     assert r.status_code == 201
     a = r.json()["answer"]
@@ -25,8 +26,9 @@ def test_without_data_it_says_so_and_suggests_importing(client):
     assert kinds == ["verified", "suggestion"] and "no tiene datos" in a["parts"][0]["text"]
 
 
-def test_answers_from_real_figures_with_labels_and_history(client):
+def test_answers_from_real_figures_with_labels_and_history(client, premium):
     client.register("owner@example.com")
+    premium(client)
     import_dataset(client, content=CSV, roles={"Concepto": "category"})
     r = ask(client, "¿Cuánto vendí y cuánto gasté?").json()
     texts = " ".join(p["text"] for p in r["answer"]["parts"])
@@ -43,8 +45,9 @@ def test_answers_from_real_figures_with_labels_and_history(client):
     assert "data-analyst" in agents[0]["text"] and "aprueb" in agents[1]["text"]
 
 
-def test_real_provider_gets_aggregates_only_and_tags_are_parsed(client, monkeypatch):
+def test_real_provider_gets_aggregates_only_and_tags_are_parsed(client, monkeypatch, premium):
     client.register("owner@example.com")
+    premium(client)
     import_dataset(client, content=CSV, roles={"Concepto": "category"})
     seen = {}
 
@@ -63,7 +66,7 @@ def test_real_provider_gets_aggregates_only_and_tags_are_parsed(client, monkeypa
                 cost_usd=0.0001,
             )
 
-    monkeypatch.setattr(assistant, "get_provider", lambda: Fake())
+    monkeypatch.setattr(assistant, "get_provider", lambda *_a, **_k: Fake())
     a = ask(client, "Resume mis finanzas").json()["answer"]
     assert [p["kind"] for p in a["parts"]] == ["verified", "estimate", "suggestion", "estimate"]
     assert a["meta"]["simulated"] is False and a["meta"]["cost_usd"] == 0.0001
@@ -81,7 +84,7 @@ def test_provider_failure_falls_back_to_rules(client, monkeypatch):
         def complete(self, **_):
             raise providers.ProviderError("ai.rate_limited", "x")
 
-    monkeypatch.setattr(assistant, "get_provider", lambda: Broken())
+    monkeypatch.setattr(assistant, "get_provider", lambda *_a, **_k: Broken())
     a = ask(client, "hola").json()["answer"]
     assert a["meta"]["provider_error"] == "ai.rate_limited" and a["meta"]["simulated"] is True and a["parts"]
 

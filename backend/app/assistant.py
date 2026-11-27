@@ -428,6 +428,24 @@ def parse_tagged(text: str) -> list[dict[str, str]]:
     return parts
 
 
+BASIC_MAX_PARTS = 2
+
+
+def _words(text: str) -> set[str]:
+    return {w for w in re.findall(r"\w+", text.lower()) if len(w) > 3}
+
+
+def basic_parts(parts: list[dict[str, str]], question: str = "") -> list[dict[str, str]]:
+    """Nivel básico: solo las partes más relacionadas con la pregunta (máximo 2), sin análisis extra.
+    Si la única acción posible es una sugerencia (p. ej. «importa datos»), se conserva."""
+    core = [(i, p) for i, p in enumerate(parts) if p.get("kind") != "suggestion"]
+    if len(core) <= 1:
+        return parts[:BASIC_MAX_PARTS]
+    q = _words(question)
+    best = sorted(core, key=lambda ip: (-len(q & _words(ip[1].get("text", ""))), ip[0]))[:BASIC_MAX_PARTS]
+    return [p for _, p in sorted(best, key=lambda ip: ip[0])]
+
+
 # --- Conversación ------------------------------------------------------------------------------
 def ask(
     db: Session,
@@ -437,7 +455,9 @@ def ask(
     conversation_id: uuid.UUID | None,
     question: str,
     language: str,
+    tier: str = "advanced",
 ) -> tuple[AssistantMessage, AssistantMessage]:
+    """`tier` «basic» (plan gratuito): sin memoria de la conversación, menos contexto y respuestas más cortas."""
     since = datetime.now(UTC) - timedelta(hours=1)
     recent = int(
         db.execute(
@@ -488,8 +508,10 @@ def ask(
     db.flush()
 
     ctx = build_context(db, org_id)
-    provider = get_provider()
+    basic = tier == "basic"
+    provider = get_provider(tier)
     meta: dict[str, Any] = {
+        "tier": "basic" if basic else "advanced",
         "intents": detect_intents(question),
         "provider": provider.name,
         "model": provider.model,
@@ -500,7 +522,7 @@ def ask(
         parts = rule_based_answer(question, ctx, language)
     else:
         lang = "Spanish (Mexico)" if language != "en" else "English"
-        messages = [{"role": m.role, "content": m.content} for m in history[-HISTORY:]]
+        messages = [] if basic else [{"role": m.role, "content": m.content} for m in history[-HISTORY:]]
         messages.append(
             {
                 "role": "user",
@@ -526,6 +548,8 @@ def ask(
             # Si el proveedor falla, se responde con el motor determinista y se dice por qué.
             parts = rule_based_answer(question, ctx, language)
             meta.update({"provider_error": e.code, "simulated": True})
+    if basic:
+        parts = basic_parts(parts, question)
     meta["parts"] = parts
     text = "\n\n".join(p["text"] for p in parts)[:8000] or "—"
     a = AssistantMessage(

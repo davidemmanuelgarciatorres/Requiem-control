@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, Request, Response, Up
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app import audit
+from app import audit, entitlements
 from app.api.deps import AuthContext, client_ip, require_permission
 from app.config import get_settings
 from app.db import get_db
@@ -118,6 +118,7 @@ def confirm(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     org = ctx.require_org()
+    entitlements.ensure_tool_available(db, org.id, "imports")
     up = service.get_upload(db, org.id, upload_id)
     ds = service.confirm(
         db,
@@ -127,6 +128,7 @@ def confirm(
         user_id=ctx.user.id,
         ip=client_ip(request),
     )
+    entitlements.record_use(db, org.id, "imports")
     return {**service.dataset_summary(ds, up.original_filename), "columns": ds.columns, "report": ds.report}
 
 

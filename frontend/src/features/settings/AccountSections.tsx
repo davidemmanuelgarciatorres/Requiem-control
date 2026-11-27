@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Download, Trash2, UserPlus } from 'lucide-react';
+import { Check, Download, Trash2, UserPlus } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../app/auth';
 import { usePreferences } from '../../app/preferences';
@@ -7,14 +7,45 @@ import { Badge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { ErrorState, Skeleton } from '../../components/ui/States';
-import { api, ApiError, type AuditEntry, type Member, type Plan, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
+import { api, ApiError, ROLE_RANK, type AuditEntry, type Member, type Plan, type RoleCode, type SessionInfo, type SubscriptionInfo } from '../../lib/api';
 import { IS_DEMO } from '../../lib/env';
 import { formatCurrency, formatDate, formatNumber, formatUsdApprox, interpolate } from '../../lib/format';
 import { useApiResource } from '../../lib/useApi';
 import { errorMessage, PASSWORD_MIN_LENGTH } from '../auth/errors';
+import { aiTierOf, meters, UsageMeters } from './PlanWidgets';
 import { Field } from '../auth/Field';
 
-const ROLES: RoleCode[] = ['owner', 'admin', 'member', 'viewer'];
+const ROLES: RoleCode[] = ['owner', 'admin', 'manager', 'member', 'viewer'];
+// Permisos resumidos por rango (el servidor es quien decide; esto solo lo explica).
+const CAPS: { key: 'view' | 'work' | 'lead' | 'admin' | 'owner'; roles: RoleCode[] }[] = [
+  { key: 'view', roles: ['owner', 'admin', 'manager', 'member', 'viewer'] },
+  { key: 'work', roles: ['owner', 'admin', 'manager', 'member'] },
+  { key: 'lead', roles: ['owner', 'admin', 'manager'] },
+  { key: 'admin', roles: ['owner', 'admin'] },
+  { key: 'owner', roles: ['owner'] },
+];
+
+function RanksTable() {
+  const { t } = usePreferences();
+  return (
+    <details className="rc-ranks">
+      <summary>{t.ranks.whatCanDo}</summary>
+      <div className="rc-table-wrap">
+        <table className="rc-table rc-ranks__table">
+          <thead><tr><th scope="col">{t.ranks.capability}</th>{ROLES.map((r) => <th key={r} scope="col">{t.org.roles[r]}</th>)}</tr></thead>
+          <tbody>
+            {CAPS.map((c) => (
+              <tr key={c.key}>
+                <th scope="row">{t.ranks.caps[c.key]}</th>
+                {ROLES.map((r) => <td key={r} className="rc-ranks__cell">{c.roles.includes(r) ? <Check size={14} aria-label="✓" /> : <span aria-label="—">—</span>}</td>)}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </details>
+  );
+}
 
 /** Ejecuta una acción con estado de carga, error y confirmación. */
 function useAction() {
@@ -131,6 +162,10 @@ export function MembersSection() {
   const action = useAction();
   const manage = can('members.manage');
   const invites = useApiResource<PendingInvite[]>(manage ? '/organizations/current/invitations' : null, orgId);
+  const myRole = session?.role ?? 'viewer';
+  // El Líder gestiona a todos; los demás solo rangos inferiores al suyo (mismo criterio que el servidor).
+  const canManageRank = (r: RoleCode) => myRole === 'owner' || ROLE_RANK[r] < ROLE_RANK[myRole];
+  const assignable = ROLES.filter((r) => r !== 'owner' && canManageRank(r));
   const [invited, setInvited] = useState<string | null>(null);
 
   const invite = async (email: string, role: string) => {
@@ -189,15 +224,15 @@ export function MembersSection() {
                     <td>{m.full_name}{isMe && <span className="rc-list__meta"> ({t.account.you})</span>}</td>
                     <td>{m.email}</td>
                     <td>
-                      {manage ? (
+                      {manage && !isMe && canManageRank(m.role) ? (
                         <select className="rc-select" value={m.role} aria-label={`${t.account.role}: ${m.full_name}`} disabled={action.busy}
                           onChange={(e) => changeRole(m.id, e.target.value)}>
-                          {ROLES.map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
+                          {ROLES.filter((r) => r === m.role || canManageRank(r) || (r === 'owner' && myRole === 'owner')).map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
                         </select>
                       ) : <Badge tone="outline">{t.org.roles[m.role]}</Badge>}
                     </td>
                     <td className="rc-table__actions">
-                      {manage && !isMe && (
+                      {manage && !isMe && canManageRank(m.role) && (
                         <Button size="sm" variant="ghost" icon={<Trash2 size={14} />} onClick={() => remove(m.id)} disabled={action.busy}
                           aria-label={`${t.account.remove}: ${m.full_name}`}>
                           {t.account.remove}
@@ -217,7 +252,7 @@ export function MembersSection() {
           <div className="rc-field" style={{ flex: '0 0 auto' }}>
             <label className="rc-field__label" htmlFor="new-member-role">{t.account.role}</label>
             <select id="new-member-role" name="role" className="rc-select" defaultValue="member" style={{ minHeight: 44 }}>
-              {ROLES.filter((r) => r !== 'owner').map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
+              {assignable.map((r) => <option key={r} value={r}>{t.org.roles[r]}</option>)}
             </select>
           </div>
           <Button type="submit" variant="primary" icon={<UserPlus size={15} />} loading={action.busy} style={{ marginBottom: 22 }}>
@@ -226,6 +261,7 @@ export function MembersSection() {
         </form>
       )}
       {invited && <p className="rc-form__ok" role="status">{interpolate(t.account.invited, { email: invited })}</p>}
+      <RanksTable />
       {action.error && <p className="rc-form__error" role="alert">{action.error}</p>}
       {manage && invites.data && invites.data.length > 0 && (
         <section aria-label={t.account.pendingInvites}>
@@ -257,19 +293,20 @@ export function PlanSection() {
   if (!can('billing.read')) return null;
   const p = sub.data?.plan;
   return (
-    <Card title={t.account.planTitle}
+    <Card id="plan" title={t.account.planTitle}
       actions={p && <Badge tone={p.code === 'free' ? 'outline' : 'accent'}>{p.code === 'free' ? t.account.free : `${formatCurrency(p.price_cents / 100, lang, p.currency)} ${t.account.perMonth}`}</Badge>}>
       {sub.loading && <Skeleton height={80} />}
       {sub.error != null && <ErrorState title={errorMessage(t, sub.error)} onRetry={sub.reload} />}
       {p && sub.data && (
         <>
           <p className="rc-card__title">{p.name}</p>
-          <dl className="rc-limits">
-            <div><dt>{t.account.limitMembers}</dt><dd className="rc-tabular">{sub.data.usage.members ?? 0} / {p.max_members}</dd></div>
-            <div><dt>{t.account.limitAgents}</dt><dd className="rc-tabular">{sub.data.usage.active_agents ?? 0} / {p.max_active_agents}</dd></div>
-            <div><dt>{t.account.limitExecutions}</dt><dd className="rc-tabular">{formatNumber(p.max_monthly_executions, lang)}</dd></div>
-            <div><dt>{t.account.limitStorage}</dt><dd className="rc-tabular">{formatNumber(p.max_storage_mb, lang)} MB</dd></div>
-          </dl>
+          <p className="rc-list__meta">
+            {t.plans.aiTitle}: <strong>{aiTierOf(p) === 'basic' ? t.plans.aiBasic : t.plans.aiAdvanced}</strong>
+            {' · '}{aiTierOf(p) === 'basic' ? t.plans.aiBasicHint : t.plans.aiAdvancedHint}
+          </p>
+          <h3 className="rc-field__label">{t.plans.usageTitle}</h3>
+          <UsageMeters items={meters(sub.data, t.plans.tools as Record<string, string>)} />
+          <p className="rc-list__meta">{t.account.limitStorage}: {formatNumber(sub.data.usage.storage_mb ?? 0, lang)} / {formatNumber(p.max_storage_mb, lang)} MB · {t.plans.resets}</p>
           <BillingActions />
         </>
       )}

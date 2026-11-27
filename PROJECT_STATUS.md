@@ -4,6 +4,14 @@
 
 ## ✅ Implementado y probado
 
+### Rangos, planes y límites
+| Funcionalidad | Cómo se verificó |
+|---|---|
+| Rangos: Líder, Colíder, Encargado (nuevo), Miembro, Observador; solo se gestionan rangos inferiores al propio (el Líder, todos); tabla «¿Qué puede hacer cada rango?» | pytest + unitarias. |
+| IA por plan: Gratis = IA básica (modelo ligero, respuesta corta, menos contexto, sin memoria de la conversación); Premium = IA avanzada. Se indica en pantalla | pytest (modelos, tokens, contexto y memoria) + unitarias. |
+| Límites mensuales por herramienta (asistente, importaciones, exportaciones) y de automatizaciones activas; 402 con mensaje claro | pytest + unitarias. |
+| Tarjeta del plan con uso del mes y «Mejorar a Premium» en la primera página | unitarias + e2e con axe. |
+
 ### Cuentas y lanzamiento público
 | Funcionalidad | Cómo se verificó |
 |---|---|
@@ -165,9 +173,9 @@ Shell responsivo, búsqueda de módulos, idiomas es/en, panel con onboarding y d
 ## Resultados de la última ejecución
 ```
 backend:  ruff + mypy (strict)  → sin problemas
-          pytest                → 165 aprobadas (PostgreSQL 16 real; correo, Google, Stripe e IA simulados)
+          pytest                → 175 aprobadas (PostgreSQL 16 real; correo, Google, Stripe e IA simulados)
 frontend: lint + typecheck      → 0 problemas
-          npm run test          → 104 aprobadas
+          npm run test          → 108 aprobadas
           npm run e2e           → 101 aprobadas, 1 omitida a propósito (escritorio y Pixel 7, incluye auditoría axe)
 docker:   docker-compose.prod.yml probado de punta a punta; respaldo y restauración probados
 ```
